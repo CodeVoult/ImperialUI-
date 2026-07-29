@@ -19,8 +19,17 @@ local T = {
     green   = Color3.fromRGB(34, 197, 94),
     bgTrans = 0.05,
     tabSize = 150,
-    iconSize = 22,
+    iconSize = 20,
 }
+
+-- === HELPER PARA FORMATO DE ÍCONOS ===
+local function getIconId(icon)
+    if not icon or icon == "" then return "" end
+    if type(icon) == "number" or (type(icon) == "string" and tonumber(icon)) then
+        return "rbxassetid://" .. tostring(icon)
+    end
+    return tostring(icon)
+end
 
 -- === HELPERS DE CREACIÓN ===
 local function New(cls, props)
@@ -67,7 +76,7 @@ function LeehHub:CreateWindow(cfg)
         Parent       = (gethui and gethui()) or game:GetService("CoreGui"),  
     })  
 
-    --// Ventana Principal
+    -- Ventana Principal
     local winMain = New("Frame", {  
         Name                   = "Main",  
         AnchorPoint            = Vector2.new(0.5, 0.5),  
@@ -145,7 +154,7 @@ function LeehHub:CreateWindow(cfg)
     local function CreateTab(tabCfg)
         tabCfg = tabCfg or {}
         local nm = tabCfg.Title or tabCfg.Name or "Tab"
-        local iconId = tabCfg.Icon or ""
+        local iconAsset = getIconId(tabCfg.Icon)
 
         local page = New("ScrollingFrame", {  
             Size                   = UDim2.fromScale(1, 1),  
@@ -159,34 +168,69 @@ function LeehHub:CreateWindow(cfg)
         Pad(page, 2, 6, 2, 6)  
         pages[nm] = page  
 
+        -- Botón de la Pestaña
         local btn = New("TextButton", {  
             Size                   = UDim2.new(1, 0, 0, 36),  
             BackgroundColor3       = T.panel,  
             BackgroundTransparency = 0.5,
-            Text                   = "   " .. nm,  
+            Text                   = "",  
+            Parent                 = sidebar,  
+        })  
+        Cor(btn, 6)  
+        Stk(btn, T.border, 1)
+
+        local hasIcon = iconAsset ~= ""
+
+        -- Ícono (si existe)
+        local iconImg
+        if hasIcon then
+            iconImg = New("ImageLabel", {
+                Size                   = UDim2.new(0, T.iconSize, 0, T.iconSize),
+                Position               = UDim2.new(0, 10, 0.5, 0),
+                AnchorPoint            = Vector2.new(0, 0.5),
+                BackgroundTransparency = 1,
+                Image                  = iconAsset,
+                ImageColor3            = T.muted,
+                Parent                 = btn,
+            })
+        end
+
+        -- Texto de la Pestaña (Se ajusta la posición si hay ícono)
+        local txtLabel = New("TextLabel", {
+            Position               = UDim2.new(0, hasIcon and (T.iconSize + 16) or 12, 0, 0),
+            Size                   = UDim2.new(1, -(hasIcon and (T.iconSize + 20) or 16), 1, 0),
+            BackgroundTransparency = 1,
+            Text                   = nm,
             TextColor3             = T.muted,
             Font                   = Enum.Font.GothamMedium,
             TextSize               = 13,
             TextXAlignment         = Enum.TextXAlignment.Left,
-            Parent                 = sidebar,  
-        })  
-        Cor(btn, 6)  
-        local stroke = Stk(btn, T.border, 1)
+            Parent                 = btn,
+        })
 
+        -- Animación al hacer clic
         btn.MouseButton1Click:Connect(function()  
             for name, pg in pairs(pages) do pg.Visible = (name == nm) end  
             for _, b in ipairs(sidebar:GetChildren()) do
                 if b:IsA("TextButton") then
-                    TW(b, 0.2, { TextColor3 = T.muted, BackgroundTransparency = 0.5 })
+                    TW(b, 0.2, { BackgroundTransparency = 0.5 })
+                    local lbl = b:FindFirstChildOfClass("TextLabel")
+                    local img = b:FindFirstChildOfClass("ImageLabel")
+                    if lbl then TW(lbl, 0.2, { TextColor3 = T.muted }) end
+                    if img then TW(img, 0.2, { ImageColor3 = T.muted }) end
                 end
             end
-            TW(btn, 0.2, { TextColor3 = T.text, BackgroundTransparency = 0 })
+            TW(btn, 0.2, { BackgroundTransparency = 0 })
+            TW(txtLabel, 0.2, { TextColor3 = T.text })
+            if iconImg then TW(iconImg, 0.2, { ImageColor3 = T.text }) end
         end)  
 
-        if #sidebar:GetChildren() == 2 then -- Primer Tab cargado por defecto
+        -- Primer Tab activo por defecto
+        if #sidebar:GetChildren() == 2 then 
             page.Visible = true
-            btn.TextColor3 = T.text
             btn.BackgroundTransparency = 0
+            txtLabel.TextColor3 = T.text
+            if iconImg then iconImg.ImageColor3 = T.text end
         end
 
         local Tab = { Container = page }
@@ -309,7 +353,6 @@ function LeehHub:CreateWindow(cfg)
     return Window
 end
 
--- Alias global para que funcione llamando a LeehHub:Window(...) o Fluent:CreateWindow(...)
 LeehHub.Window = LeehHub.CreateWindow
 
 return LeehHub
