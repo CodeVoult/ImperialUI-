@@ -1,12 +1,12 @@
 local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua"))()
 
--- TABLA TEMPORAL PARA PRUEBAS (Sustituye a Functions.lua de momento)
+-- Utils temporal para que cargue la UI sin necesitar Functions.lua todavía
 local Utils = {
     S = {},
     SetKillAll = function(self, val) end
 }
 
-local Win = LeehHub:Window({
+local Win = Lib:Window({
     Title   = "ForceHub Max | V1.5",
     Creator = "ForceScript V1",
     Game    = "Duels: Murders Vs Sheriffs",
