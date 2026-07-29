@@ -3,10 +3,7 @@ LeehHub.__index = LeehHub
 
 local TweenService     = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Players          = game:GetService("Players")
-local LP               = Players.LocalPlayer
 
--- === TEMAS / COLORES ===
 local T = {
     bg      = Color3.fromRGB(15, 15, 15),     
     panel   = Color3.fromRGB(22, 22, 22), 
@@ -14,15 +11,14 @@ local T = {
     border  = Color3.fromRGB(45, 45, 45),  
     acc     = Color3.fromRGB(255, 255, 255), 
     text    = Color3.fromRGB(250, 250, 250),
-    muted   = Color3.fromRGB(120, 120, 120),
+    muted   = Color3.fromRGB(140, 140, 140),
     red     = Color3.fromRGB(200, 30, 30),
     green   = Color3.fromRGB(34, 197, 94),
     bgTrans = 0.05,
-    tabSize = 150,
-    iconSize = 20,
+    tabSize = 140,
+    iconSize = 18,
 }
 
--- === HELPER PARA FORMATO DE ÍCONOS ===
 local function getIconId(icon)
     if not icon or icon == "" then return "" end
     if type(icon) == "number" or (type(icon) == "string" and tonumber(icon)) then
@@ -31,7 +27,6 @@ local function getIconId(icon)
     return tostring(icon)
 end
 
--- === HELPERS DE CREACIÓN ===
 local function New(cls, props)
     local o = Instance.new(cls)
     for k, v in pairs(props or {}) do o[k] = v end
@@ -63,12 +58,10 @@ local function TW(obj, t, props)
     return anim
 end
 
--- === COMPATIBILIDAD CON FLUENT (CreateWindow) ===
 function LeehHub:CreateWindow(cfg)
     cfg = cfg or {}
-    local title   = cfg.Title or cfg.Name or "LeehHub"
-    local sub     = cfg.SubTitle or cfg.Creator or ""
-    local key     = cfg.MinimizeKey or Enum.KeyCode.RightControl
+    local title = cfg.Title or cfg.Name or "LeehHub"
+    local sub   = cfg.SubTitle or cfg.Creator or ""
 
     local GUI = New("ScreenGui", {  
         Name         = "LeehHub_UI",  
@@ -76,12 +69,11 @@ function LeehHub:CreateWindow(cfg)
         Parent       = (gethui and gethui()) or game:GetService("CoreGui"),  
     })  
 
-    -- Ventana Principal
     local winMain = New("Frame", {  
         Name                   = "Main",  
         AnchorPoint            = Vector2.new(0.5, 0.5),  
         Position               = UDim2.fromScale(0.5, 0.5),  
-        Size                   = cfg.Size or UDim2.new(0, 580, 0, 340),  
+        Size                   = cfg.Size or UDim2.new(0, 560, 0, 320),  
         BackgroundColor3       = T.bg,  
         BackgroundTransparency = T.bgTrans,  
         Visible                = true,  
@@ -90,9 +82,8 @@ function LeehHub:CreateWindow(cfg)
     Cor(winMain, 10)  
     Stk(winMain, Color3.fromRGB(0,0,0), 2.5)  
 
-    -- TopBar
     local titleBar = New("Frame", {  
-        Size                   = UDim2.new(1, -12, 0, 42),  
+        Size                   = UDim2.new(1, -12, 0, 38),  
         Position               = UDim2.new(0, 6, 0, 6),  
         BackgroundColor3       = T.panel,  
         BackgroundTransparency = 0.2,  
@@ -103,19 +94,19 @@ function LeehHub:CreateWindow(cfg)
 
     New("TextLabel", {  
         Position               = UDim2.new(0, 12, 0, 0),  
-        Size                   = UDim2.new(1, -50, 1, 0),  
+        Size                   = UDim2.new(1, -24, 1, 0),  
         BackgroundTransparency = 1,  
         Text                   = sub ~= "" and (title .. " | " .. sub) or title,  
         TextColor3             = T.text,  
         Font                   = Enum.Font.GothamBold,  
-        TextSize               = 14,  
+        TextSize               = 13,  
         TextXAlignment         = Enum.TextXAlignment.Left,  
         Parent                 = titleBar,  
     })  
 
     local sidebar = New("ScrollingFrame", {  
-        Position               = UDim2.new(0, 6, 0, 54),  
-        Size                   = UDim2.new(0, T.tabSize, 1, -60),  
+        Position               = UDim2.new(0, 6, 0, 50),  
+        Size                   = UDim2.new(0, T.tabSize, 1, -56),  
         BackgroundTransparency = 1,  
         ScrollBarThickness     = 0,  
         CanvasSize             = UDim2.new(0,0,0,0),  
@@ -123,16 +114,15 @@ function LeehHub:CreateWindow(cfg)
         Parent                 = winMain,  
     })  
     List(sidebar, Enum.FillDirection.Vertical, 6)  
-    Pad(sidebar, 4, 4, 2, 2)  
+    Pad(sidebar, 2, 2, 2, 2)  
 
     local contentArea = New("Frame", {  
-        Position               = UDim2.new(0, T.tabSize + 14, 0, 54),  
-        Size                   = UDim2.new(1, -(T.tabSize + 20), 1, -60),  
+        Position               = UDim2.new(0, T.tabSize + 12, 0, 50),  
+        Size                   = UDim2.new(1, -(T.tabSize + 18), 1, -56),  
         BackgroundTransparency = 1,  
         Parent                 = winMain,  
     })  
 
-    -- Arrastrar Ventana
     local dragging, dragStart, startPos
     titleBar.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
@@ -147,13 +137,12 @@ function LeehHub:CreateWindow(cfg)
     end)
     UserInputService.InputEnded:Connect(function() dragging = false end)
 
-    local Window = { GUI = GUI, Main = winMain, Tabs = {} }  
     local pages = {}
 
-    -- === NATIVO Y COMPATIBILIDAD CON FLUENT (AddTab / Tab) ===
-    local function CreateTab(tabCfg)
+    local function CreateTab(self, tabCfg)
+        if type(tabCfg) == "string" then tabCfg = { Name = tabCfg } end
         tabCfg = tabCfg or {}
-        local nm = tabCfg.Title or tabCfg.Name or "Tab"
+        local nm = tabCfg.Name or tabCfg.Title or "Tab"
         local iconAsset = getIconId(tabCfg.Icon)
 
         local page = New("ScrollingFrame", {  
@@ -168,9 +157,8 @@ function LeehHub:CreateWindow(cfg)
         Pad(page, 2, 6, 2, 6)  
         pages[nm] = page  
 
-        -- Botón de la Pestaña
         local btn = New("TextButton", {  
-            Size                   = UDim2.new(1, 0, 0, 36),  
+            Size                   = UDim2.new(1, 0, 0, 34),  
             BackgroundColor3       = T.panel,  
             BackgroundTransparency = 0.5,
             Text                   = "",  
@@ -181,12 +169,11 @@ function LeehHub:CreateWindow(cfg)
 
         local hasIcon = iconAsset ~= ""
 
-        -- Ícono (si existe)
         local iconImg
         if hasIcon then
             iconImg = New("ImageLabel", {
                 Size                   = UDim2.new(0, T.iconSize, 0, T.iconSize),
-                Position               = UDim2.new(0, 10, 0.5, 0),
+                Position               = UDim2.new(0, 8, 0.5, 0),
                 AnchorPoint            = Vector2.new(0, 0.5),
                 BackgroundTransparency = 1,
                 Image                  = iconAsset,
@@ -195,20 +182,18 @@ function LeehHub:CreateWindow(cfg)
             })
         end
 
-        -- Texto de la Pestaña (Se ajusta la posición si hay ícono)
         local txtLabel = New("TextLabel", {
-            Position               = UDim2.new(0, hasIcon and (T.iconSize + 16) or 12, 0, 0),
-            Size                   = UDim2.new(1, -(hasIcon and (T.iconSize + 20) or 16), 1, 0),
+            Position               = UDim2.new(0, hasIcon and (T.iconSize + 14) or 10, 0, 0),
+            Size                   = UDim2.new(1, -(hasIcon and (T.iconSize + 18) or 12), 1, 0),
             BackgroundTransparency = 1,
             Text                   = nm,
             TextColor3             = T.muted,
             Font                   = Enum.Font.GothamMedium,
-            TextSize               = 13,
+            TextSize               = 12,
             TextXAlignment         = Enum.TextXAlignment.Left,
             Parent                 = btn,
         })
 
-        -- Animación al hacer clic
         btn.MouseButton1Click:Connect(function()  
             for name, pg in pairs(pages) do pg.Visible = (name == nm) end  
             for _, b in ipairs(sidebar:GetChildren()) do
@@ -225,7 +210,7 @@ function LeehHub:CreateWindow(cfg)
             if iconImg then TW(iconImg, 0.2, { ImageColor3 = T.text }) end
         end)  
 
-        -- Primer Tab activo por defecto
+        -- Activar la primera pestaña automáticamente
         if #sidebar:GetChildren() == 2 then 
             page.Visible = true
             btn.BackgroundTransparency = 0
@@ -235,30 +220,29 @@ function LeehHub:CreateWindow(cfg)
 
         local Tab = { Container = page }
 
-        -- Componentes dentro del Tab
         function Tab:AddToggle(idx, cfg)
             cfg = cfg or idx or {}
-            local name = cfg.Title or cfg.Name or "Toggle"
+            local name = cfg.Name or cfg.Title or "Toggle"
             local def  = cfg.Default or false
             local cb   = cfg.Callback or function() end
 
-            local row = New("Frame", { Size = UDim2.new(1, 0, 0, 42), BackgroundColor3 = T.panel2, Parent = page })
+            local row = New("Frame", { Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = T.panel2, Parent = page })
             Cor(row, 6); Stk(row, T.border, 1)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -60, 1, 0),
                 BackgroundTransparency = 1, Text = name, TextColor3 = T.text,
-                Font = Enum.Font.GothamMedium, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = row
+                Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = row
             })
 
             local sw = New("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.new(0, 38, 0, 20), BackgroundColor3 = def and T.green or T.red, Parent = row
+                Size = UDim2.new(0, 36, 0, 18), BackgroundColor3 = def and T.green or T.red, Parent = row
             })
             Cor(sw, 10)
 
             local knob = New("Frame", {
-                Size = UDim2.new(0, 14, 0, 14), Position = def and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7),
+                Size = UDim2.new(0, 12, 0, 12), Position = def and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6),
                 BackgroundColor3 = Color3.new(1,1,1), Parent = sw
             })
             Cor(knob, 10)
@@ -267,7 +251,7 @@ function LeehHub:CreateWindow(cfg)
             btnClick.MouseButton1Click:Connect(function()
                 def = not def
                 TW(sw, 0.2, { BackgroundColor3 = def and T.green or T.red })
-                TW(knob, 0.2, { Position = def and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7) })
+                TW(knob, 0.2, { Position = def and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6) })
                 cb(def)
             end)
             return { OnChanged = function(self, fn) cb = fn end }
@@ -275,27 +259,27 @@ function LeehHub:CreateWindow(cfg)
 
         function Tab:AddSlider(idx, cfg)
             cfg = cfg or idx or {}
-            local name = cfg.Title or cfg.Name or "Slider"
+            local name = cfg.Name or cfg.Title or "Slider"
             local mn, mx = cfg.Min or 0, cfg.Max or 100
             local def = cfg.Default or mn
             local cb = cfg.Callback or function() end
 
-            local row = New("Frame", { Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = T.panel2, Parent = page })
+            local row = New("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundColor3 = T.panel2, Parent = page })
             Cor(row, 6); Stk(row, T.border, 1)
 
             New("TextLabel", {
-                Position = UDim2.new(0, 10, 0, 6), Size = UDim2.new(1, -60, 0, 18),
+                Position = UDim2.new(0, 10, 0, 4), Size = UDim2.new(1, -60, 0, 16),
                 BackgroundTransparency = 1, Text = name, TextColor3 = T.text,
                 Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = row
             })
 
             local valLbl = New("TextLabel", {
-                Position = UDim2.new(1, -50, 0, 6), Size = UDim2.new(0, 40, 0, 18),
+                Position = UDim2.new(1, -50, 0, 4), Size = UDim2.new(0, 40, 0, 16),
                 BackgroundTransparency = 1, Text = tostring(def), TextColor3 = T.muted,
-                Font = Enum.Font.GothamBold, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right, Parent = row
+                Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Right, Parent = row
             })
 
-            local track = New("Frame", { Position = UDim2.new(0, 10, 0, 32), Size = UDim2.new(1, -20, 0, 6), BackgroundColor3 = T.panel, Parent = row })
+            local track = New("Frame", { Position = UDim2.new(0, 10, 0, 28), Size = UDim2.new(1, -20, 0, 6), BackgroundColor3 = T.panel, Parent = row })
             Cor(track, 3)
 
             local fill = New("Frame", { Size = UDim2.new((def - mn) / (mx - mn), 0, 1, 0), BackgroundColor3 = T.acc, Parent = track })
@@ -322,37 +306,19 @@ function LeehHub:CreateWindow(cfg)
             return { OnChanged = function(self, fn) cb = fn end }
         end
 
-        function Tab:AddButton(cfg)
-            cfg = cfg or {}
-            local name = cfg.Title or cfg.Name or "Button"
-            local cb = cfg.Callback or function() end
-
-            local btn = New("TextButton", {
-                Size = UDim2.new(1, 0, 0, 36), BackgroundColor3 = T.panel2,
-                Text = name, TextColor3 = T.text, Font = Enum.Font.GothamBold, TextSize = 13, Parent = page
-            })
-            Cor(btn, 6); Stk(btn, T.border, 1)
-            btn.MouseButton1Click:Connect(cb)
-        end
-
-        -- Alias para mantener ambas sintaxis compatibles
-        Tab.Tab = Tab
         Tab.Section = function(self, name) return Tab end
         Tab.Toggle = Tab.AddToggle
         Tab.Slider = Tab.AddSlider
         Tab.LineSlider = Tab.AddSlider
-        Tab.Button = Tab.AddButton
 
         return Tab
     end
 
-    Window.AddTab = CreateTab
-    Window.Tab = CreateTab
-    Window.SetSize = function(self, w, h) winMain.Size = UDim2.new(0, w, 0, h or math.floor(w * 0.53)) end
-
-    return Window
+    return {
+        Tab = function(self, cfg) return CreateTab(self, cfg) end,
+        AddTab = function(self, cfg) return CreateTab(self, cfg) end,
+        SetSize = function(self, w, h) winMain.Size = UDim2.new(0, w, 0, h or math.floor(w * 0.53)) end
+    }
 end
 
 LeehHub.Window = LeehHub.CreateWindow
-
-return LeehHub
