@@ -1,6 +1,6 @@
-local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/leeh10/LeeHubMax/refs/heads/main/LeehLib.lua"))()
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua"))()
 -- NOTA: Asegúrate de que el link de abajo sea donde subas el Functions.lua
-local Utils = loadstring(game:HttpGet("https://raw.githubusercontent.com/leeh10/LeeHubMax/refs/heads/main/Functions.lua"))()
+local Utils = loadstring(game:HttpGet("URL"))()
 
 local Win = Lib:Window({
     Title   = "ForceHub Max | V1.5",
