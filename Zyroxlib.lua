@@ -210,7 +210,6 @@ function LeehHub:CreateWindow(cfg)
             if iconImg then TW(iconImg, 0.2, { ImageColor3 = T.text }) end
         end)  
 
-        -- Activar la primera pestaña automáticamente
         if #sidebar:GetChildren() == 2 then 
             page.Visible = true
             btn.BackgroundTransparency = 0
@@ -322,3 +321,5 @@ function LeehHub:CreateWindow(cfg)
 end
 
 LeehHub.Window = LeehHub.CreateWindow
+
+return LeehHub
