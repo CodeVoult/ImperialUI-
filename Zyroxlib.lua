@@ -210,6 +210,7 @@ function LeehHub:CreateWindow(cfg)
             if iconImg then TW(iconImg, 0.2, { ImageColor3 = T.text }) end
         end)  
 
+        -- Activar la primera pestaña automáticamente
         if #sidebar:GetChildren() == 2 then 
             page.Visible = true
             btn.BackgroundTransparency = 0
@@ -219,8 +220,8 @@ function LeehHub:CreateWindow(cfg)
 
         local Tab = { Container = page }
 
-        function Tab:AddToggle(idx, cfg)
-            cfg = cfg or idx or {}
+        function Tab:AddToggle(p1, p2)
+            local cfg = (type(p1) == "table" and p1) or (type(p2) == "table" and p2) or {}
             local name = cfg.Name or cfg.Title or "Toggle"
             local def  = cfg.Default or false
             local cb   = cfg.Callback or function() end
@@ -256,8 +257,8 @@ function LeehHub:CreateWindow(cfg)
             return { OnChanged = function(self, fn) cb = fn end }
         end
 
-        function Tab:AddSlider(idx, cfg)
-            cfg = cfg or idx or {}
+        function Tab:AddSlider(p1, p2)
+            local cfg = (type(p1) == "table" and p1) or (type(p2) == "table" and p2) or {}
             local name = cfg.Name or cfg.Title or "Slider"
             local mn, mx = cfg.Min or 0, cfg.Max or 100
             local def = cfg.Default or mn
