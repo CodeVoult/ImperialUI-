@@ -1,4 +1,4 @@
-local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua"))()
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua?v=" .. math.random(1, 100000)))()
 
 -- Utils temporal para que cargue la UI sin necesitar Functions.lua todavía
 local Utils = {
