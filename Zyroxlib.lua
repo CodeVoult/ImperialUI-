@@ -1,12 +1,11 @@
 -- [[
 -- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.2)
--- Base ORIGINAL v1.4 intacta + adaptaciones pedidas:
---   • Slider de tamaño hace el menú GRANDE (ancho + alto)
---   • setGhost (esconder logo)
---   • Bloquear arrastre del logo
---   • AddButton para Animaciones
--- Todo lo demás queda EXACTAMENTE igual.
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.5.0)
+-- Novedades v1.5.0:
+--   1) Cambio de tamaño proporcional completo vía UIScale (Hub Grande/Pequeño).
+--   2) Métodos para Esconder Logo (Invisible) y Bloquear Logo (Desactivar Drag).
+--   3) Soporte nativo para Botones (AddButton) en las secciones.
+--   4) Todo lo demás permanece intacto (degradados animado, auto-canvas, etc.).
 -- ============================================================
 -- ]]
 
@@ -75,6 +74,9 @@ local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
     update()
 end
 
+-- ============================================================
+-- CREAR VENTANA
+-- ============================================================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
 
@@ -125,6 +127,8 @@ function Library:CreateWindow(hubTitle)
         Parent = self.GUI
     })
     Cor(floatIcon, 21)
+    self.FloatIcon = floatIcon
+    self.IsLogoLocked = false
 
     local lightStroke = New("UIStroke", {
         Name = "LightStroke",
@@ -156,16 +160,13 @@ function Library:CreateWindow(hubTitle)
     Cor(innerShine, 21)
 
     -- ========== VENTANA PRINCIPAL ==========
-    local targetMenuWidth, targetMenuHeight = 620, 360
-    self.BaseWidth = 620
-    self.BaseHeight = 360
-    self.CurrentScale = 1
+    local baseWidth, baseHeight = 620, 360
 
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+        Size = UDim2.new(0, baseWidth, 0, baseHeight),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
         Visible = false,
@@ -232,6 +233,7 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
+    -- ---------- SIDEBAR ----------
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -261,42 +263,7 @@ function Library:CreateWindow(hubTitle)
     self.Pages = {}
     self.ActivePage = nil
     self.winOpen = false
-    self.lockLogo = false
-    self.ghostMode = false
-
-    -- ========== FUNCIONES DE CONTROL ==========
-    function self:SetMenuScale(scale)
-        scale = math.clamp(scale, 0.85, 1.45)
-        self.CurrentScale = scale
-        local newW = math.floor(self.BaseWidth * scale)
-        local newH = math.floor(self.BaseHeight * scale)
-        if self.winOpen then
-            Tween(self.WinMain, 0.25, {
-                Size = UDim2.new(0, newW, 0, newH)
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        else
-            self.WinMain.Size = UDim2.new(0, newW, 0, newH)
-        end
-    end
-
-    function self:SetGhost(state)
-        self.ghostMode = state
-        if state then
-            Tween(lightStroke, 0.4, { Transparency = 1 })
-            Tween(floatIcon, 0.4, { BackgroundTransparency = 1 })
-            Tween(innerShine, 0.4, { BackgroundTransparency = 1 })
-            floatIcon.TextTransparency = 1
-        else
-            Tween(lightStroke, 0.4, { Transparency = 0 })
-            Tween(floatIcon, 0.4, { BackgroundTransparency = 0.35 })
-            Tween(innerShine, 0.4, { BackgroundTransparency = 0.9 })
-            floatIcon.TextTransparency = 0
-        end
-    end
-
-    function self:SetLockLogo(state)
-        self.lockLogo = state
-    end
+    self.CurrentScale = 1
 
     local function openWin()
         if self.winOpen then return end
@@ -317,17 +284,14 @@ function Library:CreateWindow(hubTitle)
             self.WinMain.Visible = true
             winScale.Scale = 0.01
 
-            local finalW = math.floor(self.BaseWidth * self.CurrentScale)
-            local finalH = math.floor(self.BaseHeight * self.CurrentScale)
-
             Tween(self.WinMain, 0.9, {
                 Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, finalW, 0, finalH),
+                Size = UDim2.new(0, baseWidth, 0, baseHeight),
                 BackgroundTransparency = T.bgTrans
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
             Tween(borderStroke, 0.6, { Transparency = 0.2 })
-            Tween(winScale, 0.9, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            Tween(winScale, 0.9, { Scale = self.CurrentScale }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         end)
     end
 
@@ -349,21 +313,14 @@ function Library:CreateWindow(hubTitle)
         collapse.Completed:Connect(function()
             if not self.winOpen then
                 self.WinMain.Visible = false
-                floatIcon.Visible = true
+                if floatIcon.Name ~= "HiddenLogo" then
+                    floatIcon.Visible = true
+                end
                 floatScale.Scale = 0
                 Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-                if self.ghostMode then
-                    lightStroke.Transparency = 1
-                    floatIcon.BackgroundTransparency = 1
-                    innerShine.BackgroundTransparency = 1
-                    floatIcon.TextTransparency = 1
-                else
-                    Tween(lightStroke, 0.35, { Transparency = 0 })
-                    Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
-                    Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
-                    floatIcon.TextTransparency = 0
-                end
+                Tween(lightStroke, 0.35, { Transparency = 0 })
+                Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
+                Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
             end
         end)
     end
@@ -381,8 +338,8 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
-            if self.lockLogo and target == floatIcon then return end
+            if handle == floatIcon and self.IsLogoLocked then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -391,7 +348,7 @@ function Library:CreateWindow(hubTitle)
             currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
             targetX, targetY = currentX, currentY
 
-            if scaleObj then Tween(scaleObj, 0.2, { Scale = 1.01 }) end
+            if scaleObj then Tween(scaleObj, 0.2, { Scale = (self.CurrentScale or 1) * 1.01 }) end
 
             if not lerpConnection then
                 lerpConnection = RunService.RenderStepped:Connect(function()
@@ -418,45 +375,46 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
-                if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
+                if scaleObj then Tween(scaleObj, 0.25, { Scale = self.CurrentScale or 1 }) end
                 local duration = tick() - inputBeganTime
                 if duration < 0.25 and clickCallback then clickCallback() end
             end
         end)
     end
 
-    local function makeDraggable(obj, target)
-        local dragStart, startPos, dragging
-        obj.InputBegan:Connect(function(i)
-            if self.lockLogo and target == floatIcon then return end
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = i.Position
-                startPos = target.Position
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(i)
-            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                local del = i.Position - dragStart
-                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
-            end
-        end)
-        UserInputService.InputEnded:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
-        end)
-    end
-
-    makeDraggable(floatIcon, floatIcon)
+    makeSmoothDrag(floatIcon, floatIcon, nil, nil)
     makeSmoothDrag(titleBar, self.WinMain, winScale, closeWin)
 
     return self
 end
 
+-- ============================================================
+-- FUNCIONES ADICIONALES DE CONFIGURACIÓN
+-- ============================================================
+function Library:SetScale(scaleValue)
+    self.CurrentScale = scaleValue
+    if self.WinScale then
+        Tween(self.WinScale, 0.2, { Scale = scaleValue })
+    end
+end
+
+function Library:SetLogoVisible(visible)
+    if self.FloatIcon then
+        self.FloatIcon.Name = visible and "FloatIcon" or "HiddenLogo"
+        self.FloatIcon.Visible = visible
+    end
+end
+
+function Library:SetLogoLock(locked)
+    self.IsLogoLocked = locked
+end
+
+-- ============================================================
+-- NOTIFICACIÓN
+-- ============================================================
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
@@ -557,6 +515,9 @@ function Library:Notify(feature, state)
     end)
 end
 
+-- ============================================================
+-- CREAR TAB
+-- ============================================================
 function Library:CreateTab(name, iconId)
     local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
@@ -636,6 +597,9 @@ function Library:CreateTab(name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
+    -- ============================================================
+    -- SECCIÓN
+    -- ============================================================
     function TabMethods:CreateSection(title)
         local container = New("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
@@ -670,6 +634,34 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
+        -- ========== BOTÓN (NUEVO METODO) ==========
+        function ElementMethods:AddButton(lbl, cb)
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            local btn = New("TextButton", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 13,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            btn.MouseButton1Click:Connect(function()
+                if cb then cb() end
+            end)
+        end
+
+        -- ========== TOGGLE ==========
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -730,6 +722,7 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
+        -- ========== SLIDER ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -848,6 +841,7 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
+        -- ========== DROPDOWN ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -945,6 +939,7 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
+        -- ========== COLOR PICKER ==========
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
@@ -1207,57 +1202,6 @@ function Library:CreateTab(name, iconId)
                         refreshUI()
                     end
                 end
-            end)
-        end
-
-        -- ========== BOTÓN (NUEVO - para Animaciones) ==========
-        function ElementMethods:AddButton(lbl, cb)
-            local row = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 44),
-                BackgroundColor3 = T.panel2,
-                ZIndex = 5,
-                Parent = card
-            })
-            Cor(row, 20)
-            Stk(row, T.border, 1.5)
-
-            local btn = New("TextButton", {
-                Size = UDim2.new(1, -20, 0, 32),
-                Position = UDim2.new(0, 10, 0.5, -16),
-                BackgroundColor3 = Color3.fromRGB(0, 140, 255),
-                Text = lbl,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
-                TextSize = 13,
-                AutoButtonColor = false,
-                ZIndex = 6,
-                Parent = row
-            })
-            Cor(btn, 12)
-
-            local btnGrad = New("UIGradient", {
-                Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 180, 255)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 220, 255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 220))
-                }),
-                Rotation = 90,
-                Parent = btn
-            })
-
-            btn.MouseEnter:Connect(function()
-                Tween(btn, 0.15, { Size = UDim2.new(1, -16, 0, 34) })
-            end)
-            btn.MouseLeave:Connect(function()
-                Tween(btn, 0.15, { Size = UDim2.new(1, -20, 0, 32) })
-            end)
-
-            btn.MouseButton1Click:Connect(function()
-                Tween(btn, 0.08, { Size = UDim2.new(1, -24, 0, 30) })
-                task.delay(0.08, function()
-                    Tween(btn, 0.12, { Size = UDim2.new(1, -20, 0, 32) })
-                end)
-                if cb then cb() end
             end)
         end
 
