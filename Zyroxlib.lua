@@ -9,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES (FÍSICA FLUIDA Y LENTA TIPO YARHM)
+-- 1. MOTOR DE RESORTES
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -17,8 +17,8 @@ Spring.__index = Spring
 function Spring.new(mass, damping, constant, initialPos)
     local self = setmetatable({}, Spring)
     self.m = mass
-    self.d = damping   -- Fricción
-    self.k = constant  -- Rigidez
+    self.d = damping
+    self.k = constant
     self.x = initialPos
     self.v = 0
     self.target = initialPos
@@ -79,15 +79,6 @@ local function Shadow(obj, transparency, expand)
         ZIndex = 0,
         Parent = obj
     })
-end
-
-local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
-    extraPad = extraPad or 12
-    local function update()
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + extraPad)
-    end
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
-    update()
 end
 
 function Library:CreateWindow(hubTitle)
@@ -595,15 +586,11 @@ function Library:CreateWindow(hubTitle)
     makeSmoothDrag(titleBar, self.WinMain, self.WinScale, closeWin)
 
     function self:SetScale(scaleValue)
-        if self.WinScale then
-            self.WinScale.Scale = scaleValue
-        end
+        if self.WinScale then self.WinScale.Scale = scaleValue end
     end
 
     function self:SetLogoVisible(visible)
-        if self.FloatIcon then
-            self.FloatIcon.Visible = visible
-        end
+        if self.FloatIcon then self.FloatIcon.Visible = visible end
     end
 
     function self:SetLogoLocked(locked)
@@ -1422,3 +1409,5 @@ function Library:CreateTab(name, iconId)
 
     return TabMethods
 end
+
+return Library
