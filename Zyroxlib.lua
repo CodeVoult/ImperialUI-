@@ -992,37 +992,7 @@ function Library:CreateTab(name, iconId)
             end)
         end
         
-        -- ========== BUTTON ==========
-function ElementMethods:AddButton(lbl, cb)
-    local row = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = T.panel2,
-        ZIndex = 5,
-        Parent = card
-    })
-    Cor(row, 20)
-    Stk(row, T.border, 1.5)
-
-    local btn = New("TextButton", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundTransparency = 1,
-        Text = lbl,
-        TextColor3 = Color3.fromRGB(240, 245, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 13,
-        ZIndex = 6,
-        Parent = row
-    })
-
-    btn.MouseButton1Click:Connect(function()
-        Tween(row, 0.1, { BackgroundColor3 = T.border })
-        task.delay(0.1, function()
-            Tween(row, 0.2, { BackgroundColor3 = T.panel2 })
-        end)
-        cb()
-    end)
-end
-
+        
 
         -- ========== SLIDER (sin cambios) ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
