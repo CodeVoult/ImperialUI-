@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (v2.0 Ultra Enhanced) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (v2.1 Refined) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -22,10 +22,10 @@ local T = {
     text = Color3.fromRGB(255, 255, 255),
     red = Color3.fromRGB(255, 60, 60),
     green = Color3.fromRGB(50, 255, 100),
-    sep = Color3.fromRGB(20, 35, 60),
+    sep = Color3.fromRGB(0, 166, 255),
     switchOff = Color3.fromRGB(25, 38, 64),
     bgTrans = 0.05,
-    tabSize = 200,
+    tabSize = 190,
 }
 
 local function New(cls, props)
@@ -114,7 +114,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 0.35,
         Text = "Open Menu",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Gotham,
         TextSize = 14,
         AutoButtonColor = false,
         ZIndex = 999999990,
@@ -153,6 +153,7 @@ function Library:CreateWindow(hubTitle)
 
     local targetMenuWidth, targetMenuHeight = 620, 360
 
+    -- Interfaz Principal con Esquinas Super Redondas (30px)
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -165,7 +166,7 @@ function Library:CreateWindow(hubTitle)
         ClipsDescendants = true,
         Parent = self.GUI
     })
-    Cor(self.WinMain, 24)
+    Cor(self.WinMain, 30)
 
     New("UIGradient", {
         Name = "MainBackgroundGradient",
@@ -188,7 +189,7 @@ function Library:CreateWindow(hubTitle)
         ClipsDescendants = true,
         Parent = self.WinMain
     })
-    Cor(winInner, 24)
+    Cor(winInner, 30)
 
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
@@ -221,43 +222,57 @@ function Library:CreateWindow(hubTitle)
         Parent = winInner
     })
 
+    -- Titulo con Fuente Normal y Color Blanco
     New("TextLabel", {
         Size = UDim2.new(1, -24, 1, 0),
-        Position = UDim2.new(0, 16, 0, 0),
+        Position = UDim2.new(0, 20, 0, 0),
         BackgroundTransparency = 1,
         RichText = true,
-        Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
+        Text = hubTitle or 'Zyrox Hub VIP <font color="#00A6FF">v1.2</font>',
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Gotham,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 7,
         Parent = titleBar
     })
 
+    -- Sidebar de Tabs (Scroll Invisible)
     self.Sidebar = New("ScrollingFrame", {
-        Position = UDim2.new(0, 6, 0, 50),
-        Size = UDim2.new(0, T.tabSize - 30, 1, -60),
+        Position = UDim2.new(0, 12, 0, 52),
+        Size = UDim2.new(0, T.tabSize - 20, 1, -64),
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
+        ScrollBarImageTransparency = 1,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         ZIndex = 3,
         Parent = winInner
     })
-    local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
-    Pad(self.Sidebar, 4, 8, 2, 6)
+    local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 10)
+    Pad(self.Sidebar, 4, 8, 4, 4)
     BindAutoCanvas(self.Sidebar, sidebarList, 16)
 
+    -- Línea Separadora Gruesa Azul entre Tabs y Páginas
+    local dividerLine = New("Frame", {
+        Position = UDim2.new(0, T.tabSize, 0, 52),
+        Size = UDim2.new(0, 3, 1, -64),
+        BackgroundColor3 = Color3.fromRGB(0, 166, 255),
+        BorderSizePixel = 0,
+        ZIndex = 4,
+        Parent = winInner
+    })
+    Cor(dividerLine, 2)
+
     self.ContentArea = New("Frame", {
-        Position = UDim2.new(0, T.tabSize - 20, 0, 50),
-        Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
+        Position = UDim2.new(0, T.tabSize + 12, 0, 52),
+        Size = UDim2.new(1, -T.tabSize - 24, 1, -64),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = 0.45,
         ClipsDescendants = true,
         ZIndex = 3,
         Parent = winInner
     })
-    Cor(self.ContentArea, 16)
+    Cor(self.ContentArea, 20)
     Stk(self.ContentArea, Color3.fromRGB(255, 255, 255), 1)
 
     New("UIGradient", {
@@ -275,14 +290,15 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
+    -- Transición de Apertura Más Lenta (1.1s)
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
-        Tween(floatScale, 0.4, { Scale = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(lightStroke, 0.3, { Transparency = 1 })
-        Tween(innerShine, 0.3, { BackgroundTransparency = 1 })
+        Tween(floatScale, 0.5, { Scale = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(lightStroke, 0.4, { Transparency = 1 })
+        Tween(innerShine, 0.4, { BackgroundTransparency = 1 })
 
-        task.delay(0.25, function()
+        task.delay(0.3, function()
             self.FloatIcon.Visible = false
             local startX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
             local startY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
@@ -294,14 +310,14 @@ function Library:CreateWindow(hubTitle)
             self.WinMain.Visible = true
             self.WinScale.Scale = 0.01
 
-            Tween(self.WinMain, 0.7, {
+            Tween(self.WinMain, 1.1, {
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
                 BackgroundTransparency = T.bgTrans
             }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            Tween(borderStroke, 0.5, { Transparency = 0.2 })
-            Tween(self.WinScale, 0.7, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            Tween(borderStroke, 0.8, { Transparency = 0.2 })
+            Tween(self.WinScale, 1.1, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end)
     end
 
@@ -311,10 +327,10 @@ function Library:CreateWindow(hubTitle)
         local targetX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
         local targetY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
-        Tween(borderStroke, 0.4, { Transparency = 1 })
-        Tween(self.WinScale, 0.6, { Scale = 0.01 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+        Tween(borderStroke, 0.5, { Transparency = 1 })
+        Tween(self.WinScale, 0.8, { Scale = 0.01 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-        local collapse = Tween(self.WinMain, 0.6, {
+        local collapse = Tween(self.WinMain, 0.8, {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0, targetX, 0, targetY),
             BackgroundTransparency = 1
@@ -326,9 +342,9 @@ function Library:CreateWindow(hubTitle)
                 self.FloatIcon.Visible = true
                 floatScale.Scale = 0
                 Tween(floatScale, 0.5, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                Tween(lightStroke, 0.3, { Transparency = 0 })
-                Tween(self.FloatIcon, 0.3, { BackgroundTransparency = 0.35 })
-                Tween(innerShine, 0.3, { BackgroundTransparency = 0.9 })
+                Tween(lightStroke, 0.4, { Transparency = 0 })
+                Tween(self.FloatIcon, 0.4, { BackgroundTransparency = 0.35 })
+                Tween(innerShine, 0.4, { BackgroundTransparency = 0.9 })
             end
         end)
     end
@@ -467,7 +483,7 @@ function Library:Notify(feature, state)
         BackgroundTransparency = 1,
         Text = titleTxt,
         TextColor3 = accent,
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
@@ -481,7 +497,7 @@ function Library:Notify(feature, state)
         BackgroundTransparency = 1,
         Text = feature,
         TextColor3 = T.text,
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.Gotham,
         TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
@@ -534,11 +550,11 @@ function Library:Notify(feature, state)
 end
 
 -- =======================================================
--- CREACIÓN DE TABS CON ANIMACIÓN DE DESPLAZAMIENTO DERECHA
+-- CREACIÓN DE TABS CON CONTORNO REDONDO Y FADE DESVANECIDO
 -- =======================================================
 function Library:CreateTab(name, iconId)
     local tabContainer = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 42),
+        Size = UDim2.new(1, 0, 0, 38),
         BackgroundTransparency = 1,
         ZIndex = 4,
         Parent = self.Sidebar
@@ -548,19 +564,20 @@ function Library:CreateTab(name, iconId)
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(0, 166, 255),
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0.9, -- Transparencia suave de base
         Text = "",
         AutoButtonColor = false,
         ZIndex = 4,
         Parent = tabContainer
     })
-    Cor(tabBtn, 12)
-    local tabStroke = Stk(tabBtn, T.border, 1.5)
-    tabStroke.Transparency = 1
+    Cor(tabBtn, 20) -- Super Redondo (Pill Shape)
+    
+    local tabStroke = Stk(tabBtn, Color3.fromRGB(0, 166, 255), 1.2)
+    tabStroke.Transparency = 0.5 -- Contorno permanente y redondeado
 
     local icon = New("ImageLabel", {
-        Size = UDim2.new(0, 22, 0, 22),
-        Position = UDim2.new(0, 12, 0.5, -11),
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 12, 0.5, -10),
         BackgroundTransparency = 1,
         Image = iconId or "",
         ImageColor3 = Color3.fromRGB(150, 175, 205),
@@ -569,13 +586,13 @@ function Library:CreateTab(name, iconId)
     })
 
     local txt = New("TextLabel", {
-        Size = UDim2.new(1, -46, 1, 0),
-        Position = UDim2.new(0, 42, 0, 0),
+        Size = UDim2.new(1, -44, 1, 0),
+        Position = UDim2.new(0, 40, 0, 0),
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = Color3.fromRGB(150, 175, 205),
-        Font = Enum.Font.GothamMedium,
-        TextSize = 14,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
@@ -590,28 +607,28 @@ function Library:CreateTab(name, iconId)
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Parent = self.ContentArea
     })
-    Cor(page, 8)
+    Cor(page, 12)
     local pageList = List(page, Enum.FillDirection.Vertical, 8)
     Pad(page, 10, 10, 10, 10)
     BindAutoCanvas(page, pageList, 20)
 
-    -- Selección y Animación a la Derecha (+8px)
+    -- Selección con Efecto Desvanecido (Fade) y Contorno Manteniéndose
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
-            Tween(t.btn, 0.3, { Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1 }, Enum.EasingStyle.Quart)
-            Tween(t.txt, 0.3, { TextColor3 = Color3.fromRGB(150, 175, 205) })
-            Tween(t.icon, 0.3, { ImageColor3 = Color3.fromRGB(150, 175, 205) })
-            Tween(t.stroke, 0.3, { Transparency = 1 })
+            Tween(t.btn, 0.4, { BackgroundTransparency = 0.9 }, Enum.EasingStyle.Quart)
+            Tween(t.txt, 0.4, { TextColor3 = Color3.fromRGB(150, 175, 205) })
+            Tween(t.icon, 0.4, { ImageColor3 = Color3.fromRGB(150, 175, 205) })
+            Tween(t.stroke, 0.4, { Transparency = 0.6, Color = Color3.fromRGB(0, 166, 255) })
         end
         for _, p in pairs(self.Pages) do
             p.Visible = false
         end
 
-        -- Mover suavemente hacia la derecha (+8px)
-        Tween(tabBtn, 0.35, { Position = UDim2.new(0, 8, 0, 0), BackgroundTransparency = 0.8 }, Enum.EasingStyle.Back)
-        Tween(txt, 0.3, { TextColor3 = Color3.fromRGB(255, 255, 255) })
-        Tween(icon, 0.3, { ImageColor3 = Color3.fromRGB(0, 180, 255) })
-        Tween(tabStroke, 0.3, { Transparency = 0 })
+        -- Transición Suave Desvanecida (FadeIn)
+        Tween(tabBtn, 0.4, { BackgroundTransparency = 0.72 }, Enum.EasingStyle.Quart)
+        Tween(txt, 0.4, { TextColor3 = Color3.fromRGB(255, 255, 255) })
+        Tween(icon, 0.4, { ImageColor3 = Color3.fromRGB(0, 200, 255) })
+        Tween(tabStroke, 0.4, { Transparency = 0, Color = Color3.fromRGB(0, 200, 255) })
 
         page.Visible = true
         self.ActivePage = page
@@ -620,11 +637,11 @@ function Library:CreateTab(name, iconId)
     if not self.ActivePage then
         self.ActivePage = page
         page.Visible = true
-        tabBtn.Position = UDim2.new(0, 8, 0, 0)
-        tabBtn.BackgroundTransparency = 0.8
+        tabBtn.BackgroundTransparency = 0.72
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-        icon.ImageColor3 = Color3.fromRGB(0, 180, 255)
+        icon.ImageColor3 = Color3.fromRGB(0, 200, 255)
         tabStroke.Transparency = 0
+        tabStroke.Color = Color3.fromRGB(0, 200, 255)
     end
 
     table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
@@ -646,10 +663,10 @@ function Library:CreateTab(name, iconId)
             Size = UDim2.new(1, -4, 0, 22),
             Position = UDim2.new(0, 4, 0, 0),
             BackgroundTransparency = 1,
-            Text = title:upper(),
-            TextColor3 = Color3.fromRGB(0, 166, 255),
-            Font = Enum.Font.GothamBold,
-            TextSize = 12,
+            Text = title,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Font = Enum.Font.Gotham,
+            TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 6,
             Parent = container
@@ -666,9 +683,6 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- =======================================================
-        -- TOGGLES CON REBOTE ELÁSTICO
-        -- =======================================================
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -686,7 +700,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamMedium,
+                Font = Enum.Font.Gotham,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 6,
@@ -727,7 +741,6 @@ function Library:CreateTab(name, iconId)
                 cb(def)
                 self.Library:Notify(lbl, def)
 
-                -- Animación de Rebote Elástico hacia la Derecha
                 if def then
                     Tween(knob, 0.5, { 
                         Position = UDim2.new(1, -23, 0.5, 0),
@@ -765,7 +778,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 13,
                 ZIndex = 6,
                 Parent = row
@@ -784,9 +797,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- =======================================================
-        -- SLIDERS ESTILO IOS / CONTROL CENTER (Barra Ancha Redondeada)
-        -- =======================================================
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 48),
@@ -798,7 +808,6 @@ function Library:CreateTab(name, iconId)
             Cor(row, 14)
             Stk(row, T.border, 1)
 
-            -- Contenedor principal estilo barra gruesa
             local sliderContainer = New("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -811,7 +820,6 @@ function Library:CreateTab(name, iconId)
             Cor(sliderContainer, 17)
             Stk(sliderContainer, Color3.fromRGB(40, 60, 90), 1)
 
-            -- Barra de relleno estilo iOS
             local fill = New("Frame", {
                 Size = UDim2.new((def - mn) / (mx - mn), 0, 1, 0),
                 BackgroundColor3 = Color3.fromRGB(0, 166, 255),
@@ -828,21 +836,19 @@ function Library:CreateTab(name, iconId)
                 Parent = fill
             })
 
-            -- Etiqueta de texto superpuesta
             local titleLabel = New("TextLabel", {
                 Position = UDim2.new(0, 16, 0, 0),
                 Size = UDim2.new(0.6, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 8,
                 Parent = sliderContainer
             })
 
-            -- Indicador de valor editable
             local valInput = New("TextBox", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -12, 0.5, 0),
@@ -850,7 +856,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = tostring(def),
                 TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Right,
                 ClearTextOnFocus = false,
@@ -907,9 +913,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- =======================================================
-        -- BUILDSELECTOR / DROPDOWN MEJORADO V2
-        -- =======================================================
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -938,7 +941,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamMedium,
+                Font = Enum.Font.Gotham,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 6,
@@ -952,7 +955,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundColor3 = Color3.fromRGB(15, 24, 42),
                 Text = options[defaultIdx] .. "  ▼",
                 TextColor3 = Color3.fromRGB(0, 180, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 11,
                 ZIndex = 6,
                 Parent = header
@@ -980,7 +983,7 @@ function Library:CreateTab(name, iconId)
                     BackgroundColor3 = isSelected and Color3.fromRGB(0, 120, 215) or Color3.fromRGB(14, 22, 38),
                     Text = opt,
                     TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(170, 190, 220),
-                    Font = Enum.Font.GothamMedium,
+                    Font = Enum.Font.Gotham,
                     TextSize = 11,
                     ZIndex = 7,
                     Parent = optionsHolder
@@ -1026,7 +1029,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamMedium,
+                Font = Enum.Font.Gotham,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 6,
@@ -1097,7 +1100,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 16,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 102,
@@ -1185,7 +1188,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundColor3 = Color3.fromRGB(14, 25, 45),
                 Text = "Cancel",
                 TextColor3 = Color3.fromRGB(220, 230, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 14,
                 ZIndex = 102,
                 Parent = modalFrame
@@ -1199,7 +1202,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundColor3 = Color3.fromRGB(24, 100, 230),
                 Text = "Apply",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 14,
                 ZIndex = 102,
                 Parent = modalFrame
