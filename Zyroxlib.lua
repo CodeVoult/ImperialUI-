@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.1 Fix) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.2 Enhanced Visuals) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -13,17 +13,18 @@ if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
 end
 
 local T = {
-    bg = Color3.fromRGB(14, 38, 70),
-    panel = Color3.fromRGB(4, 20, 38),
-    panel2 = Color3.fromRGB(6, 26, 48),
+    bg = Color3.fromRGB(15, 23, 42),       -- Azul oscuro profundo estilo slate/navy
+    bgGradient = Color3.fromRGB(8, 12, 22), -- Azul casi negro para la esquina oscura
+    panel = Color3.fromRGB(18, 28, 48),
+    panel2 = Color3.fromRGB(12, 20, 36),
     border = Color3.fromRGB(0, 166, 255),
     acc = Color3.fromRGB(0, 166, 255),
     text = Color3.fromRGB(255, 255, 255),
     red = Color3.fromRGB(255, 60, 60),
     green = Color3.fromRGB(50, 255, 100),
-    sep = Color3.fromRGB(10, 35, 60),
-    switchOff = Color3.fromRGB(10, 30, 50),
-    bgTrans = 0.1,
+    sep = Color3.fromRGB(20, 35, 60),
+    switchOff = Color3.fromRGB(15, 28, 48),
+    bgTrans = 0.05,
     tabSize = 200,
 }
 
@@ -37,7 +38,13 @@ local function Cor(obj, r) New("UICorner", { CornerRadius = UDim.new(0, r or 8),
 local function Stk(obj, col, th) return New("UIStroke", { Color = col or T.border, Thickness = th or 1.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = obj }) end
 local function List(obj, dir, pad) return New("UIListLayout", { FillDirection = dir or Enum.FillDirection.Vertical, Padding = UDim.new(0, pad or 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = obj }) end
 local function Pad(obj, t, b, l, r) New("UIPadding", { PaddingTop = UDim.new(0, t or 0), PaddingBottom = UDim.new(0, b or 0), PaddingLeft = UDim.new(0, l or 0), PaddingRight = UDim.new(0, r or 0), Parent = obj }) end
-local function Tween(obj, t, props, style, dir) local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props) anim:Play() return anim end
+
+-- Función de animación optimizada con curvas más suaves
+local function Tween(obj, t, props, style, dir) 
+    local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quart, dir or Enum.EasingDirection.Out), props) 
+    anim:Play() 
+    return anim 
+end
 
 local function Shadow(obj, transparency, expand)
     return New("ImageLabel", {
@@ -147,34 +154,50 @@ function Library:CreateWindow(hubTitle)
 
     local targetMenuWidth, targetMenuHeight = 620, 360
 
+    -- =======================================================
+    -- VENTANA PRINCIPAL CON EFECTO DEGRADADO EN EL FONDO
+    -- =======================================================
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
-        BackgroundColor3 = T.bg,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255), -- Fondo blanco base para el UIGradient
         BackgroundTransparency = T.bgTrans,
         Visible = false,
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Parent = self.GUI
     })
-    Cor(self.WinMain, 32)
+    Cor(self.WinMain, 24)
+
+    -- Degradado estilo fondo de la imagen 2 (Azul claro arriba a azul marino profundo abajo)
+    local mainBgGradient = New("UIGradient", {
+        Name = "MainBackgroundGradient",
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 38, 68)),   -- Esquina superior más azulada
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 23, 42)), -- Centro slate/navy
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 12, 24))     -- Esquina inferior oscura
+        }),
+        Rotation = 135, -- Ángulo en diagonal idéntico al fondo de la imagen
+        Parent = self.WinMain
+    })
+
+    Shadow(self.WinMain, 0.45, 36)
 
     self.WinScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
 
     local winInner = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = T.bg,
-        BackgroundTransparency = T.bgTrans,
+        BackgroundTransparency = 1, -- Dejamos transparente para apreciar el degradado de WinMain
         ClipsDescendants = true,
         Parent = self.WinMain
     })
-    Cor(winInner, 32)
+    Cor(winInner, 24)
 
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
-        Thickness = 3.2,
+        Thickness = 2,
         Color = Color3.fromRGB(255, 255, 255),
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = self.WinMain
@@ -205,7 +228,7 @@ function Library:CreateWindow(hubTitle)
 
     New("TextLabel", {
         Size = UDim2.new(1, -24, 1, 0),
-        Position = UDim2.new(0, 12, 0, 0),
+        Position = UDim2.new(0, 16, 0, 0),
         BackgroundTransparency = 1,
         RichText = true,
         Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
@@ -230,17 +253,28 @@ function Library:CreateWindow(hubTitle)
     Pad(self.Sidebar, 4, 8, 2, 6)
     BindAutoCanvas(self.Sidebar, sidebarList, 16)
 
+    -- Panel contenedor con translúcido para que combine con el degradado de fondo
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
         Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
         BackgroundColor3 = T.panel,
-        BackgroundTransparency = T.bgTrans,
+        BackgroundTransparency = 0.45, -- Ligera transparencia para absorber el degradado
         ClipsDescendants = true,
         ZIndex = 3,
         Parent = winInner
     })
     Cor(self.ContentArea, 16)
-    Stk(self.ContentArea, T.border, 1.5)
+    Stk(self.ContentArea, Color3.fromRGB(255, 255, 255), 1)
+
+    New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 180, 220))
+        }),
+        Transparency = NumberSequence.new(0.2, 0.5),
+        Rotation = 90,
+        Parent = self.ContentArea
+    })
 
     self.Tabs = {}
     self.Pages = {}
@@ -250,11 +284,11 @@ function Library:CreateWindow(hubTitle)
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
-        Tween(floatScale, 0.45, { Scale = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-        Tween(lightStroke, 0.35, { Transparency = 1 })
-        Tween(innerShine, 0.35, { BackgroundTransparency = 1 })
+        Tween(floatScale, 0.4, { Scale = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(lightStroke, 0.3, { Transparency = 1 })
+        Tween(innerShine, 0.3, { BackgroundTransparency = 1 })
 
-        task.delay(0.3, function()
+        task.delay(0.25, function()
             self.FloatIcon.Visible = false
             local startX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
             local startY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
@@ -266,14 +300,14 @@ function Library:CreateWindow(hubTitle)
             self.WinMain.Visible = true
             self.WinScale.Scale = 0.01
 
-            Tween(self.WinMain, 0.9, {
+            Tween(self.WinMain, 0.7, {
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
                 BackgroundTransparency = T.bgTrans
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            Tween(borderStroke, 0.6, { Transparency = 0.2 })
-            Tween(self.WinScale, 0.9, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            Tween(borderStroke, 0.5, { Transparency = 0.2 })
+            Tween(self.WinScale, 0.7, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end)
     end
 
@@ -283,24 +317,24 @@ function Library:CreateWindow(hubTitle)
         local targetX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
         local targetY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
-        Tween(borderStroke, 0.5, { Transparency = 1 })
-        Tween(self.WinScale, 0.85, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        Tween(borderStroke, 0.4, { Transparency = 1 })
+        Tween(self.WinScale, 0.6, { Scale = 0.01 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-        local collapse = Tween(self.WinMain, 0.85, {
+        local collapse = Tween(self.WinMain, 0.6, {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0, targetX, 0, targetY),
             BackgroundTransparency = 1
-        }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
         collapse.Completed:Connect(function()
             if not self.winOpen then
                 self.WinMain.Visible = false
                 self.FloatIcon.Visible = true
                 floatScale.Scale = 0
-                Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                Tween(lightStroke, 0.35, { Transparency = 0 })
-                Tween(self.FloatIcon, 0.35, { BackgroundTransparency = 0.35 })
-                Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
+                Tween(floatScale, 0.5, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                Tween(lightStroke, 0.3, { Transparency = 0 })
+                Tween(self.FloatIcon, 0.3, { BackgroundTransparency = 0.35 })
+                Tween(innerShine, 0.3, { BackgroundTransparency = 0.9 })
             end
         end)
     end
@@ -314,7 +348,7 @@ function Library:CreateWindow(hubTitle)
         local dragStart, startPos
         local targetX, targetY, currentX, currentY = 0, 0, 0, 0
         local lerpConnection = nil
-        local suavizado = 0.15
+        local suavizado = 0.18
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
@@ -521,14 +555,14 @@ function Library:CreateTab(name, iconId)
     })
     Cor(tabBtn, 21)
     local tabStroke = Stk(tabBtn, T.border, 1.5)
-    tabStroke.Transparency = 0
+    tabStroke.Transparency = 1
 
     local icon = New("ImageLabel", {
         Size = UDim2.new(0, 24, 0, 24),
         Position = UDim2.new(0, 12, 0.5, -12),
         BackgroundTransparency = 1,
         Image = iconId or "",
-        ImageColor3 = Color3.fromRGB(255, 255, 255),
+        ImageColor3 = Color3.fromRGB(180, 200, 220),
         ZIndex = 5,
         Parent = tabBtn
     })
@@ -540,7 +574,7 @@ function Library:CreateTab(name, iconId)
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 16,
+        TextSize = 15,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
@@ -549,7 +583,7 @@ function Library:CreateTab(name, iconId)
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = T.panel,
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 1,
         Visible = false,
         ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -560,18 +594,23 @@ function Library:CreateTab(name, iconId)
     Pad(page, 8, 8, 8, 8)
     BindAutoCanvas(page, pageList, 20)
 
+    -- Transición fluida al seleccionar Tab
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
-            Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
-            t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
-            t.stroke.Transparency = 0
+            Tween(t.btn, 0.25, { BackgroundTransparency = 1 })
+            Tween(t.txt, 0.25, { TextColor3 = Color3.fromRGB(180, 200, 220) })
+            Tween(t.icon, 0.25, { ImageColor3 = Color3.fromRGB(180, 200, 220) })
+            Tween(t.stroke, 0.25, { Transparency = 1 })
         end
         for _, p in pairs(self.Pages) do
             p.Visible = false
         end
-        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
-        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-        tabStroke.Transparency = 0
+
+        Tween(tabBtn, 0.25, { BackgroundTransparency = 0.85 })
+        Tween(txt, 0.25, { TextColor3 = Color3.fromRGB(255, 255, 255) })
+        Tween(icon, 0.25, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        Tween(tabStroke, 0.25, { Transparency = 0 })
+
         page.Visible = true
         self.ActivePage = page
     end)
@@ -581,6 +620,8 @@ function Library:CreateTab(name, iconId)
         page.Visible = true
         tabBtn.BackgroundTransparency = 0.85
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+        icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        tabStroke.Transparency = 0
     end
 
     table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
@@ -605,7 +646,7 @@ function Library:CreateTab(name, iconId)
             Text = title,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             Font = Enum.Font.GothamMedium,
-            TextSize = 18,
+            TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 6,
             Parent = container
@@ -626,11 +667,12 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
+                BackgroundTransparency = 0.2,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            Stk(row, T.border, 1.2)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 14, 0, 0),
@@ -649,12 +691,12 @@ function Library:CreateTab(name, iconId)
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.new(0, 50, 0, 26),
-                BackgroundColor3 = T.switchOff,
+                BackgroundColor3 = def and T.acc or T.switchOff,
                 ZIndex = 6,
                 Parent = row
             })
             Cor(switchBg, 13)
-            Stk(switchBg, T.border, 1.5)
+            Stk(switchBg, T.border, 1.2)
 
             local knob = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
@@ -678,7 +720,8 @@ function Library:CreateTab(name, iconId)
                 def = not def
                 cb(def)
                 self.Library:Notify(lbl, def)
-                Tween(knob, 0.3, { Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) })
+                Tween(knob, 0.35, { Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) }, Enum.EasingStyle.Back)
+                Tween(switchBg, 0.3, { BackgroundColor3 = def and T.acc or T.switchOff })
             end)
         end
 
@@ -686,11 +729,12 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
+                BackgroundTransparency = 0.2,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            local rowStroke = Stk(row, T.border, 1.2)
 
             local btn = New("TextButton", {
                 Size = UDim2.fromScale(1, 1),
@@ -703,11 +747,15 @@ function Library:CreateTab(name, iconId)
                 Parent = row
             })
 
+            btn.MouseButton1Down:Connect(function()
+                Tween(row, 0.15, { BackgroundColor3 = T.border })
+            end)
+
+            btn.MouseButton1Up:Connect(function()
+                Tween(row, 0.25, { BackgroundColor3 = T.panel2 })
+            end)
+
             btn.MouseButton1Click:Connect(function()
-                Tween(row, 0.1, { BackgroundColor3 = T.border })
-                task.delay(0.1, function()
-                    Tween(row, 0.2, { BackgroundColor3 = T.panel2 })
-                end)
                 cb()
             end)
         end
@@ -716,6 +764,7 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
                 BackgroundColor3 = T.panel2,
+                BackgroundTransparency = 0.2,
                 ZIndex = 5,
                 Parent = card
             })
@@ -759,7 +808,7 @@ function Library:CreateTab(name, iconId)
             })
             Cor(track, 3)
 
-            local trackStroke = Stk(track, Color3.fromRGB(255, 255, 255), 1.6)
+            local trackStroke = Stk(track, Color3.fromRGB(255, 255, 255), 1.2)
             New("UIGradient", {
                 Color = ColorSequence.new({
                     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
@@ -837,12 +886,13 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
+                BackgroundTransparency = 0.2,
                 ClipsDescendants = true,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            Stk(row, T.border, 1.2)
 
             local header = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -877,7 +927,7 @@ function Library:CreateTab(name, iconId)
                 Parent = header
             })
             Cor(selectBtn, 13)
-            Stk(selectBtn, T.border, 1.5)
+            Stk(selectBtn, T.border, 1.2)
 
             local optionsHolder = New("ScrollingFrame", {
                 Position = UDim2.new(0, 10, 0, 44),
@@ -913,7 +963,7 @@ function Library:CreateTab(name, iconId)
                     cb(opt)
                     dropdownOpen = false
                     selectBtn.Text = options[currIdx] .. " ▼"
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                    Tween(row, 0.35, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Quart)
                 end)
             end
 
@@ -923,7 +973,7 @@ function Library:CreateTab(name, iconId)
                 local holderHeight = math.min(contentHeight, 110)
                 optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
                 selectBtn.Text = options[currIdx] .. (dropdownOpen and " ▲" or " ▼")
-                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) })
+                Tween(row, 0.35, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) }, Enum.EasingStyle.Quart)
             end)
         end
 
@@ -934,11 +984,12 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
+                BackgroundTransparency = 0.2,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            Stk(row, T.border, 1.2)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 14, 0, 0),
@@ -980,7 +1031,7 @@ function Library:CreateTab(name, iconId)
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.new(0, 340, 0, 280),
-                BackgroundColor3 = Color3.fromRGB(8, 14, 26),
+                BackgroundColor3 = Color3.fromRGB(15, 23, 42),
                 ZIndex = 101,
                 Parent = modalOverlay
             })
@@ -1199,4 +1250,3 @@ function Library:CreateTab(name, iconId)
 end
 
 return Library
-
