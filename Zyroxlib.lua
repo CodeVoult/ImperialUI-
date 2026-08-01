@@ -1,8 +1,5 @@
 -- [[
--- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.6)
--- Versión limpia + optimizada + sin errores
--- ============================================================
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.7 - Clean)
 -- ]]
 
 local Players          = game:GetService("Players")
@@ -13,19 +10,16 @@ local UserInputService = game:GetService("UserInputService")
 local Library = {}
 Library.__index = Library
 
--- Limpiar instancias previas
 pcall(function()
     local old = game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM")
     if old then old:Destroy() end
 end)
 
--- ====================== TEMA ======================
 local T = {
     bg        = Color3.fromRGB(14, 38, 70),
     panel     = Color3.fromRGB(4, 20, 38),
     panel2    = Color3.fromRGB(6, 26, 48),
     border    = Color3.fromRGB(0, 166, 255),
-    acc       = Color3.fromRGB(0, 166, 255),
     text      = Color3.fromRGB(255, 255, 255),
     red       = Color3.fromRGB(255, 60, 60),
     green     = Color3.fromRGB(50, 255, 100),
@@ -35,14 +29,9 @@ local T = {
     tabSize   = 200,
 }
 
--- ====================== HELPERS ======================
 local function New(cls, props)
     local o = Instance.new(cls)
-    if props then
-        for k, v in pairs(props) do
-            o[k] = v
-        end
-    end
+    if props then for k, v in pairs(props) do o[k] = v end end
     return o
 end
 
@@ -79,8 +68,7 @@ local function Pad(obj, t, b, l, r)
 end
 
 local function Tween(obj, t, props, style, dir)
-    local info = TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out)
-    local anim = TweenService:Create(obj, info, props)
+    local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
     anim:Play()
     return anim
 end
@@ -102,7 +90,6 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
--- ====================== CREAR VENTANA ======================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
 
@@ -114,7 +101,6 @@ function Library:CreateWindow(hubTitle)
         Parent = (gethui and gethui() or game:GetService("CoreGui"))
     })
 
-    -- Sonido click
     local clickSound = Instance.new("Sound")
     clickSound.SoundId = "rbxassetid://4590657391"
     clickSound.Volume = 0.4
@@ -128,7 +114,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Notificaciones
     self.NotifLayer = New("Frame", {
         Name = "Notifs",
         AnchorPoint = Vector2.new(1, 1),
@@ -141,7 +126,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- ========== BOTÓN FLOTANTE ==========
+    -- Float Button
     local floatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -190,7 +175,7 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(innerShine, 21)
 
-    -- ========== VENTANA PRINCIPAL ==========
+    -- Main Window
     local targetMenuWidth, targetMenuHeight = 620, 380
 
     self.WinMain = New("Frame", {
@@ -238,7 +223,7 @@ function Library:CreateWindow(hubTitle)
         Parent = borderStroke
     })
 
-    -- ========== TÍTULO ==========
+    -- Title
     local titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 52),
         BackgroundTransparency = 1,
@@ -270,7 +255,7 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    -- ========== SIDEBAR ==========
+    -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 8, 0, 56),
         Size = UDim2.new(0, T.tabSize - 28, 1, -68),
@@ -286,7 +271,7 @@ function Library:CreateWindow(hubTitle)
     List(self.Sidebar, Enum.FillDirection.Vertical, 5)
     Pad(self.Sidebar, 4, 10, 2, 4)
 
-    -- ========== CONTENT AREA ==========
+    -- Content
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 14, 0, 56),
         Size = UDim2.new(1, -T.tabSize + 6, 1, -64),
@@ -304,7 +289,6 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ========== APERTURA / CIERRE ==========
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
@@ -369,7 +353,7 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ========== ARRASTRE ==========
+    -- Drag
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -456,7 +440,6 @@ function Library:CreateWindow(hubTitle)
     return self
 end
 
--- ====================== NOTIFICACIÓN ======================
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
@@ -556,7 +539,6 @@ function Library:Notify(feature, state)
     end)
 end
 
--- ====================== CREAR TAB ======================
 function Library:CreateTab(name, iconId)
     local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 40),
@@ -649,7 +631,6 @@ function Library:CreateTab(name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
-    -- ====================== SECCIÓN ======================
     function TabMethods:CreateSection(title)
         local container = New("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
@@ -684,7 +665,6 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- ========== TOGGLE ==========
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 38),
@@ -747,7 +727,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== SLIDER ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -862,7 +841,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== DROPDOWN ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx or 1
             local dropdownOpen = false
@@ -960,7 +938,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== COLOR PICKER ==========
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(0, 166, 255)
             local tempColor = savedColor
@@ -1203,5 +1180,7 @@ function Library:CreateTab(name, iconId)
 
     return TabMethods
 end
+
+
 
 return Library
