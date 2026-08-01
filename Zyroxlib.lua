@@ -272,11 +272,24 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
+    -- Grupo que contiene TODO el contenido interno (barra, tabs, páginas).
+    -- Permite desvanecerlo como una sola unidad y coordinarlo con la expansión.
+    local contentGroup = New("CanvasGroup", {
+        Name = "ContentGroup",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        GroupTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = 4,
+        Parent = winInner
+    })
+    self.ContentGroup = contentGroup
+
     local titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         ZIndex = 5,
-        Parent = winInner
+        Parent = contentGroup
     })
 
     New("TextLabel", {
@@ -298,13 +311,14 @@ function Library:CreateWindow(hubTitle)
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ZIndex = 3,
-        Parent = winInner
+        Parent = contentGroup
     })
     local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
-    Pad(self.Sidebar, 4, 8, 2, 6)
-    BindAutoCanvas(self.Sidebar, sidebarList, 16)
+    Pad(self.Sidebar, 4, 12, 2, 6)
 
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
@@ -313,7 +327,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = T.bgTrans,
         ClipsDescendants = true,
         ZIndex = 3,
-        Parent = winInner
+        Parent = contentGroup
     })
     Cor(self.ContentArea, 16)
 
@@ -375,25 +389,48 @@ function Library:CreateWindow(hubTitle)
         return centerX / parentSize.X, centerY / parentSize.Y
     end
 
+    -- Centro actual de la ventana en escala (respeta la posición tras arrastrarla)
+    local function getWinScalePos()
+        local parentSize = self.GUI.AbsoluteSize
+        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.5 end
+        local absPos = self.WinMain.AbsolutePosition
+        local absSize = self.WinMain.AbsoluteSize
+        return (absPos.X + absSize.X / 2) / parentSize.X, (absPos.Y + absSize.Y / 2) / parentSize.Y
+    end
+
+    -- Estados que evitan que el motor de resortes pelee con el arrastre
+    self.transitioning = false
+    self.dragging = false
+
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
+        self.transitioning = true
 
         local fx, fy = getFloatScalePos()
-        springX.x, springX.target = fx, 0.5
-        springY.x, springY.target = fy, 0.5
-        springW.x, springW.target = 140, targetMenuWidth
-        springH.x, springH.target = 42, targetMenuHeight
-        springCorner.x, springCorner.target = 21, 32
+        springX.x, springX.v, springX.target = fx, 0, 0.5
+        springY.x, springY.v, springY.target = fy, 0, 0.5
+        springW.x, springW.v, springW.target = 140, 0, targetMenuWidth
+        springH.x, springH.v, springH.target = 42, 0, targetMenuHeight
+        springCorner.x, springCorner.v, springCorner.target = 21, 0, 32
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
+        self.WinMain.BackgroundTransparency = T.bgTrans
+        contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
     end
 
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
+        self.transitioning = true
+        self.dragging = false
+
+        -- Arranca los resortes desde la posición REAL (por si fue arrastrada)
+        local cx, cy = getWinScalePos()
+        springX.x, springX.v = cx, 0
+        springY.x, springY.v = cy, 0
 
         local fx, fy = getFloatScalePos()
         springX.target = fx
@@ -406,25 +443,52 @@ function Library:CreateWindow(hubTitle)
     RunService.RenderStepped:Connect(function(dt)
         if not self.WinMain then return end
 
-        local currX = springX:Update(dt)
-        local currY = springY:Update(dt)
         local currW = springW:Update(dt)
         local currH = springH:Update(dt)
         local currR = springCorner:Update(dt)
 
-        self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
+        -- El tamaño y el radio SIEMPRE los maneja el resorte (no chocan con el arrastre)
         self.WinMain.Size = UDim2.fromOffset(currW, currH)
         if winCorner then
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        local rot = math.clamp(springX.v * 1.2, -4, 4)
-        self.WinMain.Rotation = rot
+        -- El contenido aparece SOLO en el último tramo de la expansión (nada amontonado)
+        local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
+        local cp = math.clamp((p - 0.55) / 0.45, 0, 1)
+        cp = cp * cp * (3 - 2 * cp) -- suavizado (smoothstep)
+        contentGroup.GroupTransparency = 1 - cp
 
+        if self.transitioning then
+            -- Durante la transición el resorte controla posición y rotación
+            local currX = springX:Update(dt)
+            local currY = springY:Update(dt)
+            self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
+            self.WinMain.Rotation = math.clamp(springX.v * 1.2, -4, 4)
+
+            -- Fin de la apertura: soltamos el control para permitir arrastre
+            if self.winOpen
+                and math.abs(currW - targetMenuWidth) < 1.5
+                and math.abs(currH - targetMenuHeight) < 1.5
+                and math.abs(springW.v) < 2 then
+                self.transitioning = false
+                self.WinMain.Rotation = 0
+            end
+        else
+            -- En reposo mantenemos los resortes sincronizados pero SIN tocar la posición
+            springX:Update(dt)
+            springY:Update(dt)
+        end
+
+        -- Fin del cierre: la ventana ya es un botón azul -> aparece "Open Menu"
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
-            if not self.winOpen and self.WinMain.Visible then
+            if self.WinMain.Visible then
                 self.WinMain.Visible = false
+                self.WinMain.Rotation = 0
+                self.transitioning = false
                 self.FloatIcon.Visible = true
+                floatScale.Scale = 0.5
+                Tween(floatScale, 0.6, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
             end
         end
     end)
@@ -443,7 +507,9 @@ function Library:CreateWindow(hubTitle)
 
         handle.InputBegan:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if self.transitioning then return end -- no arrastrar mientras abre/cierra
             dragging = true
+            self.dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
             startPos = target.Position
@@ -481,6 +547,7 @@ function Library:CreateWindow(hubTitle)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
+                self.dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
                 local duration = tick() - inputBeganTime
                 if duration < 0.25 and clickCallback then clickCallback() end
@@ -696,13 +763,14 @@ function Library:CreateTab(name, iconId)
         BackgroundTransparency = 1,
         Visible = false,
         ScrollBarThickness = 0,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Parent = self.ContentArea
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
-    Pad(page, 8, 8, 8, 8)
-    BindAutoCanvas(page, pageList, 20)
+    Pad(page, 8, 16, 8, 8)
 
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
