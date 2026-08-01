@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("TU_LINK?v=" .. math.random(1,999999)))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua?v=" .. math.random(1,999999)))()
 
 local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>')
 
