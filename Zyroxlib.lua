@@ -1,3 +1,4 @@
+
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
@@ -296,30 +297,33 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    self.Sidebar = New("ScrollingFrame", {
-        Position = UDim2.new(0, 6, 0, 50),
-        Size = UDim2.new(0, T.tabSize - 30, 1, -60),
+        self.Sidebar = New("ScrollingFrame", {
+        Position = UDim2.new(0, 8, 0, 50),
+        Size = UDim2.new(0, T.tabSize - 20, 1, -58),
         BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ClipsDescendants = true, -- Evita que los elementos se salgan
         ScrollBarThickness = 0,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ZIndex = 3,
+        ZIndex = 5,
         Parent = contentGroup
     })
     local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
     self.ContentArea = New("Frame", {
-        Position = UDim2.new(0, T.tabSize - 20, 0, 50),
-        Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
+        Position = UDim2.new(0, T.tabSize, 0, 50),
+        Size = UDim2.new(1, -T.tabSize - 10, 1, -58),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = T.bgTrans,
-        ClipsDescendants = true,
-        ZIndex = 3,
+        ClipsDescendants = true, -- Evita desbordamiento de páginas
+        ZIndex = 5,
         Parent = contentGroup
     })
     Cor(self.ContentArea, 16)
+
 
     New("UIGradient", {
         Color = ColorSequence.new({
@@ -387,7 +391,7 @@ function Library:CreateWindow(hubTitle)
     self.transitioning = false
     self.dragging = false
 
-    local function openWin()
+        local function openWin()
         if self.winOpen then return end
         self.winOpen = true
         self.transitioning = true
@@ -406,7 +410,24 @@ function Library:CreateWindow(hubTitle)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
+
+        -- ANIMACIÓN EN CASCADA DE LAS TABS --
+        task.spawn(function()
+            task.wait(0.2) -- Espera breve a que abra la ventana
+            for idx, tabData in ipairs(self.Tabs) do
+                tabData.btn.GroupTransparency = 1
+                tabData.btn.Position = UDim2.new(-0.2, 0, 0, (idx - 1) * 48)
+                
+                Tween(tabData.btn, 0.35, { 
+                    GroupTransparency = 0, 
+                    Position = UDim2.new(0, 0, 0, (idx - 1) * 48) 
+                }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                
+                task.wait(0.05) -- Tiempo entre cada pestaña (rápido pero fluido)
+            end
+        end)
     end
+
 
     local function closeWin()
         if not self.winOpen then return end
@@ -440,16 +461,6 @@ function Library:CreateWindow(hubTitle)
         if winCorner then
             winCorner.CornerRadius = UDim.new(0, currR)
         end
-
-        local tabW = math.min(T.tabSize - 30, math.max(0, currW - 40))
-        local availH = math.max(0, currH - 60)
-        local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
-
-        self.Sidebar.Size = UDim2.fromOffset(tabW, availH)
-        self.Sidebar.Position = UDim2.fromOffset(6, 50)
-
-        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
-        self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
 
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
@@ -701,24 +712,25 @@ function Library:Notify(feature, state)
 end
 
 function Library:CreateTab(name, iconId)
-    local tabBtn = New("TextButton", {
+    local tabBtn = New("CanvasGroup", {
         Size = UDim2.new(1, 0, 0, 42),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 1,
-        Text = "",
-        AutoButtonColor = false,
+        GroupTransparency = 0,
+        BorderSizePixel = 0,
         ZIndex = 4,
         Parent = self.Sidebar
     })
     Cor(tabBtn, 21)
-    local tabStroke = New("UIStroke", {
-        Thickness = 1.6,
-        Color = Color3.fromRGB(255, 255, 255),
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+
+    local clickBtn = New("TextButton", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 10,
         Parent = tabBtn
     })
     tabStroke.Transparency = 0
-
+    
     local tabGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
