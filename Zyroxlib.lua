@@ -1,7 +1,6 @@
 -- [[
 --     ============================================================
 --       ZyroxHub UI Library | iOS Premium VIP Edition (v1.3)
---       Solo interfaz - mismo look & feel del script grande
 --     ============================================================
 -- ]]
 
@@ -21,7 +20,7 @@ if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
 end
 
 -- ============================================================
---   TEMA (idéntico al script grande)
+--   TEMA
 -- ============================================================
 local T = {
     bg        = Color3.fromRGB(14, 38, 70),
@@ -108,11 +107,13 @@ end
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
 
+    local targetParent = (gethui and gethui()) or game:GetService("CoreGui") or LP:WaitForChild("PlayerGui")
+
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
         ResetOnSpawn = false,
         DisplayOrder = 999999999,
-        Parent = (gethui and gethui() or game:GetService("CoreGui"))
+        Parent = targetParent
     })
 
     -- Sonido de click
@@ -140,9 +141,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- ============================================================
-    --   BOTÓN FLOTANTE "Open Menu"
-    -- ============================================================
+    -- Botón Flotante
     local floatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -191,9 +190,7 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(innerShine, 21)
 
-    -- ============================================================
-    --   VENTANA PRINCIPAL
-    -- ============================================================
+    -- Ventana Principal
     local targetMenuWidth, targetMenuHeight = 620, 360
 
     self.WinMain = New("Frame", {
@@ -221,7 +218,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
-    -- Borde animado
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
@@ -248,7 +244,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Título
     local titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
@@ -270,7 +265,6 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -283,7 +277,6 @@ function Library:CreateWindow(hubTitle)
     List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 8, 2, 6)
 
-    -- Content Area
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
         Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
@@ -301,9 +294,6 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ============================================================
-    --   SISTEMA DE APERTURA / CIERRE
-    -- ============================================================
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
@@ -368,9 +358,6 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ============================================================
-    --   ARRASTRE SUAVE
-    -- ============================================================
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -380,9 +367,7 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
-            if target:GetAttribute("AnimateClose") == true then return end
-
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -419,20 +404,17 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
-
-                local duration = tick() - inputBeganTime
-                if duration < 0.25 and clickCallback then
+                if (tick() - inputBeganTime) < 0.25 and clickCallback then
                     clickCallback()
                 end
             end
         end)
     end
 
-    -- Arrastre del botón flotante
     local function makeDraggable(obj, target)
         local dragStart, startPos, dragging
         obj.InputBegan:Connect(function(i)
@@ -944,6 +926,50 @@ function Library:CreateTab(name)
                 Tween(row, 0.3, {
                     Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40)
                 })
+            end)
+        end
+
+        -- ColorPicker (NUEVO / AGREGADO)
+        function ElementMethods:AddColorPicker(lbl, defColor, cb)
+            local currentColor = defColor or Color3.fromRGB(255, 255, 255)
+
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(1, -70, 1, 0),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            local colorPreview = New("TextButton", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -10, 0.5, 0),
+                Size = UDim2.new(0, 44, 0, 22),
+                BackgroundColor3 = currentColor,
+                Text = "",
+                ZIndex = 6,
+                Parent = row
+            })
+            Cor(colorPreview, 11)
+            Stk(colorPreview, Color3.fromRGB(255, 255, 255), 1.2)
+
+            colorPreview.MouseButton1Click:Connect(function()
+                -- Ejemplo de ciclado rápido o toggle de paleta
+                cb(currentColor)
             end)
         end
 
