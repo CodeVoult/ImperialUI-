@@ -272,7 +272,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Grupo que contiene TODO el contenido interno
     local contentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
         Size = UDim2.new(1, 0, 1, 0),
@@ -367,9 +366,6 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ================================================================= --
-    -- CONFIGURACIÓN DE LOS RESORTES
-    -- ================================================================= --
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
@@ -416,7 +412,6 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
         
-        -- Ocultar contenido al inicio de la animación
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -428,7 +423,6 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- Ocultamos INMEDIATAMENTE el contenido para evitar que se amontone
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
@@ -456,10 +450,6 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        -- ============================================================
-        -- FIX CRÍTICO: Clamping dinámico + revelado tardío de contenido
-        -- Evita que las tabs se salgan mientras la ventana está creciendo
-        -- ============================================================
         local tabW = math.min(T.tabSize - 30, math.max(0, currW - 40))
         local availH = math.max(0, currH - 60)
         local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
@@ -470,13 +460,12 @@ function Library:CreateWindow(hubTitle)
         self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
         self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
 
-        -- Lógica de visibilidad del contenido (mucho más tardía y segura)
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
             if p > 0.88 and currH > 180 then
                 contentGroup.Visible = true
                 local cp = math.clamp((p - 0.88) / 0.12, 0, 1)
-                cp = cp * cp * (3 - 2 * cp) -- smoothstep
+                cp = cp * cp * (3 - 2 * cp)
                 contentGroup.GroupTransparency = 1 - cp
             else
                 contentGroup.Visible = false
@@ -1433,5 +1422,25 @@ function Library:CreateTab(name, iconId)
 
     return TabMethods
 end
+
+-- ================================================================= --
+-- EJEMPLO DE INICIALIZACIÓN (AQUÍ ES DONDE SE EJECUTA TU INTERFAZ)
+-- ================================================================= --
+local Window = Library:CreateWindow('Zyrox Hub <font color="#00FFCD">VIP</font>')
+
+local Tab1 = Window:CreateTab("Principal", "rbxassetid://6031280882")
+local Section1 = Tab1:CreateSection("Opciones Principales")
+
+Section1:AddToggle("Auto Farm", false, function(state)
+    print("Auto Farm:", state)
+end)
+
+Section1:AddSlider("Velocidad", 16, 200, 50, function(val)
+    print("Nueva velocidad:", val)
+end)
+
+Section1:AddButton("Ejecutar Test", function()
+    Window:Notify("Script ejecutado correctamente", true)
+end)
 
 return Library
