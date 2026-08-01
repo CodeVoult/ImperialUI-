@@ -165,12 +165,67 @@ function Library:CreateWindow(hubTitle)
 
     local winInner = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = T.bg,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = T.bgTrans,
         ClipsDescendants = true,
         Parent = self.WinMain
     })
     Cor(winInner, 32)
+
+    -- Fondo degradado premium: azul claro (arriba-izquierda) -> azul oscuro (esquina abajo-derecha)
+    local bgGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
+            ColorSequenceKeypoint.new(0.45, Color3.fromRGB(16, 66, 132)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 38))
+        }),
+        Rotation = 45,
+        Parent = winInner
+    })
+
+    -- Animación sutil de "respiración" del degradado para un acabado premium
+    task.spawn(function()
+        local t = 0
+        while bgGradient and bgGradient.Parent do
+            t = t + 0.02
+            bgGradient.Rotation = 45 + math.sin(t) * 4
+            bgGradient.Offset = Vector2.new(math.sin(t * 0.6) * 0.04, math.cos(t * 0.6) * 0.04)
+            task.wait(0.03)
+        end
+    end)
+
+    -- Brillo diagonal tenue que recorre el fondo (efecto vidrio/premium)
+    local sheen = New("Frame", {
+        Name = "Sheen",
+        Size = UDim2.new(2, 0, 2, 0),
+        Position = UDim2.new(-0.5, 0, -0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(120, 190, 255),
+        BackgroundTransparency = 0.92,
+        BorderSizePixel = 0,
+        ZIndex = 1,
+        Parent = winInner
+    })
+    local sheenGradient = New("UIGradient", {
+        Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.42, 1),
+            NumberSequenceKeypoint.new(0.5, 0.35),
+            NumberSequenceKeypoint.new(0.58, 1),
+            NumberSequenceKeypoint.new(1, 1)
+        }),
+        Rotation = 45,
+        Offset = Vector2.new(-1, -1),
+        Parent = sheen
+    })
+
+    -- Barrido de luz que cruza el panel cada pocos segundos
+    task.spawn(function()
+        while sheenGradient and sheenGradient.Parent do
+            sheenGradient.Offset = Vector2.new(-1, -1)
+            Tween(sheenGradient, 2.2, { Offset = Vector2.new(1, 1) }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+            task.wait(4.5)
+        end
+    end)
 
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
@@ -240,7 +295,39 @@ function Library:CreateWindow(hubTitle)
         Parent = winInner
     })
     Cor(self.ContentArea, 16)
-    Stk(self.ContentArea, T.border, 1.5)
+
+    -- Fondo degradado sutil a juego con la ventana
+    New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 44, 84)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 34))
+        }),
+        Rotation = 45,
+        Parent = self.ContentArea
+    })
+
+    -- Mismo contorno con degradado animado que el botón "Open Menu"
+    local contentStroke = New("UIStroke", {
+        Thickness = 1.8,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = self.ContentArea
+    })
+    local contentGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = contentStroke
+    })
+    task.spawn(function()
+        while contentGradient and contentGradient.Parent do
+            contentGradient.Rotation = (contentGradient.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
 
     self.Tabs = {}
     self.Pages = {}
