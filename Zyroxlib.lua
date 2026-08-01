@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.1 Fix) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -7,6 +7,31 @@ local UserInputService = game:GetService("UserInputService")
 
 local Library = {}
 Library.__index = Library
+
+-- ================================================================= --
+-- 1. MOTOR DE RESORTES (FÍSICA FLUIDA Y LENTA TIPO YARHM)
+-- ================================================================= --
+local Spring = {}
+Spring.__index = Spring
+
+function Spring.new(mass, damping, constant, initialPos)
+    local self = setmetatable({}, Spring)
+    self.m = mass
+    self.d = damping   -- Fricción
+    self.k = constant  -- Rigidez (constante baja = movimiento más suave y lento)
+    self.x = initialPos
+    self.v = 0
+    self.target = initialPos
+    return self
+end
+
+function Spring:Update(dt)
+    local f = -self.k * (self.x - self.target) - self.d * self.v
+    local a = f / self.m
+    self.v = self.v + a * dt
+    self.x = self.x + self.v * dt
+    return self.x
+end
 
 if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
     game:GetService("CoreGui").DDOS_VENOM:Destroy()
@@ -33,7 +58,7 @@ local function New(cls, props)
     return o
 end
 
-local function Cor(obj, r) New("UICorner", { CornerRadius = UDim.new(0, r or 8), Parent = obj }) end
+local function Cor(obj, r) return New("UICorner", { CornerRadius = UDim.new(0, r or 8), Parent = obj }) end
 local function Stk(obj, col, th) return New("UIStroke", { Color = col or T.border, Thickness = th or 1.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = obj }) end
 local function List(obj, dir, pad) return New("UIListLayout", { FillDirection = dir or Enum.FillDirection.Vertical, Padding = UDim.new(0, pad or 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = obj }) end
 local function Pad(obj, t, b, l, r) New("UIPadding", { PaddingTop = UDim.new(0, t or 0), PaddingBottom = UDim.new(0, b or 0), PaddingLeft = UDim.new(0, l or 0), PaddingRight = UDim.new(0, r or 0), Parent = obj }) end
@@ -150,8 +175,8 @@ function Library:CreateWindow(hubTitle)
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+        Position = UDim2.new(0.5, 0, 0.15, 0),
+        Size = UDim2.new(0, 140, 0, 42),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
         Visible = false,
@@ -159,7 +184,7 @@ function Library:CreateWindow(hubTitle)
         ClipsDescendants = true,
         Parent = self.GUI
     })
-    Cor(self.WinMain, 32)
+    local winCorner = Cor(self.WinMain, 21)
 
     self.WinScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
 
@@ -172,7 +197,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
-    -- Fondo degradado premium: azul claro (arriba-izquierda) -> azul oscuro (esquina abajo-derecha)
     local bgGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
@@ -183,7 +207,6 @@ function Library:CreateWindow(hubTitle)
         Parent = winInner
     })
 
-    -- Animación sutil de "respiración" del degradado para un acabado premium
     task.spawn(function()
         local t = 0
         while bgGradient and bgGradient.Parent do
@@ -194,7 +217,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Brillo diagonal tenue que recorre el fondo (efecto vidrio/premium)
     local sheen = New("Frame", {
         Name = "Sheen",
         Size = UDim2.new(2, 0, 2, 0),
@@ -218,7 +240,6 @@ function Library:CreateWindow(hubTitle)
         Parent = sheen
     })
 
-    -- Barrido de luz que cruza el panel cada pocos segundos
     task.spawn(function()
         while sheenGradient and sheenGradient.Parent do
             sheenGradient.Offset = Vector2.new(-1, -1)
@@ -296,7 +317,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(self.ContentArea, 16)
 
-    -- Fondo degradado sutil a juego con la ventana
     New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 44, 84)),
@@ -306,7 +326,6 @@ function Library:CreateWindow(hubTitle)
         Parent = self.ContentArea
     })
 
-    -- Mismo contorno con degradado animado que el botón "Open Menu"
     local contentStroke = New("UIStroke", {
         Thickness = 1.8,
         Color = Color3.fromRGB(255, 255, 255),
@@ -334,66 +353,81 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
+    -- ================================================================= --
+    -- CONFIGURACIÓN DE LOS RESORTES (ANIMACIÓN FLUIDA, LENTA Y SUAVE)
+    -- ================================================================= --
+    local startX = self.FloatIcon.Position.X.Scale
+    local startY = self.FloatIcon.Position.Y.Scale
+
+    local springX = Spring.new(1, 24, 45, startX)
+    local springY = Spring.new(1, 24, 45, startY)
+    local springW = Spring.new(1, 22, 40, 140)
+    local springH = Spring.new(1, 22, 40, 42)
+    local springCorner = Spring.new(1, 28, 55, 21)
+
+    local function getFloatScalePos()
+        local parentSize = self.GUI.AbsoluteSize
+        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.15 end
+        local absPos = self.FloatIcon.AbsolutePosition
+        local absSize = self.FloatIcon.AbsoluteSize
+        local centerX = absPos.X + (absSize.X / 2)
+        local centerY = absPos.Y + (absSize.Y / 2)
+        return centerX / parentSize.X, centerY / parentSize.Y
+    end
+
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
-        Tween(floatScale, 0.45, { Scale = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-        Tween(lightStroke, 0.35, { Transparency = 1 })
-        Tween(innerShine, 0.35, { BackgroundTransparency = 1 })
 
-        task.delay(0.3, function()
-            self.FloatIcon.Visible = false
-            local startX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
-            local startY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
+        local fx, fy = getFloatScalePos()
+        springX.x, springX.target = fx, 0.5
+        springY.x, springY.target = fy, 0.5
+        springW.x, springW.target = 140, targetMenuWidth
+        springH.x, springH.target = 42, targetMenuHeight
+        springCorner.x, springCorner.target = 21, 32
 
-            self.WinMain.Size = UDim2.new(0, 0, 0, 0)
-            self.WinMain.Position = UDim2.new(0, startX, 0, startY)
-            self.WinMain.BackgroundTransparency = 1
-            borderStroke.Transparency = 1
-            self.WinMain.Visible = true
-            self.WinScale.Scale = 0.01
-
-            -- Movimiento y expansión suave (Back = ligero rebote elástico)
-            Tween(self.WinMain, 1.25, {
-                Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
-                BackgroundTransparency = T.bgTrans
-            }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-
-            Tween(borderStroke, 0.7, { Transparency = 0.2 })
-            -- Escala con rebote elástico lento y suave
-            Tween(self.WinScale, 1.35, { Scale = 1 }, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
-        end)
+        self.FloatIcon.Visible = false
+        self.WinMain.Visible = true
+        borderStroke.Transparency = 0.2
     end
 
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
-        local targetX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
-        local targetY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
-        Tween(borderStroke, 0.6, { Transparency = 1 })
-        -- Pequeño "estiramiento" hacia atrás antes de retraerse (sensación elástica)
-        Tween(self.WinScale, 1.0, { Scale = 0.01 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        local fx, fy = getFloatScalePos()
+        springX.target = fx
+        springY.target = fy
+        springW.target = 140
+        springH.target = 42
+        springCorner.target = 21
+    end
 
-        local collapse = Tween(self.WinMain, 1.0, {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0, targetX, 0, targetY),
-            BackgroundTransparency = 1
-        }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    RunService.RenderStepped:Connect(function(dt)
+        if not self.WinMain then return end
 
-        collapse.Completed:Connect(function()
-            if not self.winOpen then
+        local currX = springX:Update(dt)
+        local currY = springY:Update(dt)
+        local currW = springW:Update(dt)
+        local currH = springH:Update(dt)
+        local currR = springCorner:Update(dt)
+
+        self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
+        self.WinMain.Size = UDim2.fromOffset(currW, currH)
+        if winCorner then
+            winCorner.CornerRadius = UDim.new(0, currR)
+        end
+
+        local rot = math.clamp(springX.v * 1.2, -4, 4)
+        self.WinMain.Rotation = rot
+
+        if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
+            if not self.winOpen and self.WinMain.Visible then
                 self.WinMain.Visible = false
                 self.FloatIcon.Visible = true
-                floatScale.Scale = 0
-                Tween(floatScale, 0.7, { Scale = 1 }, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
-                Tween(lightStroke, 0.35, { Transparency = 0 })
-                Tween(self.FloatIcon, 0.35, { BackgroundTransparency = 0.35 })
-                Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
             end
-        end)
-    end
+        end
+    end)
 
     self.FloatIcon.MouseButton1Click:Connect(function()
         if not self.winOpen then openWin() end
@@ -618,7 +652,6 @@ function Library:CreateTab(name, iconId)
     })
     tabStroke.Transparency = 0
 
-    -- Mismo degradado animado que el botón "Open Menu"
     local tabGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
