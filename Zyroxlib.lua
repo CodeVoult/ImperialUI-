@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Bug Fixes & Physics Alignment) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -81,15 +81,6 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
-local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
-    extraPad = extraPad or 12
-    local function update()
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + extraPad)
-    end
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
-    update()
-end
-
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
@@ -128,7 +119,7 @@ function Library:CreateWindow(hubTitle)
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Size = UDim2.new(0, 140, 0, 42),
-        Position = UDim2.new(0.5, 0, 0, 50),
+        Position = UDim2.new(0.5, 0, 0.1, 0),
         BackgroundColor3 = Color3.fromRGB(10, 14, 23),
         BackgroundTransparency = 0.35,
         Text = "Open Menu",
@@ -136,6 +127,7 @@ function Library:CreateWindow(hubTitle)
         Font = Enum.Font.GothamBold,
         TextSize = 14,
         AutoButtonColor = false,
+        ClipsDescendants = true,
         ZIndex = 999999990,
         Parent = self.GUI
     })
@@ -175,7 +167,7 @@ function Library:CreateWindow(hubTitle)
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.15, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 140, 0, 42),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
@@ -217,37 +209,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    local sheen = New("Frame", {
-        Name = "Sheen",
-        Size = UDim2.new(2, 0, 2, 0),
-        Position = UDim2.new(-0.5, 0, -0.5, 0),
-        BackgroundColor3 = Color3.fromRGB(120, 190, 255),
-        BackgroundTransparency = 0.92,
-        BorderSizePixel = 0,
-        ZIndex = 1,
-        Parent = winInner
-    })
-    local sheenGradient = New("UIGradient", {
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 1),
-            NumberSequenceKeypoint.new(0.42, 1),
-            NumberSequenceKeypoint.new(0.5, 0.35),
-            NumberSequenceKeypoint.new(0.58, 1),
-            NumberSequenceKeypoint.new(1, 1)
-        }),
-        Rotation = 45,
-        Offset = Vector2.new(-1, -1),
-        Parent = sheen
-    })
-
-    task.spawn(function()
-        while sheenGradient and sheenGradient.Parent do
-            sheenGradient.Offset = Vector2.new(-1, -1)
-            Tween(sheenGradient, 2.2, { Offset = Vector2.new(1, 1) }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-            task.wait(4.5)
-        end
-    end)
-
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
@@ -279,7 +240,8 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
-        Visible = false, -- Inicialmente oculto para evitar colisiones
+        Visible = false,
+        ClipsDescendants = true,
         ZIndex = 4,
         Parent = winInner
     })
@@ -314,10 +276,11 @@ function Library:CreateWindow(hubTitle)
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
         ZIndex = 3,
         Parent = contentGroup
     })
-    local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
+    List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
     self.ContentArea = New("Frame", {
@@ -368,34 +331,24 @@ function Library:CreateWindow(hubTitle)
     self.winOpen = false
 
     -- ================================================================= --
-    -- CONFIGURACIÓN DE LOS RESORTES
+    -- CONFIGURACIÓN DE LOS RESORTES Y POSICIONES
     -- ================================================================= --
-    local startX = self.FloatIcon.Position.X.Scale
-    local startY = self.FloatIcon.Position.Y.Scale
+    local function getObjScalePos(obj)
+        local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+        if vp.X == 0 or vp.Y == 0 then return 0.5, 0.5 end
+        local absPos = obj.AbsolutePosition
+        local absSize = obj.AbsoluteSize
+        local centerX = absPos.X + (absSize.X / 2)
+        local centerY = absPos.Y + (absSize.Y / 2)
+        return math.clamp(centerX / vp.X, 0.05, 0.95), math.clamp(centerY / vp.Y, 0.05, 0.95)
+    end
 
+    local startX, startY = 0.5, 0.1
     local springX = Spring.new(1, 24, 45, startX)
     local springY = Spring.new(1, 24, 45, startY)
     local springW = Spring.new(1, 22, 40, 140)
     local springH = Spring.new(1, 22, 40, 42)
     local springCorner = Spring.new(1, 28, 55, 21)
-
-    local function getFloatScalePos()
-        local parentSize = self.GUI.AbsoluteSize
-        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.15 end
-        local absPos = self.FloatIcon.AbsolutePosition
-        local absSize = self.FloatIcon.AbsoluteSize
-        local centerX = absPos.X + (absSize.X / 2)
-        local centerY = absPos.Y + (absSize.Y / 2)
-        return centerX / parentSize.X, centerY / parentSize.Y
-    end
-
-    local function getWinScalePos()
-        local parentSize = self.GUI.AbsoluteSize
-        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.5 end
-        local absPos = self.WinMain.AbsolutePosition
-        local absSize = self.WinMain.AbsoluteSize
-        return (absPos.X + absSize.X / 2) / parentSize.X, (absPos.Y + absSize.Y / 2) / parentSize.Y
-    end
 
     self.transitioning = false
     self.dragging = false
@@ -405,7 +358,7 @@ function Library:CreateWindow(hubTitle)
         self.winOpen = true
         self.transitioning = true
 
-        local fx, fy = getFloatScalePos()
+        local fx, fy = getObjScalePos(self.FloatIcon)
         springX.x, springX.v, springX.target = fx, 0, 0.5
         springY.x, springY.v, springY.target = fy, 0, 0.5
         springW.x, springW.v, springW.target = 140, 0, targetMenuWidth
@@ -416,7 +369,6 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
         
-        -- Ocultar contenido al inicio de la animación
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -428,15 +380,14 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- Ocultamos INMEDIATAMENTE el contenido para evitar que se amontone
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
-        local cx, cy = getWinScalePos()
+        local cx, cy = getObjScalePos(self.WinMain)
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
 
-        local fx, fy = getFloatScalePos()
+        local fx, fy = getObjScalePos(self.FloatIcon)
         springX.target = fx
         springY.target = fy
         springW.target = 140
@@ -456,13 +407,12 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        -- Lógica de visibilidad del contenido según el estado de apertura
+        -- LÓGICA CORREGIDA: Solo se hace visible el contenido si el ancho es adecuado
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p > 0.6 then
+            if p > 0.85 then -- Solo mostrar cuando la ventana casi completa su expansión
                 contentGroup.Visible = true
-                local cp = math.clamp((p - 0.6) / 0.4, 0, 1)
-                cp = cp * cp * (3 - 2 * cp)
+                local cp = math.clamp((p - 0.85) / 0.15, 0, 1)
                 contentGroup.GroupTransparency = 1 - cp
             else
                 contentGroup.Visible = false
@@ -486,9 +436,11 @@ function Library:CreateWindow(hubTitle)
                 self.transitioning = false
                 self.WinMain.Rotation = 0
             end
-        else
-            springX:Update(dt)
-            springY:Update(dt)
+        elseif self.winOpen and self.dragging then
+            -- Mantiene sincronizados los resortes cuando se arrastra la ventana abierta
+            local cx, cy = getObjScalePos(self.WinMain)
+            springX.x, springX.target = cx, cx
+            springY.x, springY.target = cy, cy
         end
 
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
@@ -507,12 +459,13 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
+    -- Arrastre suave para la ventana flotante y la barra del título
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
         local targetX, targetY, currentX, currentY = 0, 0, 0, 0
         local lerpConnection = nil
-        local suavizado = 0.15
+        local suavizado = 0.2
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
@@ -523,6 +476,8 @@ function Library:CreateWindow(hubTitle)
             inputBeganTime = tick()
             dragStart = input.Position
             startPos = target.Position
+
+            local vp = workspace.CurrentCamera.ViewportSize
             currentX = target.AbsolutePosition.X + (target.AbsoluteSize.X * target.AnchorPoint.X)
             currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
             targetX, targetY = currentX, currentY
@@ -531,10 +486,14 @@ function Library:CreateWindow(hubTitle)
 
             if not lerpConnection then
                 lerpConnection = RunService.RenderStepped:Connect(function()
-                    if dragging or math.abs(currentX - targetX) > 0.1 or math.abs(currentY - targetY) > 0.1 then
+                    if dragging or math.abs(currentX - targetX) > 0.5 or math.abs(currentY - targetY) > 0.5 then
                         currentX = currentX + (targetX - currentX) * suavizado
                         currentY = currentY + (targetY - currentY) * suavizado
-                        target.Position = UDim2.new(0, math.round(currentX), 0, math.round(currentY))
+                        
+                        -- Actualizar posición en Scale unificado
+                        local sX = currentX / vp.X
+                        local sY = currentY / vp.Y
+                        target.Position = UDim2.new(sX, 0, sY, 0)
                     else
                         lerpConnection:Disconnect()
                         lerpConnection = nil
@@ -546,8 +505,9 @@ function Library:CreateWindow(hubTitle)
         UserInputService.InputChanged:Connect(function(input)
             if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 local delta = input.Position - dragStart
-                local originX = (target.Parent.AbsoluteSize.X * startPos.X.Scale) + startPos.X.Offset
-                local originY = (target.Parent.AbsoluteSize.Y * startPos.Y.Scale) + startPos.Y.Offset
+                local vp = workspace.CurrentCamera.ViewportSize
+                local originX = (vp.X * startPos.X.Scale) + startPos.X.Offset
+                local originY = (vp.Y * startPos.Y.Scale) + startPos.Y.Offset
                 targetX = originX + delta.X
                 targetY = originY + delta.Y
             end
@@ -560,35 +520,14 @@ function Library:CreateWindow(hubTitle)
                 self.dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
                 local duration = tick() - inputBeganTime
-                if duration < 0.25 and clickCallback then clickCallback() end
+                if duration < 0.2 and clickCallback then clickCallback() end
             end
         end)
     end
 
-    local function makeDraggable(obj, target)
-        local dragStart, startPos, dragging
-        obj.InputBegan:Connect(function(i)
-            if self.LogoLocked then return end
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = i.Position
-                startPos = target.Position
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(i)
-            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                local del = i.Position - dragStart
-                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
-            end
-        end)
-        UserInputService.InputEnded:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
-        end)
-    end
-
-    makeDraggable(self.FloatIcon, self.FloatIcon)
+    makeSmoothDrag(self.FloatIcon, self.FloatIcon, floatScale, function()
+        if not self.winOpen then openWin() end
+    end)
     makeSmoothDrag(titleBar, self.WinMain, self.WinScale, closeWin)
 
     function self:SetScale(scaleValue)
@@ -776,6 +715,7 @@ function Library:CreateTab(name, iconId)
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
         Parent = self.ContentArea
     })
     Cor(page, 8)
