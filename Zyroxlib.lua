@@ -391,7 +391,7 @@ function Library:CreateWindow(hubTitle)
     self.transitioning = false
     self.dragging = false
 
-        local function openWin()
+    local function openWin()
         if self.winOpen then return end
         self.winOpen = true
         self.transitioning = true
@@ -410,24 +410,7 @@ function Library:CreateWindow(hubTitle)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
-
-        -- ANIMACIÓN EN CASCADA DE LAS TABS --
-        task.spawn(function()
-            task.wait(0.2) -- Espera breve a que abra la ventana
-            for idx, tabData in ipairs(self.Tabs) do
-                tabData.btn.GroupTransparency = 1
-                tabData.btn.Position = UDim2.new(-0.2, 0, 0, (idx - 1) * 48)
-                
-                Tween(tabData.btn, 0.35, { 
-                    GroupTransparency = 0, 
-                    Position = UDim2.new(0, 0, 0, (idx - 1) * 48) 
-                }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                
-                task.wait(0.05) -- Tiempo entre cada pestaña (rápido pero fluido)
-            end
-        end)
     end
-
 
     local function closeWin()
         if not self.winOpen then return end
@@ -712,25 +695,24 @@ function Library:Notify(feature, state)
 end
 
 function Library:CreateTab(name, iconId)
-    local tabBtn = New("CanvasGroup", {
+    local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 1,
-        GroupTransparency = 0,
-        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
         ZIndex = 4,
         Parent = self.Sidebar
     })
     Cor(tabBtn, 21)
-
-    local clickBtn = New("TextButton", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundTransparency = 1,
-        Text = "",
-        ZIndex = 10,
+    local tabStroke = New("UIStroke", {
+        Thickness = 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = tabBtn
     })
     tabStroke.Transparency = 0
-    
+
     local tabGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
