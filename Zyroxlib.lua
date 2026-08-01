@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Clean Fixed Engine) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES (FÍSICA FLUIDA)
+-- 1. MOTOR DE RESORTES (FÍSICA FLUIDA Y LENTA TIPO YARHM)
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -79,6 +79,15 @@ local function Shadow(obj, transparency, expand)
         ZIndex = 0,
         Parent = obj
     })
+end
+
+local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
+    extraPad = extraPad or 12
+    local function update()
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + extraPad)
+    end
+    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
+    update()
 end
 
 function Library:CreateWindow(hubTitle)
@@ -166,7 +175,7 @@ function Library:CreateWindow(hubTitle)
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Position = UDim2.new(0.5, 0, 0.15, 0),
         Size = UDim2.new(0, 140, 0, 42),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
@@ -263,19 +272,14 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- ================================================================= --
-    -- CONTENEDOR INTERNO FIJO (Sin deformación)
-    -- ================================================================= --
+    -- Grupo que contiene TODO el contenido interno
     local contentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+        Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
         Visible = false,
-        ClipsDescendants = true,
         ZIndex = 4,
         Parent = winInner
     })
@@ -289,8 +293,8 @@ function Library:CreateWindow(hubTitle)
     })
 
     New("TextLabel", {
-        Size = UDim2.new(1, -60, 1, 0),
-        Position = UDim2.new(0, 14, 0, 0),
+        Size = UDim2.new(1, -24, 1, 0),
+        Position = UDim2.new(0, 12, 0, 0),
         BackgroundTransparency = 1,
         RichText = true,
         Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
@@ -302,22 +306,6 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    -- Botón para cerrar la interfaz en la barra superior
-    local closeBtn = New("TextButton", {
-        AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -12, 0.5, 0),
-        Size = UDim2.new(0, 28, 0, 28),
-        BackgroundColor3 = Color3.fromRGB(255, 50, 50),
-        BackgroundTransparency = 0.2,
-        Text = "✕",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        ZIndex = 8,
-        Parent = titleBar
-    })
-    Cor(closeBtn, 14)
-
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -326,10 +314,10 @@ function Library:CreateWindow(hubTitle)
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ZIndex = 5,
+        ZIndex = 3,
         Parent = contentGroup
     })
-    List(self.Sidebar, Enum.FillDirection.Vertical, 6)
+    local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
     self.ContentArea = New("Frame", {
@@ -338,7 +326,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundColor3 = T.panel,
         BackgroundTransparency = T.bgTrans,
         ClipsDescendants = true,
-        ZIndex = 5,
+        ZIndex = 3,
         Parent = contentGroup
     })
     Cor(self.ContentArea, 16)
@@ -380,7 +368,7 @@ function Library:CreateWindow(hubTitle)
     self.winOpen = false
 
     -- ================================================================= --
-    -- RESORTES DE TRANSICIÓN DE APERTURA / CIERRE
+    -- CONFIGURACIÓN DE LOS RESORTES
     -- ================================================================= --
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
@@ -401,7 +389,16 @@ function Library:CreateWindow(hubTitle)
         return centerX / parentSize.X, centerY / parentSize.Y
     end
 
+    local function getWinScalePos()
+        local parentSize = self.GUI.AbsoluteSize
+        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.5 end
+        local absPos = self.WinMain.AbsolutePosition
+        local absSize = self.WinMain.AbsoluteSize
+        return (absPos.X + absSize.X / 2) / parentSize.X, (absPos.Y + absSize.Y / 2) / parentSize.Y
+    end
+
     self.transitioning = false
+    self.dragging = false
 
     local function openWin()
         if self.winOpen then return end
@@ -419,7 +416,8 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
         
-        contentGroup.Visible = true
+        -- Ocultar contenido al inicio de la animación
+        contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
     end
@@ -428,12 +426,15 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then return end
         self.winOpen = false
         self.transitioning = true
+        self.dragging = false
 
+        -- Ocultamos INMEDIATAMENTE el contenido para evitar que se amontone
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
-        springX.x, springX.v = 0.5, 0
-        springY.x, springY.v = 0.5, 0
+        local cx, cy = getWinScalePos()
+        springX.x, springX.v = cx, 0
+        springY.x, springY.v = cy, 0
 
         local fx, fy = getFloatScalePos()
         springX.target = fx
@@ -455,22 +456,59 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
+        -- ============================================================
+        -- FIX CRÍTICO: Clamping dinámico + revelado tardío de contenido
+        -- Evita que las tabs se salgan mientras la ventana está creciendo
+        -- ============================================================
+        local tabW = math.min(T.tabSize - 30, math.max(0, currW - 40))
+        local availH = math.max(0, currH - 60)
+        local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
+
+        self.Sidebar.Size = UDim2.fromOffset(tabW, availH)
+        self.Sidebar.Position = UDim2.fromOffset(6, 50)
+
+        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
+        self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
+
+        -- Lógica de visibilidad del contenido (mucho más tardía y segura)
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            contentGroup.Visible = true
-            contentGroup.GroupTransparency = 1 - (p * p * (3 - 2 * p))
+            if p > 0.88 and currH > 180 then
+                contentGroup.Visible = true
+                local cp = math.clamp((p - 0.88) / 0.12, 0, 1)
+                cp = cp * cp * (3 - 2 * cp) -- smoothstep
+                contentGroup.GroupTransparency = 1 - cp
+            else
+                contentGroup.Visible = false
+                contentGroup.GroupTransparency = 1
+            end
         else
             contentGroup.Visible = false
             contentGroup.GroupTransparency = 1
         end
 
-        local currX = springX:Update(dt)
-        local currY = springY:Update(dt)
-        self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
+        if self.transitioning then
+            local currX = springX:Update(dt)
+            local currY = springY:Update(dt)
+            self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
+            self.WinMain.Rotation = math.clamp(springX.v * 1.2, -4, 4)
+
+            if self.winOpen
+                and math.abs(currW - targetMenuWidth) < 1.5
+                and math.abs(currH - targetMenuHeight) < 1.5
+                and math.abs(springW.v) < 2 then
+                self.transitioning = false
+                self.WinMain.Rotation = 0
+            end
+        else
+            springX:Update(dt)
+            springY:Update(dt)
+        end
 
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
             if self.WinMain.Visible then
                 self.WinMain.Visible = false
+                self.WinMain.Rotation = 0
                 self.transitioning = false
                 self.FloatIcon.Visible = true
                 floatScale.Scale = 0.5
@@ -483,25 +521,78 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    closeBtn.MouseButton1Click:Connect(function()
-        if self.winOpen then closeWin() end
-    end)
+    local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
+        local dragging = false
+        local dragStart, startPos
+        local targetX, targetY, currentX, currentY = 0, 0, 0, 0
+        local lerpConnection = nil
+        local suavizado = 0.15
+        local inputBeganTime = 0
 
-    -- Arrastre seguro EXCLUSIVAMENTE para el botón flotante (FloatIcon)
-    local function makeDraggable(obj)
+        handle.InputBegan:Connect(function(input)
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if self.transitioning then return end
+            dragging = true
+            self.dragging = true
+            inputBeganTime = tick()
+            dragStart = input.Position
+            startPos = target.Position
+            currentX = target.AbsolutePosition.X + (target.AbsoluteSize.X * target.AnchorPoint.X)
+            currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
+            targetX, targetY = currentX, currentY
+
+            if scaleObj then Tween(scaleObj, 0.2, { Scale = 1.01 }) end
+
+            if not lerpConnection then
+                lerpConnection = RunService.RenderStepped:Connect(function()
+                    if dragging or math.abs(currentX - targetX) > 0.1 or math.abs(currentY - targetY) > 0.1 then
+                        currentX = currentX + (targetX - currentX) * suavizado
+                        currentY = currentY + (targetY - currentY) * suavizado
+                        target.Position = UDim2.new(0, math.round(currentX), 0, math.round(currentY))
+                    else
+                        lerpConnection:Disconnect()
+                        lerpConnection = nil
+                    end
+                end)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                local originX = (target.Parent.AbsoluteSize.X * startPos.X.Scale) + startPos.X.Offset
+                local originY = (target.Parent.AbsoluteSize.Y * startPos.Y.Scale) + startPos.Y.Offset
+                targetX = originX + delta.X
+                targetY = originY + delta.Y
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if dragging then
+                dragging = false
+                self.dragging = false
+                if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
+                local duration = tick() - inputBeganTime
+                if duration < 0.25 and clickCallback then clickCallback() end
+            end
+        end)
+    end
+
+    local function makeDraggable(obj, target)
         local dragStart, startPos, dragging
         obj.InputBegan:Connect(function(i)
             if self.LogoLocked then return end
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 dragStart = i.Position
-                startPos = obj.Position
+                startPos = target.Position
             end
         end)
         UserInputService.InputChanged:Connect(function(i)
             if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
                 local del = i.Position - dragStart
-                obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
+                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
             end
         end)
         UserInputService.InputEnded:Connect(function(i)
@@ -511,7 +602,8 @@ function Library:CreateWindow(hubTitle)
         end)
     end
 
-    makeDraggable(self.FloatIcon)
+    makeDraggable(self.FloatIcon, self.FloatIcon)
+    makeSmoothDrag(titleBar, self.WinMain, self.WinScale, closeWin)
 
     function self:SetScale(scaleValue)
         if self.WinScale then
@@ -639,7 +731,7 @@ function Library:CreateTab(name, iconId)
         BackgroundTransparency = 1,
         Text = "",
         AutoButtonColor = false,
-        ZIndex = 6,
+        ZIndex = 4,
         Parent = self.Sidebar
     })
     Cor(tabBtn, 21)
@@ -673,7 +765,7 @@ function Library:CreateTab(name, iconId)
         BackgroundTransparency = 1,
         Image = iconId or "",
         ImageColor3 = Color3.fromRGB(255, 255, 255),
-        ZIndex = 7,
+        ZIndex = 5,
         Parent = tabBtn
     })
 
@@ -686,7 +778,7 @@ function Library:CreateTab(name, iconId)
         Font = Enum.Font.GothamMedium,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 7,
+        ZIndex = 5,
         Parent = tabBtn
     })
 
@@ -701,7 +793,7 @@ function Library:CreateTab(name, iconId)
         Parent = self.ContentArea
     })
     Cor(page, 8)
-    List(page, Enum.FillDirection.Vertical, 6)
+    local pageList = List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 16, 8, 8)
 
     tabBtn.MouseButton1Click:Connect(function()
@@ -737,7 +829,7 @@ function Library:CreateTab(name, iconId)
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            ZIndex = 6,
+            ZIndex = 5,
             Parent = page
         })
         List(container, Enum.FillDirection.Vertical, 8)
@@ -751,7 +843,7 @@ function Library:CreateTab(name, iconId)
             Font = Enum.Font.GothamMedium,
             TextSize = 18,
             TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 7,
+            ZIndex = 6,
             Parent = container
         })
 
@@ -759,7 +851,7 @@ function Library:CreateTab(name, iconId)
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            ZIndex = 6,
+            ZIndex = 5,
             Parent = container
         })
         List(card, Enum.FillDirection.Vertical, 8)
@@ -770,7 +862,7 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
-                ZIndex = 6,
+                ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
@@ -785,7 +877,7 @@ function Library:CreateTab(name, iconId)
                 Font = Enum.Font.GothamMedium,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
 
@@ -794,7 +886,7 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.new(0, 50, 0, 26),
                 BackgroundColor3 = T.switchOff,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
             Cor(switchBg, 13)
@@ -805,7 +897,7 @@ function Library:CreateTab(name, iconId)
                 Size = UDim2.new(0, 20, 0, 20),
                 Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 8,
+                ZIndex = 7,
                 Parent = switchBg
             })
             Cor(knob, 8)
@@ -830,7 +922,7 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
-                ZIndex = 6,
+                ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
@@ -843,7 +935,7 @@ function Library:CreateTab(name, iconId)
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 Font = Enum.Font.GothamBold,
                 TextSize = 13,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
 
@@ -860,7 +952,7 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
                 BackgroundColor3 = T.panel2,
-                ZIndex = 6,
+                ZIndex = 5,
                 Parent = card
             })
             Cor(row, 21)
@@ -890,7 +982,7 @@ function Library:CreateTab(name, iconId)
                 Font = Enum.Font.GothamMedium,
                 TextSize = 11,
                 TextXAlignment = Enum.TextXAlignment.Right,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
 
@@ -898,7 +990,7 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.new(0, 52, 0.5, -2),
                 Size = UDim2.new(1, -200, 0, 6),
                 BackgroundColor3 = Color3.fromRGB(12, 22, 38),
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
             Cor(track, 3)
@@ -917,7 +1009,7 @@ function Library:CreateTab(name, iconId)
             local fill = New("Frame", {
                 BackgroundColor3 = T.border,
                 Size = UDim2.new((def - mn) / (mx - mn), 0, 1, 0),
-                ZIndex = 8,
+                ZIndex = 7,
                 Parent = track
             })
             Cor(fill, 3)
@@ -929,7 +1021,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 9,
+                ZIndex = 8,
                 Parent = track
             })
             Cor(thumb, 7)
@@ -982,7 +1074,7 @@ function Library:CreateTab(name, iconId)
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
                 ClipsDescendants = true,
-                ZIndex = 6,
+                ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
@@ -991,7 +1083,7 @@ function Library:CreateTab(name, iconId)
             local header = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundTransparency = 1,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
 
@@ -1004,7 +1096,7 @@ function Library:CreateTab(name, iconId)
                 Font = Enum.Font.GothamMedium,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = header
             })
 
@@ -1017,7 +1109,7 @@ function Library:CreateTab(name, iconId)
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 Font = Enum.Font.GothamBold,
                 TextSize = 11,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = header
             })
             Cor(selectBtn, 13)
@@ -1029,7 +1121,7 @@ function Library:CreateTab(name, iconId)
                 BackgroundTransparency = 1,
                 CanvasSize = UDim2.new(0, 0, 0, (#options * 32) + 6),
                 ScrollBarThickness = 3,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
             List(optionsHolder, Enum.FillDirection.Vertical, 6)
@@ -1046,7 +1138,7 @@ function Library:CreateTab(name, iconId)
                     TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230),
                     Font = Enum.Font.GothamBold,
                     TextSize = 11,
-                    ZIndex = 8,
+                    ZIndex = 7,
                     Parent = optionsHolder
                 })
                 Cor(optBtn, 13)
@@ -1078,7 +1170,7 @@ function Library:CreateTab(name, iconId)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
-                ZIndex = 6,
+                ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
@@ -1093,7 +1185,7 @@ function Library:CreateTab(name, iconId)
                 Font = Enum.Font.GothamMedium,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
 
@@ -1103,7 +1195,7 @@ function Library:CreateTab(name, iconId)
                 Size = UDim2.new(0, 40, 0, 22),
                 BackgroundColor3 = savedColor,
                 Text = "",
-                ZIndex = 7,
+                ZIndex = 6,
                 Parent = row
             })
             Cor(colorPreview, 11)
