@@ -1,6 +1,7 @@
 -- [[
 --     ============================================================
---       ZyroxHub UI Library | iOS Premium VIP Edition (v1.3)
+--       ZyroxHub UI Library | iOS Premium VIP Edition (v1.4)
+--       Corregida + ColorPicker + Tabs con iconos + Contorno estático
 --     ============================================================
 -- ]]
 
@@ -9,19 +10,13 @@ local TweenService     = game:GetService("TweenService")
 local RunService       = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local LP = Players.LocalPlayer
-
 local Library = {}
 Library.__index = Library
 
--- Destruir ejecuciones previas
 if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
     game:GetService("CoreGui").DDOS_VENOM:Destroy()
 end
 
--- ============================================================
---   TEMA
--- ============================================================
 local T = {
     bg        = Color3.fromRGB(14, 38, 70),
     panel     = Color3.fromRGB(4, 20, 38),
@@ -37,9 +32,6 @@ local T = {
     tabSize   = 200,
 }
 
--- ============================================================
---   HELPERS
--- ============================================================
 local function New(cls, props)
     local o = Instance.new(cls)
     for k, v in pairs(props or {}) do o[k] = v end
@@ -102,21 +94,18 @@ local function Shadow(obj, transparency, expand)
 end
 
 -- ============================================================
---   CREAR VENTANA PRINCIPAL
+--   CREAR VENTANA
 -- ============================================================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
-
-    local targetParent = (gethui and gethui()) or game:GetService("CoreGui") or LP:WaitForChild("PlayerGui")
 
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
         ResetOnSpawn = false,
         DisplayOrder = 999999999,
-        Parent = targetParent
+        Parent = (gethui and gethui() or game:GetService("CoreGui"))
     })
 
-    -- Sonido de click
     local clickSound = Instance.new("Sound")
     clickSound.SoundId = "rbxassetid://4590657391"
     clickSound.Volume = 0.5
@@ -128,7 +117,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Capa de notificaciones
     self.NotifLayer = New("Frame", {
         Name = "Notifs",
         AnchorPoint = Vector2.new(1, 1),
@@ -141,7 +129,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- Botón Flotante
+    -- ========== BOTÓN FLOTANTE ==========
     local floatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -167,8 +155,7 @@ function Library:CreateWindow(hubTitle)
         Parent = floatIcon
     })
 
-    local blueGradient = New("UIGradient", {
-        Name = "BlueGradient",
+    New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0,   Color3.fromRGB(0, 200, 255)),
             ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
@@ -190,7 +177,7 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(innerShine, 21)
 
-    -- Ventana Principal
+    -- ========== VENTANA PRINCIPAL ==========
     local targetMenuWidth, targetMenuHeight = 620, 360
 
     self.WinMain = New("Frame", {
@@ -218,6 +205,7 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
+    -- Contorno ESTÁTICO (sin animación)
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
@@ -226,8 +214,7 @@ function Library:CreateWindow(hubTitle)
         Parent = self.WinMain
     })
 
-    local borderGradient = New("UIGradient", {
-        Name = "BorderGradient",
+    New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0,   Color3.fromRGB(0, 200, 255)),
             ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
@@ -237,13 +224,7 @@ function Library:CreateWindow(hubTitle)
         Parent = borderStroke
     })
 
-    task.spawn(function()
-        while borderGradient and borderGradient.Parent do
-            borderGradient.Rotation = (borderGradient.Rotation + 1.4) % 360
-            task.wait(0.03)
-        end
-    end)
-
+    -- Título
     local titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
@@ -265,6 +246,7 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
+    -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -277,6 +259,7 @@ function Library:CreateWindow(hubTitle)
     List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 8, 2, 6)
 
+    -- Content Area
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
         Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
@@ -294,6 +277,7 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
+    -- ========== APERTURA / CIERRE ==========
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
@@ -358,6 +342,7 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
+    -- ========== ARRASTRE ==========
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -367,7 +352,8 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -404,11 +390,12 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
-                if (tick() - inputBeganTime) < 0.25 and clickCallback then
+                local duration = tick() - inputBeganTime
+                if duration < 0.25 and clickCallback then
                     clickCallback()
                 end
             end
@@ -547,24 +534,50 @@ function Library:Notify(feature, state)
 end
 
 -- ============================================================
---   CREAR PESTAÑAS
+--   CREAR TAB (con soporte de icono)
 -- ============================================================
-function Library:CreateTab(name)
+function Library:CreateTab(name, iconId)
+    -- Botón de la tab (más grande y redondo)
     local tabBtn = New("TextButton", {
-        Size = UDim2.new(1, 0, 0, 32),
-        BackgroundColor3 = T.panel2,
-        BackgroundTransparency = 0.5,
-        Text = name,
-        TextColor3 = Color3.fromRGB(180, 200, 220),
-        Font = Enum.Font.GothamMedium,
-        TextSize = 12,
+        Size = UDim2.new(1, 0, 0, 42),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
         ZIndex = 4,
         Parent = self.Sidebar
     })
-    Cor(tabBtn, 10)
-    local tabStroke = Stk(tabBtn, T.border, 1)
-    tabStroke.Transparency = 1
+    Cor(tabBtn, 21)
 
+    local tabStroke = Stk(tabBtn, T.border, 1.5)
+    tabStroke.Transparency = 0
+
+    -- Icono
+    local icon = New("ImageLabel", {
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0, 12, 0.5, -12),
+        BackgroundTransparency = 1,
+        Image = iconId or "",
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
+        ZIndex = 5,
+        Parent = tabBtn
+    })
+
+    -- Texto
+    local txt = New("TextLabel", {
+        Size = UDim2.new(1, -46, 1, 0),
+        Position = UDim2.new(0, 44, 0, 0),
+        BackgroundTransparency = 1,
+        Text = name,
+        TextColor3 = Color3.fromRGB(180, 200, 220),
+        Font = Enum.Font.GothamMedium,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 5,
+        Parent = tabBtn
+    })
+
+    -- Página
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = T.panel,
@@ -578,34 +591,36 @@ function Library:CreateTab(name)
     List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 8, 8, 8)
 
+    -- Click de la tab
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
-            Tween(t.btn, 0.2, {
-                BackgroundTransparency = 0.5,
-                TextColor3 = Color3.fromRGB(180, 200, 220)
-            })
-            t.stroke.Transparency = 1
+            Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
+            t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
+            t.stroke.Transparency = 0
         end
         for _, p in pairs(self.Pages) do p.Visible = false end
 
-        Tween(tabBtn, 0.2, {
-            BackgroundTransparency = 0,
-            TextColor3 = Color3.fromRGB(255, 255, 255)
-        })
+        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
+        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
         page.Visible = true
         self.ActivePage = page
     end)
 
+    -- Primera tab activa
     if not self.ActivePage then
         self.ActivePage = page
         page.Visible = true
-        tabStroke.Transparency = 0
-        tabBtn.BackgroundTransparency = 0
-        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tabBtn.BackgroundTransparency = 0.85
+        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke })
+    table.insert(self.Tabs, {
+        btn = tabBtn,
+        stroke = tabStroke,
+        txt = txt,
+        icon = icon
+    })
     table.insert(self.Pages, page)
 
     local TabMethods = { Library = self, Page = page }
@@ -647,7 +662,7 @@ function Library:CreateTab(name)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- Toggle
+        -- ========== TOGGLE ==========
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -710,7 +725,7 @@ function Library:CreateTab(name)
             end)
         end
 
-        -- Slider
+        -- ========== SLIDER ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -829,7 +844,7 @@ function Library:CreateTab(name)
             end)
         end
 
-        -- Dropdown
+        -- ========== DROPDOWN ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -929,9 +944,10 @@ function Library:CreateTab(name)
             end)
         end
 
-        -- ColorPicker (NUEVO / AGREGADO)
-        function ElementMethods:AddColorPicker(lbl, defColor, cb)
-            local currentColor = defColor or Color3.fromRGB(255, 255, 255)
+        -- ========== COLOR PICKER ==========
+        function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
+            local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
+            local tempColor = savedColor
 
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -944,7 +960,7 @@ function Library:CreateTab(name)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 14, 0, 0),
-                Size = UDim2.new(1, -70, 1, 0),
+                Size = UDim2.new(0.6, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
@@ -958,18 +974,217 @@ function Library:CreateTab(name)
             local colorPreview = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.new(0, 44, 0, 22),
-                BackgroundColor3 = currentColor,
+                Size = UDim2.new(0, 40, 0, 22),
+                BackgroundColor3 = savedColor,
                 Text = "",
                 ZIndex = 6,
                 Parent = row
             })
             Cor(colorPreview, 11)
-            Stk(colorPreview, Color3.fromRGB(255, 255, 255), 1.2)
+            Stk(colorPreview, T.border, 1.2)
+
+            -- Modal
+            local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
+            local modalOverlay = New("Frame", {
+                Position = UDim2.new(0, -200, 0, -200),
+                Size = UDim2.new(1, 400, 1, 400),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 0.5,
+                Visible = false,
+                ZIndex = 100,
+                Parent = screenGui
+            })
+
+            local modalFrame = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, 340, 0, 280),
+                BackgroundColor3 = Color3.fromRGB(8, 14, 26),
+                ZIndex = 101,
+                Parent = modalOverlay
+            })
+            Cor(modalFrame, 20)
+            Stk(modalFrame, Color3.fromRGB(20, 80, 180), 2)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 16, 0, 12),
+                Size = UDim2.new(1, -32, 0, 24),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+
+            -- SV Box
+            local svBox = New("TextButton", {
+                Position = UDim2.new(0, 16, 0, 44),
+                Size = UDim2.new(0, 150, 0, 130),
+                BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(svBox, 10)
+
+            New("UIGradient", {
+                Color = ColorSequence.new(Color3.fromRGB(255, 255, 255)),
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(1, 1)
+                }),
+                Parent = svBox
+            })
+
+            local blackOverlay = New("Frame", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 1,
+                ZIndex = 103,
+                Parent = svBox
+            })
+            Cor(blackOverlay, 10)
+            New("UIGradient", {
+                Color = ColorSequence.new(Color3.fromRGB(0,0,0)),
+                Rotation = 90,
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 1),
+                    NumberSequenceKeypoint.new(1, 0)
+                }),
+                Parent = blackOverlay
+            })
+
+            local pickerCursor = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(1, 0),
+                Size = UDim2.new(0, 12, 0, 12),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 104,
+                Parent = svBox
+            })
+            Cor(pickerCursor, 6)
+            Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+
+            -- Hue Bar
+            local hueBar = New("TextButton", {
+                Position = UDim2.new(0, 174, 0, 44),
+                Size = UDim2.new(0, 14, 0, 130),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(hueBar, 7)
+            New("UIGradient", {
+                Rotation = 90,
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                }),
+                Parent = hueBar
+            })
+
+            local cancelBtn = New("TextButton", {
+                Position = UDim2.new(0, 16, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
+                BackgroundColor3 = Color3.fromRGB(14, 25, 45),
+                Text = "Cancel",
+                TextColor3 = Color3.fromRGB(220, 230, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(cancelBtn, 21)
+            Stk(cancelBtn, Color3.fromRGB(30, 100, 210), 1.8)
+
+            local applyBtn = New("TextButton", {
+                Position = UDim2.new(0, 176, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
+                BackgroundColor3 = Color3.fromRGB(24, 100, 230),
+                Text = "Apply",
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(applyBtn, 21)
+            Stk(applyBtn, Color3.fromRGB(60, 140, 255), 1.8)
+
+            local h, s, v = Color3.toHSV(savedColor)
+
+            local function refreshUI()
+                tempColor = Color3.fromHSV(h, s, v)
+                svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+            end
 
             colorPreview.MouseButton1Click:Connect(function()
-                -- Ejemplo de ciclado rápido o toggle de paleta
-                cb(currentColor)
+                tempColor = savedColor
+                h, s, v = Color3.toHSV(savedColor)
+                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
+                refreshUI()
+                modalOverlay.Visible = true
+            end)
+
+            cancelBtn.MouseButton1Click:Connect(function()
+                modalOverlay.Visible = false
+            end)
+
+            applyBtn.MouseButton1Click:Connect(function()
+                savedColor = tempColor
+                colorPreview.BackgroundColor3 = savedColor
+                cb(savedColor)
+                modalOverlay.Visible = false
+            end)
+
+            -- Interacción básica SV y Hue (simplificada pero funcional)
+            local draggingSV, draggingHue = false, false
+
+            svBox.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = true
+                end
+            end)
+
+            hueBar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = true
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = false
+                    draggingHue = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    if draggingSV then
+                        local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
+                        local relY = math.clamp((input.Position.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
+                        s = relX
+                        v = 1 - relY
+                        pickerCursor.Position = UDim2.fromScale(relX, relY)
+                        refreshUI()
+                    elseif draggingHue then
+                        local relY = math.clamp((input.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
+                        h = relY
+                        refreshUI()
+                    end
+                end
             end)
         end
 
