@@ -1422,25 +1422,3 @@ function Library:CreateTab(name, iconId)
 
     return TabMethods
 end
-
--- ================================================================= --
--- EJEMPLO DE INICIALIZACIÓN (AQUÍ ES DONDE SE EJECUTA TU INTERFAZ)
--- ================================================================= --
-local Window = Library:CreateWindow('Zyrox Hub <font color="#00FFCD">VIP</font>')
-
-local Tab1 = Window:CreateTab("Principal", "rbxassetid://6031280882")
-local Section1 = Tab1:CreateSection("Opciones Principales")
-
-Section1:AddToggle("Auto Farm", false, function(state)
-    print("Auto Farm:", state)
-end)
-
-Section1:AddSlider("Velocidad", 16, 200, 50, function(val)
-    print("Nueva velocidad:", val)
-end)
-
-Section1:AddButton("Ejecutar Test", function()
-    Window:Notify("Script ejecutado correctamente", true)
-end)
-
-return Library
