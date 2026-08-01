@@ -1,22 +1,12 @@
 -- [[
 -- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.1)
--- Base ORIGINAL v1.4 intacta. Únicos cambios de esta versión:
---   1) Sistema de auto-expansión para el Sidebar (tabs) y para
---      cada página de contenido (CanvasSize calculado a mano
---      con la señal del UIListLayout, en vez de
---      AutomaticCanvasSize).
---   2) Degradado ANIMADO (rotando) en el borde principal de la
---      ventana, guiándome del script de animaciones que me
---      pasaste (MainStroke + MainGradient + loop de rotación).
---   3) ColorPicker con mejor interfaz: contorno plateado con
---      degradado (mismo estilo del borde de la ventana) y
---      sombra detrás del modal. Misma función, mismos colores.
---   4) Toggle rediseñado a píldora con knob blanco más redondo,
---      igual a la imagen de referencia.
--- Todo lo demás (colores, sliders, dropdowns, tabs, textos,
--- animaciones de apertura/cierre, etc.) queda EXACTAMENTE igual
--- al original.
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.2)
+-- Base ORIGINAL v1.4 intacta + adaptaciones pedidas:
+--   • Slider de tamaño hace el menú GRANDE (ancho + alto)
+--   • setGhost (esconder logo)
+--   • Bloquear arrastre del logo
+--   • AddButton para Animaciones
+-- Todo lo demás queda EXACTAMENTE igual.
 -- ============================================================
 -- ]]
 
@@ -76,12 +66,6 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
--- ============================================================
--- (NUEVO) Sistema de auto-expansión: calcula el CanvasSize de
--- un ScrollingFrame a partir del contenido real de su
--- UIListLayout, así al agregar más tabs o más elementos el
--- espacio se ajusta exacto, sin huecos ni saltos raros.
--- ============================================================
 local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
     extraPad = extraPad or 12
     local function update()
@@ -91,9 +75,6 @@ local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
     update()
 end
 
--- ============================================================
--- CREAR VENTANA
--- ============================================================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
 
@@ -127,7 +108,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- ========== BOTÓN FLOTANTE ========== (sin cambios)
+    -- ========== BOTÓN FLOTANTE ==========
     local floatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -176,6 +157,9 @@ function Library:CreateWindow(hubTitle)
 
     -- ========== VENTANA PRINCIPAL ==========
     local targetMenuWidth, targetMenuHeight = 620, 360
+    self.BaseWidth = 620
+    self.BaseHeight = 360
+    self.CurrentScale = 1
 
     self.WinMain = New("Frame", {
         Name = "Window",
@@ -192,6 +176,8 @@ function Library:CreateWindow(hubTitle)
     Cor(self.WinMain, 32)
 
     local winScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
+    self.WinScale = winScale
+
     local winInner = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = T.bg,
@@ -209,9 +195,6 @@ function Library:CreateWindow(hubTitle)
         Parent = self.WinMain
     })
 
-    -- (NUEVO) Mismo degradado de siempre, pero ahora animado
-    -- (rota solo), tal como el borde del script de animaciones
-    -- que me pasaste de referencia.
     local borderGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
@@ -249,19 +232,18 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    -- ---------- SIDEBAR (tabs) ----------
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0), -- (NUEVO) lo calcula BindAutoCanvas
+        CanvasSize = UDim2.new(0, 0, 0, 0),
         ZIndex = 3,
         Parent = winInner
     })
     local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 8, 2, 6)
-    BindAutoCanvas(self.Sidebar, sidebarList, 16) -- (NUEVO) sistema de expansión de tabs
+    BindAutoCanvas(self.Sidebar, sidebarList, 16)
 
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
@@ -279,6 +261,42 @@ function Library:CreateWindow(hubTitle)
     self.Pages = {}
     self.ActivePage = nil
     self.winOpen = false
+    self.lockLogo = false
+    self.ghostMode = false
+
+    -- ========== FUNCIONES DE CONTROL ==========
+    function self:SetMenuScale(scale)
+        scale = math.clamp(scale, 0.85, 1.45)
+        self.CurrentScale = scale
+        local newW = math.floor(self.BaseWidth * scale)
+        local newH = math.floor(self.BaseHeight * scale)
+        if self.winOpen then
+            Tween(self.WinMain, 0.25, {
+                Size = UDim2.new(0, newW, 0, newH)
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        else
+            self.WinMain.Size = UDim2.new(0, newW, 0, newH)
+        end
+    end
+
+    function self:SetGhost(state)
+        self.ghostMode = state
+        if state then
+            Tween(lightStroke, 0.4, { Transparency = 1 })
+            Tween(floatIcon, 0.4, { BackgroundTransparency = 1 })
+            Tween(innerShine, 0.4, { BackgroundTransparency = 1 })
+            floatIcon.TextTransparency = 1
+        else
+            Tween(lightStroke, 0.4, { Transparency = 0 })
+            Tween(floatIcon, 0.4, { BackgroundTransparency = 0.35 })
+            Tween(innerShine, 0.4, { BackgroundTransparency = 0.9 })
+            floatIcon.TextTransparency = 0
+        end
+    end
+
+    function self:SetLockLogo(state)
+        self.lockLogo = state
+    end
 
     local function openWin()
         if self.winOpen then return end
@@ -299,9 +317,12 @@ function Library:CreateWindow(hubTitle)
             self.WinMain.Visible = true
             winScale.Scale = 0.01
 
+            local finalW = math.floor(self.BaseWidth * self.CurrentScale)
+            local finalH = math.floor(self.BaseHeight * self.CurrentScale)
+
             Tween(self.WinMain, 0.9, {
                 Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+                Size = UDim2.new(0, finalW, 0, finalH),
                 BackgroundTransparency = T.bgTrans
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
@@ -331,9 +352,18 @@ function Library:CreateWindow(hubTitle)
                 floatIcon.Visible = true
                 floatScale.Scale = 0
                 Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                Tween(lightStroke, 0.35, { Transparency = 0 })
-                Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
-                Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
+
+                if self.ghostMode then
+                    lightStroke.Transparency = 1
+                    floatIcon.BackgroundTransparency = 1
+                    innerShine.BackgroundTransparency = 1
+                    floatIcon.TextTransparency = 1
+                else
+                    Tween(lightStroke, 0.35, { Transparency = 0 })
+                    Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
+                    Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
+                    floatIcon.TextTransparency = 0
+                end
             end
         end)
     end
@@ -351,7 +381,8 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if self.lockLogo and target == floatIcon then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -387,7 +418,7 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
@@ -400,6 +431,7 @@ function Library:CreateWindow(hubTitle)
     local function makeDraggable(obj, target)
         local dragStart, startPos, dragging
         obj.InputBegan:Connect(function(i)
+            if self.lockLogo and target == floatIcon then return end
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 dragStart = i.Position
@@ -425,9 +457,6 @@ function Library:CreateWindow(hubTitle)
     return self
 end
 
--- ============================================================
--- NOTIFICACIÓN (sin cambios)
--- ============================================================
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
@@ -528,9 +557,6 @@ function Library:Notify(feature, state)
     end)
 end
 
--- ============================================================
--- CREAR TAB
--- ============================================================
 function Library:CreateTab(name, iconId)
     local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
@@ -568,20 +594,19 @@ function Library:CreateTab(name, iconId)
         Parent = tabBtn
     })
 
-    -- ---------- PÁGINA DE ESTE TAB ----------
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = 0,
         Visible = false,
         ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0), -- (NUEVO) lo calcula BindAutoCanvas
+        CanvasSize = UDim2.new(0, 0, 0, 0),
         Parent = self.ContentArea
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 8, 8, 8)
-    BindAutoCanvas(page, pageList, 20) -- (NUEVO) sistema de expansión, igual en todas las páginas
+    BindAutoCanvas(page, pageList, 20)
 
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
@@ -611,9 +636,6 @@ function Library:CreateTab(name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
-    -- ============================================================
-    -- SECCIÓN (sin cambios)
-    -- ============================================================
     function TabMethods:CreateSection(title)
         local container = New("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
@@ -648,10 +670,6 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- ========== TOGGLE ==========
-        -- (CAMBIADO: solo la forma. Píldora + knob blanco más
-        -- redondo, igual a tu imagen de referencia. Los colores
-        -- del track/borde siguen siendo los mismos de siempre.)
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -675,7 +693,6 @@ function Library:CreateTab(name, iconId)
                 Parent = row
             })
 
-            -- Track tipo píldora (mismo color de siempre)
             local switchBg = New("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
@@ -684,10 +701,9 @@ function Library:CreateTab(name, iconId)
                 ZIndex = 6,
                 Parent = row
             })
-            Cor(switchBg, 13) -- radio = mitad de la altura -> píldora perfecta
+            Cor(switchBg, 13)
             Stk(switchBg, T.border, 1.5)
 
-            -- Knob blanco más grande y más redondo (squircle, como la imagen)
             local knob = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 Size = UDim2.new(0, 20, 0, 20),
@@ -714,7 +730,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== SLIDER (sin cambios) ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -833,7 +848,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== DROPDOWN (sin cambios) ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -931,11 +945,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== COLOR PICKER ==========
-        -- (CAMBIADO SOLO VISUALMENTE: contorno plateado con
-        -- degradado animado -igual al de la ventana- y sombra
-        -- detrás del modal para que se vea con más cuerpo.
-        -- La lógica de selección de color es idéntica a la original.)
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
@@ -995,12 +1004,9 @@ function Library:CreateTab(name, iconId)
             })
             Cor(modalFrame, 20)
 
-            -- Sombra detrás del modal (mejora visual pedida)
             local modalShadow = Shadow(modalFrame, 0.5, 30)
             modalShadow.ZIndex = 100
 
-            -- Contorno plateado con degradado animado (mismo estilo
-            -- que el borde principal de la ventana)
             local modalStroke = New("UIStroke", {
                 Thickness = 2.2,
                 Color = Color3.fromRGB(255, 255, 255),
@@ -1201,6 +1207,57 @@ function Library:CreateTab(name, iconId)
                         refreshUI()
                     end
                 end
+            end)
+        end
+
+        -- ========== BOTÓN (NUEVO - para Animaciones) ==========
+        function ElementMethods:AddButton(lbl, cb)
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 44),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            local btn = New("TextButton", {
+                Size = UDim2.new(1, -20, 0, 32),
+                Position = UDim2.new(0, 10, 0.5, -16),
+                BackgroundColor3 = Color3.fromRGB(0, 140, 255),
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 13,
+                AutoButtonColor = false,
+                ZIndex = 6,
+                Parent = row
+            })
+            Cor(btn, 12)
+
+            local btnGrad = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 180, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 220, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 220))
+                }),
+                Rotation = 90,
+                Parent = btn
+            })
+
+            btn.MouseEnter:Connect(function()
+                Tween(btn, 0.15, { Size = UDim2.new(1, -16, 0, 34) })
+            end)
+            btn.MouseLeave:Connect(function()
+                Tween(btn, 0.15, { Size = UDim2.new(1, -20, 0, 32) })
+            end)
+
+            btn.MouseButton1Click:Connect(function()
+                Tween(btn, 0.08, { Size = UDim2.new(1, -24, 0, 30) })
+                task.delay(0.08, function()
+                    Tween(btn, 0.12, { Size = UDim2.new(1, -20, 0, 32) })
+                end)
+                if cb then cb() end
             end)
         end
 
