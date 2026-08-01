@@ -199,21 +199,21 @@ end)
 -- ============================================================
 local SizeSec = SettingsTab:CreateSection("Dimensiones del Hub")
 
-SizeSec:AddSlider("Ancho del Hub", 620, 850, 620, function(v)
-    -- Si tu lib tiene función para cambiar tamaño, conéctala aquí
+-- 1) Ajustar escala con Slider
+SizeSec:AddSlider("Ancho/Escala del Hub", 80, 150, 100, function(v)
+    Window:SetScale(v / 100) -- Convertir de 80-150 a 0.8-1.5
 end)
 
-local GhostSec = SettingsTab:CreateSection("Seguridad del Menu")
-
+-- 2) Esconder / Mostrar Logo
 GhostSec:AddToggle("Modo Invisible (Esconder Logo)", false, function(v)
-    if getgenv().setGhost then
-        getgenv().setGhost(v)
-    end
+    Window:SetLogoVisible(not v) -- Si activa 'Invisible', ocultamos el logo (false)
 end)
 
+-- 3) Bloquear arrastre del Logo
 GhostSec:AddToggle("Bloquear Logo (Estatico)", false, function(v)
-    getgenv().S.lockLogo = v
+    Window:SetLogoLocked(v)
 end)
+
 
 local OptSec = SettingsTab:CreateSection("Optimizacion de Latencia")
 
