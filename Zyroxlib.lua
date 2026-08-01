@@ -1,7 +1,7 @@
 -- [[
 -- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4)
--- Corregida + ColorPicker + Tabs con iconos + Contorno estático
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.1)
+-- Basado en la versión que funciona + mejoras de degradado y título
 -- ============================================================
 -- ]]
 
@@ -123,13 +123,15 @@ function Library:CreateWindow(hubTitle)
         Parent = floatIcon
     })
 
+    -- Degradado mejorado (brillo arriba-izquierda)
     New("UIGradient", {
         Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 230, 255)),
+            ColorSequenceKeypoint.new(0.30, Color3.fromRGB(0, 160, 255)),
+            ColorSequenceKeypoint.new(0.65, Color3.fromRGB(0, 100, 220)),
+            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(5, 25, 70))
         }),
-        Rotation = 225,
+        Rotation = 135,
         Parent = lightStroke
     })
 
@@ -179,13 +181,16 @@ function Library:CreateWindow(hubTitle)
         Parent = self.WinMain
     })
 
+    -- Degradado mejorado del contorno (brillo arriba-izquierda)
     New("UIGradient", {
         Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 230, 255)),
+            ColorSequenceKeypoint.new(0.25, Color3.fromRGB(0, 160, 255)),
+            ColorSequenceKeypoint.new(0.55, Color3.fromRGB(0, 100, 220)),
+            ColorSequenceKeypoint.new(0.80, Color3.fromRGB(10, 50, 140)),
+            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(5, 20, 60))
         }),
-        Rotation = 225,
+        Rotation = 135,
         Parent = borderStroke
     })
 
@@ -196,15 +201,26 @@ function Library:CreateWindow(hubTitle)
         Parent = winInner
     })
 
+    -- Barra de acento + título premium
+    local accentBar = New("Frame", {
+        Size = UDim2.new(0, 4, 0, 20),
+        Position = UDim2.new(0, 14, 0.5, -10),
+        BackgroundColor3 = T.border,
+        BorderSizePixel = 0,
+        ZIndex = 7,
+        Parent = titleBar
+    })
+    Cor(accentBar, 2)
+
     New("TextLabel", {
-        Size = UDim2.new(1, -24, 1, 0),
-        Position = UDim2.new(0, 12, 0, 0),
+        Size = UDim2.new(1, -40, 1, 0),
+        Position = UDim2.new(0, 28, 0, 0),
         BackgroundTransparency = 1,
         RichText = true,
         Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
+        Font = Enum.Font.GothamBlack,
+        TextSize = 17,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 7,
         Parent = titleBar
@@ -310,7 +326,7 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -346,7 +362,7 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
@@ -545,6 +561,7 @@ function Library:CreateTab(name, iconId)
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
             t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
             t.stroke.Transparency = 0
+            t.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         end
         for _, p in pairs(self.Pages) do
             p.Visible = false
@@ -552,6 +569,7 @@ function Library:CreateTab(name, iconId)
         Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
+        icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         page.Visible = true
         self.ActivePage = page
     end)
@@ -721,7 +739,7 @@ function Library:CreateTab(name, iconId)
                     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
                     ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
                 }),
-                Rotation = 225,
+                Rotation = 135,
                 Parent = trackStroke
             })
 
@@ -1131,5 +1149,4 @@ function Library:CreateTab(name, iconId)
     return TabMethods
 end
 
--- === AQUÍ ESTABA EL ERROR: FALTABA DEVOLVER LA VARIABLE LIBRARY ===
 return Library
