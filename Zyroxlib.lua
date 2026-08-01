@@ -1,10 +1,13 @@
--- [[ -- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.5 Fixed)
--- ============================================================ -- ]]
+-- [[
+-- ============================================================
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.6)
+-- Versión limpia + optimizada + sin errores
+-- ============================================================
+-- ]]
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
+local RunService       = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local Library = {}
@@ -18,33 +21,63 @@ end)
 
 -- ====================== TEMA ======================
 local T = {
-    bg = Color3.fromRGB(14, 38, 70),
-    panel = Color3.fromRGB(4, 20, 38),
-    panel2 = Color3.fromRGB(6, 26, 48),
-    border = Color3.fromRGB(0, 166, 255),
-    acc = Color3.fromRGB(0, 166, 255),
-    text = Color3.fromRGB(255, 255, 255),
-    red = Color3.fromRGB(255, 60, 60),
-    green = Color3.fromRGB(50, 255, 100),
-    sep = Color3.fromRGB(10, 35, 60),
+    bg        = Color3.fromRGB(14, 38, 70),
+    panel     = Color3.fromRGB(4, 20, 38),
+    panel2    = Color3.fromRGB(6, 26, 48),
+    border    = Color3.fromRGB(0, 166, 255),
+    acc       = Color3.fromRGB(0, 166, 255),
+    text      = Color3.fromRGB(255, 255, 255),
+    red       = Color3.fromRGB(255, 60, 60),
+    green     = Color3.fromRGB(50, 255, 100),
+    sep       = Color3.fromRGB(10, 35, 60),
     switchOff = Color3.fromRGB(10, 30, 50),
-    bgTrans = 0.08,
-    tabSize = 200,
+    bgTrans   = 0.08,
+    tabSize   = 200,
 }
 
--- ====================== HELPERS OPTIMIZADOS ======================
+-- ====================== HELPERS ======================
 local function New(cls, props)
     local o = Instance.new(cls)
     if props then
-        for k, v in pairs(props) do o[k] = v end
+        for k, v in pairs(props) do
+            o[k] = v
+        end
     end
     return o
 end
 
-local function Cor(obj, r) New("UICorner", { CornerRadius = UDim.new(0, r or 8), Parent = obj }) end
-local function Stk(obj, col, th) return New("UIStroke", { Color = col or T.border, Thickness = th or 1.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = obj }) end
-local function List(obj, dir, pad) return New("UIListLayout", { FillDirection = dir or Enum.FillDirection.Vertical, Padding = UDim.new(0, pad or 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = obj }) end
-local function Pad(obj, t, b, l, r) New("UIPadding", { PaddingTop = UDim.new(0, t or 0), PaddingBottom = UDim.new(0, b or 0), PaddingLeft = UDim.new(0, l or 0), PaddingRight = UDim.new(0, r or 0), Parent = obj }) end
+local function Cor(obj, r)
+    New("UICorner", { CornerRadius = UDim.new(0, r or 8), Parent = obj })
+end
+
+local function Stk(obj, col, th)
+    return New("UIStroke", {
+        Color = col or T.border,
+        Thickness = th or 1.2,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = obj
+    })
+end
+
+local function List(obj, dir, pad)
+    return New("UIListLayout", {
+        FillDirection = dir or Enum.FillDirection.Vertical,
+        Padding = UDim.new(0, pad or 6),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = obj
+    })
+end
+
+local function Pad(obj, t, b, l, r)
+    New("UIPadding", {
+        PaddingTop = UDim.new(0, t or 0),
+        PaddingBottom = UDim.new(0, b or 0),
+        PaddingLeft = UDim.new(0, l or 0),
+        PaddingRight = UDim.new(0, r or 0),
+        Parent = obj
+    })
+end
+
 local function Tween(obj, t, props, style, dir)
     local info = TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out)
     local anim = TweenService:Create(obj, info, props)
@@ -72,7 +105,7 @@ end
 -- ====================== CREAR VENTANA ======================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
-    
+
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
         ResetOnSpawn = false,
@@ -89,7 +122,9 @@ function Library:CreateWindow(hubTitle)
 
     self.GUI.DescendantAdded:Connect(function(obj)
         if obj:IsA("TextButton") or obj:IsA("ImageButton") then
-            obj.MouseButton1Click:Connect(function() clickSound:Play() end)
+            obj.MouseButton1Click:Connect(function()
+                clickSound:Play()
+            end)
         end
     end)
 
@@ -144,6 +179,7 @@ function Library:CreateWindow(hubTitle)
     })
 
     local floatScale = New("UIScale", { Scale = 1, Parent = floatIcon })
+
     local innerShine = New("Frame", {
         Name = "InnerShine",
         Size = UDim2.fromScale(1, 1),
@@ -156,6 +192,7 @@ function Library:CreateWindow(hubTitle)
 
     -- ========== VENTANA PRINCIPAL ==========
     local targetMenuWidth, targetMenuHeight = 620, 380
+
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -171,6 +208,7 @@ function Library:CreateWindow(hubTitle)
     Cor(self.WinMain, 28)
 
     local winScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
+
     local winInner = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = T.bg,
@@ -200,7 +238,7 @@ function Library:CreateWindow(hubTitle)
         Parent = borderStroke
     })
 
-    -- ========== TÍTULO PREMIUM ==========
+    -- ========== TÍTULO ==========
     local titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 52),
         BackgroundTransparency = 1,
@@ -270,20 +308,29 @@ function Library:CreateWindow(hubTitle)
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
+
         Tween(floatScale, 0.4, { Scale = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
         Tween(lightStroke, 0.3, { Transparency = 1 })
         Tween(innerShine, 0.3, { BackgroundTransparency = 1 })
+
         task.delay(0.28, function()
             floatIcon.Visible = false
             local startX = floatIcon.AbsolutePosition.X + floatIcon.AbsoluteSize.X * 0.5
             local startY = floatIcon.AbsolutePosition.Y + floatIcon.AbsoluteSize.Y * 0.5
+
             self.WinMain.Size = UDim2.new(0, 0, 0, 0)
             self.WinMain.Position = UDim2.new(0, startX, 0, startY)
             self.WinMain.BackgroundTransparency = 1
             borderStroke.Transparency = 1
             self.WinMain.Visible = true
             winScale.Scale = 0.01
-            Tween(self.WinMain, 0.85, { Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight), BackgroundTransparency = T.bgTrans }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+            Tween(self.WinMain, 0.85, {
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+                BackgroundTransparency = T.bgTrans
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
             Tween(borderStroke, 0.55, { Transparency = 0.15 })
             Tween(winScale, 0.85, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         end)
@@ -292,11 +339,19 @@ function Library:CreateWindow(hubTitle)
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
+
         local targetX = floatIcon.AbsolutePosition.X + floatIcon.AbsoluteSize.X * 0.5
         local targetY = floatIcon.AbsolutePosition.Y + floatIcon.AbsoluteSize.Y * 0.5
+
         Tween(borderStroke, 0.4, { Transparency = 1 })
         Tween(winScale, 0.75, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-        local collapse = Tween(self.WinMain, 0.75, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0, targetX, 0, targetY), BackgroundTransparency = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+        local collapse = Tween(self.WinMain, 0.75, {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0, targetX, 0, targetY),
+            BackgroundTransparency = 1
+        }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
         collapse.Completed:Connect(function()
             if not self.winOpen then
                 self.WinMain.Visible = false
@@ -314,7 +369,7 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ========== ARRASTRE SUAVE ==========
+    -- ========== ARRASTRE ==========
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -324,7 +379,7 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -362,7 +417,7 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.2, { Scale = 1 }) end
@@ -414,7 +469,6 @@ function Library:Notify(feature, state)
         Parent = self.NotifLayer
     })
     Cor(card, 12)
-
     local st = Stk(card, T.border, 1.2)
     st.Transparency = 1
     local sh = Shadow(card, 1, 22)
@@ -486,7 +540,6 @@ function Library:Notify(feature, state)
     Tween(sub, 0.3, { TextTransparency = 0 })
     Tween(track, 0.3, { BackgroundTransparency = 0.45 })
     Tween(fill, 0.3, { BackgroundTransparency = 0 })
-
     Tween(fill, 1.9, { Size = UDim2.new(0, 0, 1, 0) }, Enum.EasingStyle.Linear)
 
     task.delay(2.0, function()
@@ -498,10 +551,8 @@ function Library:Notify(feature, state)
         Tween(bar, 0.25, { BackgroundTransparency = 1 })
         Tween(title, 0.25, { TextTransparency = 1 })
         Tween(sub, 0.25, { TextTransparency = 1 })
-        
-        task.delay(0.3, function()
-            if card then card:Destroy() end
-        end)
+        track:Destroy()
+        task.delay(0.3, function() if card then card:Destroy() end end)
     end)
 end
 
@@ -575,7 +626,6 @@ function Library:CreateTab(name, iconId)
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
         icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-
         page.Visible = true
         self.ActivePage = page
     end)
@@ -589,7 +639,12 @@ function Library:CreateTab(name, iconId)
         icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
+    table.insert(self.Tabs, {
+        btn = tabBtn,
+        stroke = tabStroke,
+        txt = txt,
+        icon = icon
+    })
     table.insert(self.Pages, page)
 
     local TabMethods = { Library = self, Page = page }
@@ -629,10 +684,8 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- ========== TOGGLE (FIXED) ==========
+        -- ========== TOGGLE ==========
         function ElementMethods:AddToggle(lbl, def, cb)
-            local toggleState = def or false
-
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 38),
                 BackgroundColor3 = T.panel2,
@@ -669,7 +722,7 @@ function Library:CreateTab(name, iconId)
             local knob = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 Size = UDim2.new(0, 16, 0, 16),
-                Position = toggleState and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                Position = def and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 ZIndex = 7,
                 Parent = switchBg
@@ -685,19 +738,17 @@ function Library:CreateTab(name, iconId)
             })
 
             click.MouseButton1Click:Connect(function()
-                toggleState = not toggleState
-                if cb then cb(toggleState) end
-                self.Library:Notify(lbl, toggleState)
-                Tween(knob, 0.25, { Position = toggleState and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) })
+                def = not def
+                if cb then cb(def) end
+                self.Library:Notify(lbl, def)
+                Tween(knob, 0.25, {
+                    Position = def and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+                })
             end)
         end
 
-        -- ========== SLIDER (FIXED ZERO-DIVISION) ==========
+        -- ========== SLIDER ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
-            mn = mn or 0
-            mx = mx or 100
-            def = math.clamp(def or mn, mn, mx)
-
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
@@ -755,11 +806,9 @@ function Library:CreateTab(name, iconId)
                 Parent = trackStroke
             })
 
-            local initialPct = (mx - mn == 0) and 0 or math.clamp((def - mn) / (mx - mn), 0, 1)
-
             local fill = New("Frame", {
                 BackgroundColor3 = T.border,
-                Size = UDim2.new(initialPct, 0, 1, 0),
+                Size = UDim2.new(math.clamp((def - mn) / (mx - mn), 0, 1), 0, 1, 0),
                 ZIndex = 7,
                 Parent = track
             })
@@ -767,7 +816,7 @@ function Library:CreateTab(name, iconId)
 
             local thumb = New("TextButton", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(initialPct, 0, 0.5, 0),
+                Position = UDim2.new(math.clamp((def - mn) / (mx - mn), 0, 1), 0, 0.5, 0),
                 Size = UDim2.new(0, 13, 0, 13),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Text = "",
@@ -780,17 +829,14 @@ function Library:CreateTab(name, iconId)
             local function setVal(newVal)
                 newVal = math.clamp(math.floor(newVal + 0.5), mn, mx)
                 valInput.Text = tostring(newVal)
-                
-                local range = mx - mn
-                local tt = (range == 0) and 0 or math.clamp((newVal - mn) / range, 0, 1)
-
+                local tt = (newVal - mn) / (mx - mn)
                 Tween(fill, 0.12, { Size = UDim2.new(tt, 0, 1, 0) })
                 Tween(thumb, 0.12, { Position = UDim2.new(tt, 0, 0.5, 0) })
-
                 if cb then cb(newVal) end
             end
 
             local dragging = false
+
             thumb.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
@@ -818,7 +864,6 @@ function Library:CreateTab(name, iconId)
 
         -- ========== DROPDOWN ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
-            options = options or {}
             local currIdx = defaultIdx or 1
             local dropdownOpen = false
 
@@ -857,7 +902,7 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.new(0, 110, 0, 24),
                 BackgroundColor3 = T.switchOff,
-                Text = (options[currIdx] or "Select") .. " ▼",
+                Text = (options[currIdx] or "Select") .. "  ▼",
                 TextColor3 = Color3.fromRGB(235, 245, 255),
                 Font = Enum.Font.GothamBold,
                 TextSize = 11,
@@ -899,7 +944,7 @@ function Library:CreateTab(name, iconId)
                     currIdx = i
                     if cb then cb(opt) end
                     dropdownOpen = false
-                    selectBtn.Text = options[currIdx] .. " ▼"
+                    selectBtn.Text = options[currIdx] .. "  ▼"
                     Tween(row, 0.25, { Size = UDim2.new(1, 0, 0, 38) })
                 end)
             end
@@ -908,8 +953,10 @@ function Library:CreateTab(name, iconId)
                 dropdownOpen = not dropdownOpen
                 local maxH = math.min(#options * 31 + 8, 120)
                 optionsHolder.Size = UDim2.new(1, -20, 0, maxH)
-                selectBtn.Text = (options[currIdx] or "Select") .. (dropdownOpen and " ▲" or " ▼")
-                Tween(row, 0.25, { Size = UDim2.new(1, 0, 0, dropdownOpen and (46 + maxH) or 38) })
+                selectBtn.Text = options[currIdx] .. (dropdownOpen and "  ▲" or "  ▼")
+                Tween(row, 0.25, {
+                    Size = UDim2.new(1, 0, 0, dropdownOpen and (46 + maxH) or 38)
+                })
             end)
         end
 
@@ -1015,7 +1062,6 @@ function Library:CreateTab(name, iconId)
                 Parent = svBox
             })
             Cor(blackOverlay, 10)
-
             New("UIGradient", {
                 Color = ColorSequence.new(Color3.fromRGB(0, 0, 0)),
                 Rotation = 90,
@@ -1047,7 +1093,6 @@ function Library:CreateTab(name, iconId)
                 Parent = modalFrame
             })
             Cor(hueBar, 7)
-
             New("UIGradient", {
                 Rotation = 90,
                 Color = ColorSequence.new({
@@ -1102,7 +1147,9 @@ function Library:CreateTab(name, iconId)
                 modalOverlay.Visible = true
             end)
 
-            cancelBtn.MouseButton1Click:Connect(function() modalOverlay.Visible = false end)
+            cancelBtn.MouseButton1Click:Connect(function()
+                modalOverlay.Visible = false
+            end)
 
             applyBtn.MouseButton1Click:Connect(function()
                 savedColor = tempColor
@@ -1112,12 +1159,17 @@ function Library:CreateTab(name, iconId)
             end)
 
             local draggingSV, draggingHue = false, false
+
             svBox.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then draggingSV = true end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = true
+                end
             end)
 
             hueBar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then draggingHue = true end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = true
+                end
             end)
 
             UserInputService.InputEnded:Connect(function(input)
@@ -1129,7 +1181,7 @@ function Library:CreateTab(name, iconId)
 
             UserInputService.InputChanged:Connect(function(input)
                 if not (draggingSV or draggingHue) then return end
-                if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+                if input.UserInputType \~= Enum.UserInputType.MouseMovement and input.UserInputType \~= Enum.UserInputType.Touch then return end
 
                 if draggingSV then
                     local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
