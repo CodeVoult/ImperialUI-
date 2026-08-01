@@ -1,3 +1,4 @@
+
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
@@ -297,28 +298,26 @@ function Library:CreateWindow(hubTitle)
     })
 
     self.Sidebar = New("ScrollingFrame", {
-        Position = UDim2.new(0, 8, 0, 50),
-        Size = UDim2.new(0, T.tabSize - 20, 1, -58),
+        Position = UDim2.new(0, 6, 0, 50),
+        Size = UDim2.new(0, T.tabSize - 30, 1, -60),
         BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
         ScrollBarThickness = 0,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ZIndex = 5,
+        ZIndex = 3,
         Parent = contentGroup
     })
     local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
     self.ContentArea = New("Frame", {
-        Position = UDim2.new(0, T.tabSize, 0, 50),
-        Size = UDim2.new(1, -T.tabSize - 10, 1, -58),
+        Position = UDim2.new(0, T.tabSize - 20, 0, 50),
+        Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = T.bgTrans,
         ClipsDescendants = true,
-        ZIndex = 5,
+        ZIndex = 3,
         Parent = contentGroup
     })
     Cor(self.ContentArea, 16)
@@ -403,7 +402,15 @@ function Library:CreateWindow(hubTitle)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
+        task.delay(0.35, function()
+    for _, page in ipairs(self.Pages) do
+        page.CanvasPosition = Vector2.zero
+    end
+end)
         self.WinMain.BackgroundTransparency = T.bgTrans
+        
+        contentGroup.Visible = false
+        contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
     end
 
@@ -440,21 +447,32 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
+        local tabW = math.min(T.tabSize - 30, math.max(0, currW - 40))
+        local availH = math.max(0, currH - 60)
+        local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
+
+        self.Sidebar.Size = UDim2.fromOffset(tabW, availH)
+        self.Sidebar.Position = UDim2.fromOffset(6, 50)
+
+        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
+        self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
+        for _, page in ipairs(self.Pages) do
+    page.Size = UDim2.new(1,0,1,0)
+end
+
         if self.winOpen then
-            local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p > 0.88 and currH > 180 then
-                contentGroup.Visible = true
-                local cp = math.clamp((p - 0.88) / 0.12, 0, 1)
-                cp = cp * cp * (3 - 2 * cp)
-                contentGroup.GroupTransparency = 1 - cp
-            else
-                contentGroup.Visible = false
-                contentGroup.GroupTransparency = 1
-            end
-        else
-            contentGroup.Visible = false
-            contentGroup.GroupTransparency = 1
-        end
+    local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
+
+    if p >= 0.99 then
+        contentGroup.Visible = true
+
+        local cp = math.clamp((p - 0.99) / 0.01, 0, 1)
+        contentGroup.GroupTransparency = 1 - cp
+    else
+        contentGroup.Visible = false
+        contentGroup.GroupTransparency = 1
+    end
+end
 
         if self.transitioning then
             local currX = springX:Update(dt)
@@ -690,26 +708,39 @@ function Library:Notify(feature, state)
 end
 
 function Library:CreateTab(name, iconId)
-    local tabBtn = New("Frame", {
+    local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
-        BackgroundColor3 = T.panel2,
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 1,
-        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
         ZIndex = 4,
         Parent = self.Sidebar
     })
-    Cor(tabBtn, 12)
-
-    local tabStroke = Stk(tabBtn, T.border, 1.2)
-    tabStroke.Transparency = 1
-
-    local clickBtn = New("TextButton", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundTransparency = 1,
-        Text = "",
-        ZIndex = 10,
+    Cor(tabBtn, 21)
+    local tabStroke = New("UIStroke", {
+        Thickness = 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = tabBtn
     })
+    tabStroke.Transparency = 0
+
+    local tabGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = tabStroke
+    })
+    task.spawn(function()
+        while tabGradient and tabGradient.Parent do
+            tabGradient.Rotation = (tabGradient.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
 
     local icon = New("ImageLabel", {
         Size = UDim2.new(0, 24, 0, 24),
@@ -728,7 +759,7 @@ function Library:CreateTab(name, iconId)
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 14,
+        TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
@@ -736,6 +767,7 @@ function Library:CreateTab(name, iconId)
 
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
+        ClipsDescendants = true,
         BackgroundTransparency = 1,
         Visible = false,
         ScrollBarThickness = 0,
@@ -746,18 +778,25 @@ function Library:CreateTab(name, iconId)
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
-    Pad(page, 8, 16, 8, 8)
+Pad(page, 8, 16, 8, 8)
 
-    clickBtn.MouseButton1Click:Connect(function()
+page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
+end)
+
+
+    tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
             t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
-            t.stroke.Transparency = 1
+            t.stroke.Transparency = 0
         end
         for _, p in pairs(self.Pages) do
             p.Visible = false
         end
-        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.5 })
+        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
         page.Visible = true
@@ -767,8 +806,7 @@ function Library:CreateTab(name, iconId)
     if not self.ActivePage then
         self.ActivePage = page
         page.Visible = true
-        tabBtn.BackgroundTransparency = 0.5
-        tabStroke.Transparency = 0
+        tabBtn.BackgroundTransparency = 0.85
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
@@ -794,7 +832,7 @@ function Library:CreateTab(name, iconId)
             Text = title,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             Font = Enum.Font.GothamMedium,
-            TextSize = 16,
+            TextSize = 18,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 6,
             Parent = container
