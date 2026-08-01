@@ -126,7 +126,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- Float Button
+    -- Float Button (Botón Flotante para abrir/cerrar)
     local floatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -185,7 +185,7 @@ function Library:CreateWindow(hubTitle)
         Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
-        Visible = false,
+        Visible = true, -- <--- CAMBIADO A TRUE PARA QUE SE VEA AL EJECUTAR
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Parent = self.GUI
@@ -287,7 +287,7 @@ function Library:CreateWindow(hubTitle)
     self.Tabs = {}
     self.Pages = {}
     self.ActivePage = nil
-    self.winOpen = false
+    self.winOpen = true
 
     local function openWin()
         if self.winOpen then return end
@@ -350,7 +350,7 @@ function Library:CreateWindow(hubTitle)
     end
 
     floatIcon.MouseButton1Click:Connect(function()
-        if not self.winOpen then openWin() end
+        if not self.winOpen then openWin() else closeWin() end
     end)
 
     -- Drag
@@ -363,7 +363,7 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
             dragStart = input.Position
@@ -401,7 +401,7 @@ function Library:CreateWindow(hubTitle)
         end)
 
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType \~= Enum.UserInputType.MouseButton1 and input.UserInputType \~= Enum.UserInputType.Touch then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
                 if scaleObj then Tween(scaleObj, 0.2, { Scale = 1 }) end
@@ -1158,7 +1158,7 @@ function Library:CreateTab(name, iconId)
 
             UserInputService.InputChanged:Connect(function(input)
                 if not (draggingSV or draggingHue) then return end
-                if input.UserInputType \~= Enum.UserInputType.MouseMovement and input.UserInputType \~= Enum.UserInputType.Touch then return end
+                if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
 
                 if draggingSV then
                     local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
