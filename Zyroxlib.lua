@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -18,7 +18,7 @@ function Spring.new(mass, damping, constant, initialPos)
     local self = setmetatable({}, Spring)
     self.m = mass
     self.d = damping   -- Fricción
-    self.k = constant  -- Rigidez (constante baja = movimiento más suave y lento)
+    self.k = constant  -- Rigidez
     self.x = initialPos
     self.v = 0
     self.target = initialPos
@@ -272,14 +272,14 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- Grupo que contiene TODO el contenido interno (barra, tabs, páginas).
-    -- Permite desvanecerlo como una sola unidad y coordinarlo con la expansión.
+    -- Grupo que contiene TODO el contenido interno
     local contentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
+        Visible = false, -- Inicialmente oculto para evitar colisiones
         ZIndex = 4,
         Parent = winInner
     })
@@ -368,7 +368,7 @@ function Library:CreateWindow(hubTitle)
     self.winOpen = false
 
     -- ================================================================= --
-    -- CONFIGURACIÓN DE LOS RESORTES (ANIMACIÓN FLUIDA, LENTA Y SUAVE)
+    -- CONFIGURACIÓN DE LOS RESORTES
     -- ================================================================= --
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
@@ -389,7 +389,6 @@ function Library:CreateWindow(hubTitle)
         return centerX / parentSize.X, centerY / parentSize.Y
     end
 
-    -- Centro actual de la ventana en escala (respeta la posición tras arrastrarla)
     local function getWinScalePos()
         local parentSize = self.GUI.AbsoluteSize
         if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.5 end
@@ -398,7 +397,6 @@ function Library:CreateWindow(hubTitle)
         return (absPos.X + absSize.X / 2) / parentSize.X, (absPos.Y + absSize.Y / 2) / parentSize.Y
     end
 
-    -- Estados que evitan que el motor de resortes pelee con el arrastre
     self.transitioning = false
     self.dragging = false
 
@@ -417,6 +415,9 @@ function Library:CreateWindow(hubTitle)
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
+        
+        -- Ocultar contenido al inicio de la animación
+        contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
     end
@@ -427,7 +428,10 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- Arranca los resortes desde la posición REAL (por si fue arrastrada)
+        -- Ocultamos INMEDIATAMENTE el contenido para evitar que se amontone
+        contentGroup.Visible = false
+        contentGroup.GroupTransparency = 1
+
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
@@ -447,26 +451,34 @@ function Library:CreateWindow(hubTitle)
         local currH = springH:Update(dt)
         local currR = springCorner:Update(dt)
 
-        -- El tamaño y el radio SIEMPRE los maneja el resorte (no chocan con el arrastre)
         self.WinMain.Size = UDim2.fromOffset(currW, currH)
         if winCorner then
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        -- El contenido aparece SOLO en el último tramo de la expansión (nada amontonado)
-        local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-        local cp = math.clamp((p - 0.55) / 0.45, 0, 1)
-        cp = cp * cp * (3 - 2 * cp) -- suavizado (smoothstep)
-        contentGroup.GroupTransparency = 1 - cp
+        -- Lógica de visibilidad del contenido según el estado de apertura
+        if self.winOpen then
+            local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
+            if p > 0.6 then
+                contentGroup.Visible = true
+                local cp = math.clamp((p - 0.6) / 0.4, 0, 1)
+                cp = cp * cp * (3 - 2 * cp)
+                contentGroup.GroupTransparency = 1 - cp
+            else
+                contentGroup.Visible = false
+                contentGroup.GroupTransparency = 1
+            end
+        else
+            contentGroup.Visible = false
+            contentGroup.GroupTransparency = 1
+        end
 
         if self.transitioning then
-            -- Durante la transición el resorte controla posición y rotación
             local currX = springX:Update(dt)
             local currY = springY:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             self.WinMain.Rotation = math.clamp(springX.v * 1.2, -4, 4)
 
-            -- Fin de la apertura: soltamos el control para permitir arrastre
             if self.winOpen
                 and math.abs(currW - targetMenuWidth) < 1.5
                 and math.abs(currH - targetMenuHeight) < 1.5
@@ -475,12 +487,10 @@ function Library:CreateWindow(hubTitle)
                 self.WinMain.Rotation = 0
             end
         else
-            -- En reposo mantenemos los resortes sincronizados pero SIN tocar la posición
             springX:Update(dt)
             springY:Update(dt)
         end
 
-        -- Fin del cierre: la ventana ya es un botón azul -> aparece "Open Menu"
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
             if self.WinMain.Visible then
                 self.WinMain.Visible = false
@@ -507,7 +517,7 @@ function Library:CreateWindow(hubTitle)
 
         handle.InputBegan:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-            if self.transitioning then return end -- no arrastrar mientras abre/cierra
+            if self.transitioning then return end
             dragging = true
             self.dragging = true
             inputBeganTime = tick()
