@@ -353,14 +353,16 @@ function Library:CreateWindow(hubTitle)
             self.WinMain.Visible = true
             self.WinScale.Scale = 0.01
 
-            Tween(self.WinMain, 0.9, {
+            -- Movimiento y expansión suave (Back = ligero rebote elástico)
+            Tween(self.WinMain, 1.25, {
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
                 BackgroundTransparency = T.bgTrans
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-            Tween(borderStroke, 0.6, { Transparency = 0.2 })
-            Tween(self.WinScale, 0.9, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            Tween(borderStroke, 0.7, { Transparency = 0.2 })
+            -- Escala con rebote elástico lento y suave
+            Tween(self.WinScale, 1.35, { Scale = 1 }, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
         end)
     end
 
@@ -370,21 +372,22 @@ function Library:CreateWindow(hubTitle)
         local targetX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
         local targetY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
-        Tween(borderStroke, 0.5, { Transparency = 1 })
-        Tween(self.WinScale, 0.85, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        Tween(borderStroke, 0.6, { Transparency = 1 })
+        -- Pequeño "estiramiento" hacia atrás antes de retraerse (sensación elástica)
+        Tween(self.WinScale, 1.0, { Scale = 0.01 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 
-        local collapse = Tween(self.WinMain, 0.85, {
+        local collapse = Tween(self.WinMain, 1.0, {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0, targetX, 0, targetY),
             BackgroundTransparency = 1
-        }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 
         collapse.Completed:Connect(function()
             if not self.winOpen then
                 self.WinMain.Visible = false
                 self.FloatIcon.Visible = true
                 floatScale.Scale = 0
-                Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                Tween(floatScale, 0.7, { Scale = 1 }, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
                 Tween(lightStroke, 0.35, { Transparency = 0 })
                 Tween(self.FloatIcon, 0.35, { BackgroundTransparency = 0.35 })
                 Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
@@ -607,8 +610,30 @@ function Library:CreateTab(name, iconId)
         Parent = self.Sidebar
     })
     Cor(tabBtn, 21)
-    local tabStroke = Stk(tabBtn, T.border, 1.5)
+    local tabStroke = New("UIStroke", {
+        Thickness = 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = tabBtn
+    })
     tabStroke.Transparency = 0
+
+    -- Mismo degradado animado que el botón "Open Menu"
+    local tabGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = tabStroke
+    })
+    task.spawn(function()
+        while tabGradient and tabGradient.Parent do
+            tabGradient.Rotation = (tabGradient.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
 
     local icon = New("ImageLabel", {
         Size = UDim2.new(0, 24, 0, 24),
@@ -635,8 +660,7 @@ function Library:CreateTab(name, iconId)
 
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = T.panel,
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 1,
         Visible = false,
         ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
