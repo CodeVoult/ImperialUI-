@@ -1,4 +1,3 @@
-
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
@@ -297,12 +296,12 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-        self.Sidebar = New("ScrollingFrame", {
+    self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 8, 0, 50),
         Size = UDim2.new(0, T.tabSize - 20, 1, -58),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        ClipsDescendants = true, -- Evita que los elementos se salgan
+        ClipsDescendants = true,
         ScrollBarThickness = 0,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -318,12 +317,11 @@ function Library:CreateWindow(hubTitle)
         Size = UDim2.new(1, -T.tabSize - 10, 1, -58),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = T.bgTrans,
-        ClipsDescendants = true, -- Evita desbordamiento de páginas
+        ClipsDescendants = true,
         ZIndex = 5,
         Parent = contentGroup
     })
     Cor(self.ContentArea, 16)
-
 
     New("UIGradient", {
         Color = ColorSequence.new({
@@ -406,9 +404,6 @@ function Library:CreateWindow(hubTitle)
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
-        
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
     end
 
@@ -695,39 +690,26 @@ function Library:Notify(feature, state)
 end
 
 function Library:CreateTab(name, iconId)
-    local tabBtn = New("TextButton", {
+    local tabBtn = New("Frame", {
         Size = UDim2.new(1, 0, 0, 42),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundColor3 = T.panel2,
         BackgroundTransparency = 1,
-        Text = "",
-        AutoButtonColor = false,
+        BorderSizePixel = 0,
         ZIndex = 4,
         Parent = self.Sidebar
     })
-    Cor(tabBtn, 21)
-    local tabStroke = New("UIStroke", {
-        Thickness = 1.6,
-        Color = Color3.fromRGB(255, 255, 255),
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    Cor(tabBtn, 12)
+
+    local tabStroke = Stk(tabBtn, T.border, 1.2)
+    tabStroke.Transparency = 1
+
+    local clickBtn = New("TextButton", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 10,
         Parent = tabBtn
     })
-    tabStroke.Transparency = 0
-
-    local tabGradient = New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
-        }),
-        Rotation = 225,
-        Parent = tabStroke
-    })
-    task.spawn(function()
-        while tabGradient and tabGradient.Parent do
-            tabGradient.Rotation = (tabGradient.Rotation + 1.2) % 360
-            task.wait(0.03)
-        end
-    end)
 
     local icon = New("ImageLabel", {
         Size = UDim2.new(0, 24, 0, 24),
@@ -746,7 +728,7 @@ function Library:CreateTab(name, iconId)
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 16,
+        TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
@@ -766,16 +748,16 @@ function Library:CreateTab(name, iconId)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 16, 8, 8)
 
-    tabBtn.MouseButton1Click:Connect(function()
+    clickBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
             t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
-            t.stroke.Transparency = 0
+            t.stroke.Transparency = 1
         end
         for _, p in pairs(self.Pages) do
             p.Visible = false
         end
-        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
+        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.5 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
         page.Visible = true
@@ -785,7 +767,8 @@ function Library:CreateTab(name, iconId)
     if not self.ActivePage then
         self.ActivePage = page
         page.Visible = true
-        tabBtn.BackgroundTransparency = 0.85
+        tabBtn.BackgroundTransparency = 0.5
+        tabStroke.Transparency = 0
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
@@ -811,7 +794,7 @@ function Library:CreateTab(name, iconId)
             Text = title,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             Font = Enum.Font.GothamMedium,
-            TextSize = 18,
+            TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 6,
             Parent = container
