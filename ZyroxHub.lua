@@ -1,8 +1,10 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua?v=" .. math.random(1,999999)))()
 
-
 local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>')
 
+-- ============================================================
+--   TABS (iguales al script grande)
+-- ============================================================
 local MainTab     = Window:CreateTab("Main", "rbxassetid://129659183898289")
 local CombatTab   = Window:CreateTab("Combat", "rbxassetid://139144481094772")
 local HitboxTab   = Window:CreateTab("Hitbox", "rbxassetid://92387641579827")
@@ -13,21 +15,210 @@ local AnimsTab    = Window:CreateTab("Animaciones", "rbxassetid://10326650544153
 local CameraTab   = Window:CreateTab("Camera", "rbxassetid://80826768886976")
 local SettingsTab = Window:CreateTab("Settings", "rbxassetid://92718502822243")
 
+-- ============================================================
+--   CARGAR FUNCTIONS.LUA (aquí van todos los hacks)
+-- ============================================================
+-- Descomenta cuando tengas el archivo listo:
+-- loadstring(game:HttpGet("TU_LINK_DE_Functions.lua"))()
+-- O si es local: loadstring(readfile("Functions.lua"))()
+
+-- ============================================================
+--   COMBAT TAB
+-- ============================================================
 local SilentSec = CombatTab:CreateSection("Silent Aim")
 
 SilentSec:AddToggle("Activar Silent Aim", false, function(v)
-    print("Silent Aim:", v)
+    getgenv().SilentAim.Enabled = v
 end)
 
-SilentSec:AddDropdown("Punto Objetivo", {"Cabeza", "Torso", "Pies"}, 1, function(opt)
-    print(opt)
+SilentSec:AddToggle("Solo con Armas", false, function(v)
+    getgenv().SilentAim.OnlyGun = v
 end)
 
-SilentSec:AddSlider("Radio FOV", 30, 800, 120, function(v)
-    print(v)
+SilentSec:AddToggle("Comprobar Paredes", false, function(v)
+    getgenv().SilentAim.WallCheck = v
 end)
 
-local EspSec = VisualTab:CreateSection("Opciones ESP")
-EspSec:AddColorPicker("Color de Resaltado", Color3.fromRGB(0, 166, 255), function(color)
-    print(color)
+SilentSec:AddToggle("Ocultar Círculo de FOV", false, function(v)
+    getgenv().SilentAim.HideCircle = v
+end)
+
+SilentSec:AddDropdown("Punto Objetivo", {"Cabeza", "Torso", "Pies"}, 1, function(choice)
+    if choice == "Cabeza" then
+        getgenv().SilentAim.Part = "Head"
+    elseif choice == "Torso" then
+        getgenv().SilentAim.Part = "HumanoidRootPart"
+    else
+        getgenv().SilentAim.Part = "Legs"
+    end
+end)
+
+SilentSec:AddSlider("Radio de FOV", 30, 800, 120, function(v)
+    getgenv().SilentAim.FOV = v
+end)
+
+SilentSec:AddSlider("Disimulo / Smoothness", 10, 100, 50, function(v)
+    getgenv().SilentAim.Smoothness = v
+end)
+
+SilentSec:AddSlider("Fuerza Predicción", 0, 200, 100, function(v)
+    getgenv().SilentAim.Prediction = v
+end)
+
+SilentSec:AddSlider("Rango de Distancia", 50, 1000, 500, function(v)
+    getgenv().SilentAim.DistMax = v
+end)
+
+local AutoShootSec = CombatTab:CreateSection("Auto Shoot (En mantenimiento)")
+
+AutoShootSec:AddToggle("Auto Shoot", false, function(v)
+    getgenv().S.autoShoot = v
+end)
+
+AutoShootSec:AddSlider("Rango de Disparo", 10, 1000, 250, function(v)
+    getgenv().S.shootDist = v
+end)
+
+-- ============================================================
+--   HITBOX TAB
+-- ============================================================
+local HitboxSec = HitboxTab:CreateSection("Hitbox Expander")
+
+HitboxSec:AddToggle("Activar Hitbox", false, function(v)
+    getgenv().S.hbEn = v
+end)
+
+HitboxSec:AddToggle("Ver Hitbox Visualmente", true, function(v)
+    getgenv().S.hbVisible = v
+end)
+
+HitboxSec:AddSlider("Tamaño de Hitbox", 2, 60, 10, function(v)
+    getgenv().S.hbSize = v
+end)
+
+-- ============================================================
+--   VISUAL TAB
+-- ============================================================
+local EspSec = VisualTab:CreateSection("Visualizadores ESP")
+
+EspSec:AddToggle("Resaltado (Chasis Highlight)", false, function(v)
+    getgenv().S.eP = v
+end)
+
+EspSec:AddToggle("Lineas", false, function(v)
+    getgenv().S.espLines = v
+end)
+
+EspSec:AddToggle("Cajas 2D (Boxes)", false, function(v)
+    getgenv().S.espBoxes = v
+end)
+
+EspSec:AddToggle("Esqueleto", false, function(v)
+    getgenv().S.espSkeleton = v
+end)
+
+local ColorSec = VisualTab:CreateSection("Color del ESP")
+
+ColorSec:AddColorPicker("Color de Resaltado", Color3.fromRGB(50, 255, 100), function(newColor)
+    getgenv().S.espColor = newColor
+    getgenv().S.espR = math.floor(newColor.R * 255)
+    getgenv().S.espG = math.floor(newColor.G * 255)
+    getgenv().S.espB = math.floor(newColor.B * 255)
+end)
+
+-- ============================================================
+--   FARM TAB
+-- ============================================================
+local FarmSec = FarmTab:CreateSection("Auto Farm Controller")
+
+FarmSec:AddToggle("Habilitar Auto Farm", false, function(v)
+    getgenv().S.autoFarm = v
+    if getgenv().ToggleAutoFarm then
+        getgenv().ToggleAutoFarm(v) -- función que irá en Functions.lua
+    end
+end)
+
+-- ============================================================
+--   AVATAR TAB
+-- ============================================================
+local AvatarSec = AvatarTab:CreateSection("Modificaciones Cosméticas")
+
+AvatarSec:AddToggle("Headless Local", false, function(v)
+    getgenv().S.headlessEn = v
+    if getgenv().UpdateHeadless then
+        getgenv().UpdateHeadless(v)
+    end
+end)
+
+AvatarSec:AddToggle("Korblox Pierna Izquierda", false, function(v)
+    getgenv().S.korbloxEn = v
+    if getgenv().ApplyKorblox then
+        getgenv().ApplyKorblox(v)
+    end
+end)
+
+-- ============================================================
+--   ANIMACIONES TAB
+-- ============================================================
+local AnimsSec = AnimsTab:CreateSection("Animaciones By Zyrox")
+
+-- Aquí puedes poner un botón si tu lib lo soporta:
+-- AnimsSec:AddButton("EJECUTAR SCRIPT", function()
+--     loadstring(game:HttpGet("https://pastebin.com/raw/B0AFG2tH"))()
+-- end)
+
+-- ============================================================
+--   CAMERA TAB
+-- ============================================================
+local FovSec = CameraTab:CreateSection("Field of View (FOV)")
+
+FovSec:AddToggle("Habilitar Modificador FOV", false, function(v)
+    getgenv().S.fovEn = v
+end)
+
+FovSec:AddSlider("Modificar FOV", 30, 120, 70, function(v)
+    getgenv().S.fovVal = v
+end)
+
+local MoveSec = CameraTab:CreateSection("Desplazamiento")
+
+MoveSec:AddToggle("Atravesar Paredes (Noclip)", false, function(v)
+    getgenv().S.ncEn = v
+end)
+
+MoveSec:AddToggle("Aumentar Velocidad (Speed)", false, function(v)
+    getgenv().S.spdEn = v
+end)
+
+MoveSec:AddSlider("Velocidad de Caminado", 16, 300, 200, function(v)
+    getgenv().S.spdVal = v
+end)
+
+-- ============================================================
+--   SETTINGS TAB
+-- ============================================================
+local SizeSec = SettingsTab:CreateSection("Dimensiones del Hub")
+
+SizeSec:AddSlider("Ancho del Hub", 620, 850, 620, function(v)
+    -- Si tu lib tiene función para cambiar tamaño, conéctala aquí
+end)
+
+local GhostSec = SettingsTab:CreateSection("Seguridad del Menu")
+
+GhostSec:AddToggle("Modo Invisible (Esconder Logo)", false, function(v)
+    if getgenv().setGhost then
+        getgenv().setGhost(v)
+    end
+end)
+
+GhostSec:AddToggle("Bloquear Logo (Estatico)", false, function(v)
+    getgenv().S.lockLogo = v
+end)
+
+local OptSec = SettingsTab:CreateSection("Optimizacion de Latencia")
+
+OptSec:AddToggle("Optimizar FPS del Dispositivo", false, function(v)
+    if v and getgenv().BoostDevice then
+        getgenv().BoostDevice()
+    end
 end)
