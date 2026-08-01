@@ -1,5 +1,5 @@
 -- [[
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.7 - Clean)
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.7 Clean Fixed)
 -- ]]
 
 local Players          = game:GetService("Players")
@@ -1180,7 +1180,5 @@ function Library:CreateTab(name, iconId)
 
     return TabMethods
 end
-
-
 
 return Library
