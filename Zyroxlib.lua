@@ -1,6 +1,7 @@
 -- [[
 --     ============================================================
 --       ZyroxHub UI Library | iOS Premium VIP Edition (v1.2)
+--       (Patched: Mobile Touch Drag & Floating Button)
 --     ============================================================
 -- ]]
 
@@ -125,9 +126,88 @@ function Library:CreateWindow(hubTitle)
 
     local titleBar = New("Frame", { Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1, ZIndex = 5, Parent = winInner })
     New("TextLabel", {
-        Size = UDim2.new(1, -24, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, RichText = true, Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>', TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7, Parent = titleBar
+        Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, RichText = true, Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>', TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7, Parent = titleBar
     })
 
+    -- [!] NUEVO: Botón de Minimizar
+    local minimizeBtn = New("TextButton", {
+        Size = UDim2.new(0, 30, 0, 30), Position = UDim2.new(1, -40, 0, 10), BackgroundColor3 = T.panel2, Text = "-", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 18, ZIndex = 10, Parent = titleBar
+    })
+    Cor(minimizeBtn, 15)
+    Stk(minimizeBtn, T.border, 1)
+
+    -- [!] NUEVO: Botón Flotante
+    self.FloatBtn = New("TextButton", {
+        Name = "ZyroxFloat", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.1, 0, 0.5, 0), Size = UDim2.new(0, 45, 0, 45), BackgroundColor3 = T.panel, Text = "Z", TextColor3 = T.border, Font = Enum.Font.GothamBold, TextSize = 20, Visible = false, ZIndex = 999999999, Parent = self.GUI
+    })
+    Cor(self.FloatBtn, 22)
+    Stk(self.FloatBtn, T.border, 2)
+
+    -- [!] Lógica de Minimizar/Maximizar
+    minimizeBtn.MouseButton1Click:Connect(function()
+        self.WinMain.Visible = false
+        self.FloatBtn.Visible = true
+    end)
+
+    -- [!] Lógica de Arrastre para el Menú Principal (Soporte Táctil y Ratón)
+    local function MakeDraggable(dragObj, moveObj)
+        local dragging, dragInput, dragStart, startPos
+        dragObj.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = moveObj.Position
+            end
+        end)
+        dragObj.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - dragStart
+                moveObj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+        dragObj.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+    end
+
+    MakeDraggable(titleBar, self.WinMain)
+
+    -- [!] Lógica de Arrastre para el Botón Flotante (Click vs Drag)
+    local floatDragging = false
+    local floatDragStart, floatStartPos
+
+    self.FloatBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            floatDragging = true
+            floatDragStart = input.Position
+            floatStartPos = self.FloatBtn.Position
+        end
+    end)
+    self.FloatBtn.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and floatDragging then
+            local delta = input.Position - floatDragStart
+            self.FloatBtn.Position = UDim2.new(floatStartPos.X.Scale, floatStartPos.X.Offset + delta.X, floatStartPos.Y.Scale, floatStartPos.Y.Offset + delta.Y)
+        end
+    end)
+    self.FloatBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            floatDragging = false
+            -- Si no se movió más de 10 píxeles, se considera un click para abrir
+            if floatDragStart and (input.Position - floatDragStart).Magnitude < 10 then
+                self.FloatBtn.Visible = false
+                self.WinMain.Visible = true
+            end
+        end
+    end)
+
+    -- Continúa la UI
     self.Sidebar = New("ScrollingFrame", { Position = UDim2.new(0, 6, 0, 50), Size = UDim2.new(0, T.tabSize - 30, 1, -60), BackgroundTransparency = 1, ScrollBarThickness = 0, AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 3, Parent = winInner })
     List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 8, 2, 6)
