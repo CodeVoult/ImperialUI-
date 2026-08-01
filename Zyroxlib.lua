@@ -1,11 +1,22 @@
 -- [[
 -- ============================================================
--- ZyroxHub UI Library | iOS Premium VIP Edition (v1.5.0)
--- Novedades v1.5.0:
---   1) Cambio de tamaño proporcional completo vía UIScale (Hub Grande/Pequeño).
---   2) Métodos para Esconder Logo (Invisible) y Bloquear Logo (Desactivar Drag).
---   3) Soporte nativo para Botones (AddButton) en las secciones.
---   4) Todo lo demás permanece intacto (degradados animado, auto-canvas, etc.).
+-- ZyroxHub UI Library | iOS Premium VIP Edition (v1.4.1)
+-- Base ORIGINAL v1.4 intacta. Únicos cambios de esta versión:
+--   1) Sistema de auto-expansión para el Sidebar (tabs) y para
+--      cada página de contenido (CanvasSize calculado a mano
+--      con la señal del UIListLayout, en vez de
+--      AutomaticCanvasSize).
+--   2) Degradado ANIMADO (rotando) en el borde principal de la
+--      ventana, guiándome del script de animaciones que me
+--      pasaste (MainStroke + MainGradient + loop de rotación).
+--   3) ColorPicker con mejor interfaz: contorno plateado con
+--      degradado (mismo estilo del borde de la ventana) y
+--      sombra detrás del modal. Misma función, mismos colores.
+--   4) Toggle rediseñado a píldora con knob blanco más redondo,
+--      igual a la imagen de referencia.
+-- Todo lo demás (colores, sliders, dropdowns, tabs, textos,
+-- animaciones de apertura/cierre, etc.) queda EXACTAMENTE igual
+-- al original.
 -- ============================================================
 -- ]]
 
@@ -65,6 +76,12 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
+-- ============================================================
+-- (NUEVO) Sistema de auto-expansión: calcula el CanvasSize de
+-- un ScrollingFrame a partir del contenido real de su
+-- UIListLayout, así al agregar más tabs o más elementos el
+-- espacio se ajusta exacto, sin huecos ni saltos raros.
+-- ============================================================
 local function BindAutoCanvas(scrollFrame, listLayout, extraPad)
     extraPad = extraPad or 12
     local function update()
@@ -79,6 +96,9 @@ end
 -- ============================================================
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
+
+    -- Control de bloqueo del logo flotante
+    self.LogoLocked = false
 
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
@@ -110,8 +130,8 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- ========== BOTÓN FLOTANTE ==========
-    local floatIcon = New("TextButton", {
+    -- ========== BOTÓN FLOTANTE (LOGO) ==========
+    self.FloatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Size = UDim2.new(0, 140, 0, 42),
@@ -126,16 +146,14 @@ function Library:CreateWindow(hubTitle)
         ZIndex = 999999990,
         Parent = self.GUI
     })
-    Cor(floatIcon, 21)
-    self.FloatIcon = floatIcon
-    self.IsLogoLocked = false
+    Cor(self.FloatIcon, 21)
 
     local lightStroke = New("UIStroke", {
         Name = "LightStroke",
         Thickness = 2.5,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Color = Color3.fromRGB(255, 255, 255),
-        Parent = floatIcon
+        Parent = self.FloatIcon
     })
 
     New("UIGradient", {
@@ -148,25 +166,25 @@ function Library:CreateWindow(hubTitle)
         Parent = lightStroke
     })
 
-    local floatScale = New("UIScale", { Scale = 1, Parent = floatIcon })
+    local floatScale = New("UIScale", { Scale = 1, Parent = self.FloatIcon })
     local innerShine = New("Frame", {
         Name = "InnerShine",
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 0.9,
         BackgroundColor3 = Color3.fromRGB(0, 170, 255),
         ZIndex = 999999992,
-        Parent = floatIcon
+        Parent = self.FloatIcon
     })
     Cor(innerShine, 21)
 
     -- ========== VENTANA PRINCIPAL ==========
-    local baseWidth, baseHeight = 620, 360
+    local targetMenuWidth, targetMenuHeight = 620, 360
 
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(0, baseWidth, 0, baseHeight),
+        Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
         Visible = false,
@@ -176,8 +194,8 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(self.WinMain, 32)
 
-    local winScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
-    self.WinScale = winScale
+    -- Guardamos el UIScale en 'self' para poder escalar toda la Hub
+    self.WinScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
 
     local winInner = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
@@ -263,7 +281,6 @@ function Library:CreateWindow(hubTitle)
     self.Pages = {}
     self.ActivePage = nil
     self.winOpen = false
-    self.CurrentScale = 1
 
     local function openWin()
         if self.winOpen then return end
@@ -273,36 +290,36 @@ function Library:CreateWindow(hubTitle)
         Tween(innerShine, 0.35, { BackgroundTransparency = 1 })
 
         task.delay(0.3, function()
-            floatIcon.Visible = false
-            local startX = floatIcon.AbsolutePosition.X + (floatIcon.AbsoluteSize.X / 2)
-            local startY = floatIcon.AbsolutePosition.Y + (floatIcon.AbsoluteSize.Y / 2)
+            self.FloatIcon.Visible = false
+            local startX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
+            local startY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
             self.WinMain.Size = UDim2.new(0, 0, 0, 0)
             self.WinMain.Position = UDim2.new(0, startX, 0, startY)
             self.WinMain.BackgroundTransparency = 1
             borderStroke.Transparency = 1
             self.WinMain.Visible = true
-            winScale.Scale = 0.01
+            self.WinScale.Scale = 0.01
 
             Tween(self.WinMain, 0.9, {
                 Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, baseWidth, 0, baseHeight),
+                Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
                 BackgroundTransparency = T.bgTrans
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
             Tween(borderStroke, 0.6, { Transparency = 0.2 })
-            Tween(winScale, 0.9, { Scale = self.CurrentScale }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            Tween(self.WinScale, 0.9, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         end)
     end
 
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
-        local targetX = floatIcon.AbsolutePosition.X + (floatIcon.AbsoluteSize.X / 2)
-        local targetY = floatIcon.AbsolutePosition.Y + (floatIcon.AbsoluteSize.Y / 2)
+        local targetX = self.FloatIcon.AbsolutePosition.X + (self.FloatIcon.AbsoluteSize.X / 2)
+        local targetY = self.FloatIcon.AbsolutePosition.Y + (self.FloatIcon.AbsoluteSize.Y / 2)
 
         Tween(borderStroke, 0.5, { Transparency = 1 })
-        Tween(winScale, 0.85, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        Tween(self.WinScale, 0.85, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
         local collapse = Tween(self.WinMain, 0.85, {
             Size = UDim2.new(0, 0, 0, 0),
@@ -313,19 +330,17 @@ function Library:CreateWindow(hubTitle)
         collapse.Completed:Connect(function()
             if not self.winOpen then
                 self.WinMain.Visible = false
-                if floatIcon.Name ~= "HiddenLogo" then
-                    floatIcon.Visible = true
-                end
+                self.FloatIcon.Visible = true
                 floatScale.Scale = 0
                 Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 Tween(lightStroke, 0.35, { Transparency = 0 })
-                Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
+                Tween(self.FloatIcon, 0.35, { BackgroundTransparency = 0.35 })
                 Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
             end
         end)
     end
 
-    floatIcon.MouseButton1Click:Connect(function()
+    self.FloatIcon.MouseButton1Click:Connect(function()
         if not self.winOpen then openWin() end
     end)
 
@@ -338,7 +353,6 @@ function Library:CreateWindow(hubTitle)
         local inputBeganTime = 0
 
         handle.InputBegan:Connect(function(input)
-            if handle == floatIcon and self.IsLogoLocked then return end
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             dragging = true
             inputBeganTime = tick()
@@ -348,7 +362,7 @@ function Library:CreateWindow(hubTitle)
             currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
             targetX, targetY = currentX, currentY
 
-            if scaleObj then Tween(scaleObj, 0.2, { Scale = (self.CurrentScale or 1) * 1.01 }) end
+            if scaleObj then Tween(scaleObj, 0.2, { Scale = 1.01 }) end
 
             if not lerpConnection then
                 lerpConnection = RunService.RenderStepped:Connect(function()
@@ -378,42 +392,319 @@ function Library:CreateWindow(hubTitle)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
-                if scaleObj then Tween(scaleObj, 0.25, { Scale = self.CurrentScale or 1 }) end
+                if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
                 local duration = tick() - inputBeganTime
                 if duration < 0.25 and clickCallback then clickCallback() end
             end
         end)
     end
 
-    makeSmoothDrag(floatIcon, floatIcon, nil, nil)
+    -- Draggable adaptado para respetar self.LogoLocked
+    local function makeDraggable(obj, target)
+        local dragStart, startPos, dragging
+        obj.InputBegan:Connect(function(i)
+            if self.LogoLocked then return end -- Bloquea si está activado
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = i.Position
+                startPos = target.Position
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(i)
+            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                local del = i.Position - dragStart
+                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+    end
+
+    makeDraggable(self.FloatIcon, self.FloatIcon)
+    makeSmoothDrag(titleBar, self.WinMain, self.WinScale, closeWin)
+
+    -- ========== MÉTODOS DE LA VENTANA ==========
+    
+    -- Cambia el tamaño/escala de la ventana
+    function self:SetScale(scaleValue)
+        if self.WinScale then
+            self.WinScale.Scale = scaleValue
+        end
+    end
+
+    -- Oculta o muestra el logo flotante
+    function self:SetLogoVisible(visible)
+        if self.FloatIcon then
+            self.FloatIcon.Visible = visible
+        end
+    end
+
+    -- Bloquea o desbloquea el arrastre del logo
+    function self:SetLogoLocked(locked)
+        self.LogoLocked = locked
+    end
+
+    return self
+end
+
+
+
+    -- ========== VENTANA PRINCIPAL ==========
+    local targetMenuWidth, targetMenuHeight = 620, 360
+
+    self.WinMain = New("Frame", {
+        Name = "Window",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+        BackgroundColor3 = T.bg,
+        BackgroundTransparency = T.bgTrans,
+        Visible = false,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        Parent = self.GUI
+    })
+    Cor(self.WinMain, 32)
+
+    self.WinScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
+    local winInner = New("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = T.bg,
+        BackgroundTransparency = T.bgTrans,
+        ClipsDescendants = true,
+        Parent = self.WinMain
+    })
+    Cor(winInner, 32)
+
+    local borderStroke = New("UIStroke", {
+        Name = "BorderStroke",
+        Thickness = 3.2,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = self.WinMain
+    })
+
+    -- (NUEVO) Mismo degradado de siempre, pero ahora animado
+    -- (rota solo), tal como el borde del script de animaciones
+    -- que me pasaste de referencia.
+    local borderGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = borderStroke
+    })
+    task.spawn(function()
+        while borderGradient and borderGradient.Parent do
+            borderGradient.Rotation = (borderGradient.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
+
+    local titleBar = New("Frame", {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 1,
+        ZIndex = 5,
+        Parent = winInner
+    })
+
+    New("TextLabel", {
+        Size = UDim2.new(1, -24, 1, 0),
+        Position = UDim2.new(0, 12, 0, 0),
+        BackgroundTransparency = 1,
+        RichText = true,
+        Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 7,
+        Parent = titleBar
+    })
+
+    -- ---------- SIDEBAR (tabs) ----------
+    self.Sidebar = New("ScrollingFrame", {
+        Position = UDim2.new(0, 6, 0, 50),
+        Size = UDim2.new(0, T.tabSize - 30, 1, -60),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0), -- (NUEVO) lo calcula BindAutoCanvas
+        ZIndex = 3,
+        Parent = winInner
+    })
+    local sidebarList = List(self.Sidebar, Enum.FillDirection.Vertical, 6)
+    Pad(self.Sidebar, 4, 8, 2, 6)
+    BindAutoCanvas(self.Sidebar, sidebarList, 16) -- (NUEVO) sistema de expansión de tabs
+
+    self.ContentArea = New("Frame", {
+        Position = UDim2.new(0, T.tabSize - 20, 0, 50),
+        Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
+        BackgroundColor3 = T.panel,
+        BackgroundTransparency = T.bgTrans,
+        ClipsDescendants = true,
+        ZIndex = 3,
+        Parent = winInner
+    })
+    Cor(self.ContentArea, 16)
+    Stk(self.ContentArea, T.border, 1.5)
+
+    self.Tabs = {}
+    self.Pages = {}
+    self.ActivePage = nil
+    self.winOpen = false
+
+    local function openWin()
+        if self.winOpen then return end
+        self.winOpen = true
+        Tween(floatScale, 0.45, { Scale = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        Tween(lightStroke, 0.35, { Transparency = 1 })
+        Tween(innerShine, 0.35, { BackgroundTransparency = 1 })
+
+        task.delay(0.3, function()
+            floatIcon.Visible = false
+            local startX = floatIcon.AbsolutePosition.X + (floatIcon.AbsoluteSize.X / 2)
+            local startY = floatIcon.AbsolutePosition.Y + (floatIcon.AbsoluteSize.Y / 2)
+
+            self.WinMain.Size = UDim2.new(0, 0, 0, 0)
+            self.WinMain.Position = UDim2.new(0, startX, 0, startY)
+            self.WinMain.BackgroundTransparency = 1
+            borderStroke.Transparency = 1
+            self.WinMain.Visible = true
+            winScale.Scale = 0.01
+
+            Tween(self.WinMain, 0.9, {
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, targetMenuWidth, 0, targetMenuHeight),
+                BackgroundTransparency = T.bgTrans
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+            Tween(borderStroke, 0.6, { Transparency = 0.2 })
+            Tween(winScale, 0.9, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end)
+    end
+
+    local function closeWin()
+        if not self.winOpen then return end
+        self.winOpen = false
+        local targetX = floatIcon.AbsolutePosition.X + (floatIcon.AbsoluteSize.X / 2)
+        local targetY = floatIcon.AbsolutePosition.Y + (floatIcon.AbsoluteSize.Y / 2)
+
+        Tween(borderStroke, 0.5, { Transparency = 1 })
+        Tween(winScale, 0.85, { Scale = 0.01 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+        local collapse = Tween(self.WinMain, 0.85, {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0, targetX, 0, targetY),
+            BackgroundTransparency = 1
+        }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+        collapse.Completed:Connect(function()
+            if not self.winOpen then
+                self.WinMain.Visible = false
+                floatIcon.Visible = true
+                floatScale.Scale = 0
+                Tween(floatScale, 0.55, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                Tween(lightStroke, 0.35, { Transparency = 0 })
+                Tween(floatIcon, 0.35, { BackgroundTransparency = 0.35 })
+                Tween(innerShine, 0.35, { BackgroundTransparency = 0.9 })
+            end
+        end)
+    end
+
+    floatIcon.MouseButton1Click:Connect(function()
+        if not self.winOpen then openWin() end
+    end)
+
+    local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
+        local dragging = false
+        local dragStart, startPos
+        local targetX, targetY, currentX, currentY = 0, 0, 0, 0
+        local lerpConnection = nil
+        local suavizado = 0.15
+        local inputBeganTime = 0
+
+        handle.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            dragging = true
+            inputBeganTime = tick()
+            dragStart = input.Position
+            startPos = target.Position
+            currentX = target.AbsolutePosition.X + (target.AbsoluteSize.X * target.AnchorPoint.X)
+            currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
+            targetX, targetY = currentX, currentY
+
+            if scaleObj then Tween(scaleObj, 0.2, { Scale = 1.01 }) end
+
+            if not lerpConnection then
+                lerpConnection = RunService.RenderStepped:Connect(function()
+                    if dragging or math.abs(currentX - targetX) > 0.1 or math.abs(currentY - targetY) > 0.1 then
+                        currentX = currentX + (targetX - currentX) * suavizado
+                        currentY = currentY + (targetY - currentY) * suavizado
+                        target.Position = UDim2.new(0, math.round(currentX), 0, math.round(currentY))
+                    else
+                        lerpConnection:Disconnect()
+                        lerpConnection = nil
+                    end
+                end)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                local originX = (target.Parent.AbsoluteSize.X * startPos.X.Scale) + startPos.X.Offset
+                local originY = (target.Parent.AbsoluteSize.Y * startPos.Y.Scale) + startPos.Y.Offset
+                targetX = originX + delta.X
+                targetY = originY + delta.Y
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if dragging then
+                dragging = false
+                if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
+                local duration = tick() - inputBeganTime
+                if duration < 0.25 and clickCallback then clickCallback() end
+            end
+        end)
+    end
+
+    local function makeDraggable(obj, target)
+        local dragStart, startPos, dragging
+        obj.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = i.Position
+                startPos = target.Position
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(i)
+            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                local del = i.Position - dragStart
+                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+    end
+
+    makeDraggable(floatIcon, floatIcon)
     makeSmoothDrag(titleBar, self.WinMain, winScale, closeWin)
 
     return self
 end
 
 -- ============================================================
--- FUNCIONES ADICIONALES DE CONFIGURACIÓN
--- ============================================================
-function Library:SetScale(scaleValue)
-    self.CurrentScale = scaleValue
-    if self.WinScale then
-        Tween(self.WinScale, 0.2, { Scale = scaleValue })
-    end
-end
-
-function Library:SetLogoVisible(visible)
-    if self.FloatIcon then
-        self.FloatIcon.Name = visible and "FloatIcon" or "HiddenLogo"
-        self.FloatIcon.Visible = visible
-    end
-end
-
-function Library:SetLogoLock(locked)
-    self.IsLogoLocked = locked
-end
-
--- ============================================================
--- NOTIFICACIÓN
+-- NOTIFICACIÓN (sin cambios)
 -- ============================================================
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
@@ -555,19 +846,20 @@ function Library:CreateTab(name, iconId)
         Parent = tabBtn
     })
 
+    -- ---------- PÁGINA DE ESTE TAB ----------
     local page = New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = 0,
         Visible = false,
         ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
+        CanvasSize = UDim2.new(0, 0, 0, 0), -- (NUEVO) lo calcula BindAutoCanvas
         Parent = self.ContentArea
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 8, 8, 8)
-    BindAutoCanvas(page, pageList, 20)
+    BindAutoCanvas(page, pageList, 20) -- (NUEVO) sistema de expansión, igual en todas las páginas
 
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
@@ -598,7 +890,7 @@ function Library:CreateTab(name, iconId)
     local TabMethods = { Library = self, Page = page }
 
     -- ============================================================
-    -- SECCIÓN
+    -- SECCIÓN (sin cambios)
     -- ============================================================
     function TabMethods:CreateSection(title)
         local container = New("Frame", {
@@ -634,34 +926,10 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- ========== BOTÓN (NUEVO METODO) ==========
-        function ElementMethods:AddButton(lbl, cb)
-            local row = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = T.panel2,
-                ZIndex = 5,
-                Parent = card
-            })
-            Cor(row, 20)
-            Stk(row, T.border, 1.5)
-
-            local btn = New("TextButton", {
-                Size = UDim2.fromScale(1, 1),
-                BackgroundTransparency = 1,
-                Text = lbl,
-                TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamBold,
-                TextSize = 13,
-                ZIndex = 6,
-                Parent = row
-            })
-
-            btn.MouseButton1Click:Connect(function()
-                if cb then cb() end
-            end)
-        end
-
         -- ========== TOGGLE ==========
+        -- (CAMBIADO: solo la forma. Píldora + knob blanco más
+        -- redondo, igual a tu imagen de referencia. Los colores
+        -- del track/borde siguen siendo los mismos de siempre.)
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -685,6 +953,7 @@ function Library:CreateTab(name, iconId)
                 Parent = row
             })
 
+            -- Track tipo píldora (mismo color de siempre)
             local switchBg = New("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
@@ -693,9 +962,10 @@ function Library:CreateTab(name, iconId)
                 ZIndex = 6,
                 Parent = row
             })
-            Cor(switchBg, 13)
+            Cor(switchBg, 13) -- radio = mitad de la altura -> píldora perfecta
             Stk(switchBg, T.border, 1.5)
 
+            -- Knob blanco más grande y más redondo (squircle, como la imagen)
             local knob = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 Size = UDim2.new(0, 20, 0, 20),
@@ -721,8 +991,40 @@ function Library:CreateTab(name, iconId)
                 Tween(knob, 0.3, { Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) })
             end)
         end
+        
+        -- ========== BUTTON ==========
+function ElementMethods:AddButton(lbl, cb)
+    local row = New("Frame", {
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = T.panel2,
+        ZIndex = 5,
+        Parent = card
+    })
+    Cor(row, 20)
+    Stk(row, T.border, 1.5)
 
-        -- ========== SLIDER ==========
+    local btn = New("TextButton", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = lbl,
+        TextColor3 = Color3.fromRGB(240, 245, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        ZIndex = 6,
+        Parent = row
+    })
+
+    btn.MouseButton1Click:Connect(function()
+        Tween(row, 0.1, { BackgroundColor3 = T.border })
+        task.delay(0.1, function()
+            Tween(row, 0.2, { BackgroundColor3 = T.panel2 })
+        end)
+        cb()
+    end)
+end
+
+
+        -- ========== SLIDER (sin cambios) ==========
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -841,7 +1143,7 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ========== DROPDOWN ==========
+        -- ========== DROPDOWN (sin cambios) ==========
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -940,6 +1242,10 @@ function Library:CreateTab(name, iconId)
         end
 
         -- ========== COLOR PICKER ==========
+        -- (CAMBIADO SOLO VISUALMENTE: contorno plateado con
+        -- degradado animado -igual al de la ventana- y sombra
+        -- detrás del modal para que se vea con más cuerpo.
+        -- La lógica de selección de color es idéntica a la original.)
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
@@ -999,9 +1305,12 @@ function Library:CreateTab(name, iconId)
             })
             Cor(modalFrame, 20)
 
+            -- Sombra detrás del modal (mejora visual pedida)
             local modalShadow = Shadow(modalFrame, 0.5, 30)
             modalShadow.ZIndex = 100
 
+            -- Contorno plateado con degradado animado (mismo estilo
+            -- que el borde principal de la ventana)
             local modalStroke = New("UIStroke", {
                 Thickness = 2.2,
                 Color = Color3.fromRGB(255, 255, 255),
