@@ -414,20 +414,22 @@ function Library:CreateWindow(hubTitle)
         end)
     end
 
-    local function closeWin()
+        local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
         self.transitioning = true
         self.dragging = false
 
-        -- FIX DEFINITIVO: ocultamos el contenido al iniciar el cierre.
-        -- El frame se encoge solo, sin renderizar tabs/páginas.
+        -- Ocultamos el contenido de inmediato para que solo se encoja el marco
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
         local cx, cy = getWinScalePos()
+        -- Reseteamos velocidad para evitar inercia/brincos
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
+        springW.v = 0
+        springH.v = 0
 
         local fx, fy = getFloatScalePos()
         springX.target = fx
@@ -493,17 +495,20 @@ function Library:CreateWindow(hubTitle)
             springY:Update(dt)
         end
 
-        if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
-            if self.WinMain.Visible then
-                self.WinMain.Visible = false
-                self.WinMain.Rotation = 0
-                self.transitioning = false
-                self.FloatIcon.Visible = true
-                floatScale.Scale = 0.5
-                Tween(floatScale, 0.6, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-            end
-        end
-    end)
+        -- REEMPLAZO EXACTO Y FLUIDO:
+if not self.winOpen and math.abs(currW - 140) < 1 and math.abs(currH - 42) < 1 then
+    if self.WinMain.Visible then
+        self.WinMain.Visible = false
+        self.WinMain.Rotation = 0
+        self.transitioning = false
+        
+        -- Sincronizamos la posición exacta del botón con la ventana al terminar
+        self.FloatIcon.Position = UDim2.new(springX.x, 0, springY.x, 0)
+        self.FloatIcon.Visible = true
+        floatScale.Scale = 1 -- Sin tweens ni brincos
+    end
+end
+
 
     self.FloatIcon.MouseButton1Click:Connect(function()
         if not self.winOpen then openWin() end
