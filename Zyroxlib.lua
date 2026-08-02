@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - YARHM Style Complete) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - Slow Animations & Close Effect) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES (Sistema YARHM mejorado)
+-- 1. MOTOR DE RESORTES (Ajustado para movimiento suave y lento)
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -169,7 +169,7 @@ function Library:CreateWindow(hubTitle)
     local closeTextLabel = New("TextLabel", {
         Name = "CloseTextAnim",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, 120, 0, 30),
+        Size = UDim2.new(0, 140, 0, 42),
         BackgroundTransparency = 1,
         Text = "Open Menu",
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -186,7 +186,7 @@ function Library:CreateWindow(hubTitle)
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.15, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 140, 0, 42),
         BackgroundColor3 = T.bg,
         BackgroundTransparency = T.bgTrans,
@@ -208,7 +208,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
-    -- ✅ EFECTO DE FONDO GRADIENTE ANIMADO
     local bgGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
@@ -229,7 +228,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- ✅ EFECTO SHEEN (brillo deslizante)
     local sheen = New("Frame", {
         Name = "Sheen",
         Size = UDim2.new(2, 0, 2, 0),
@@ -261,7 +259,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- ✅ BORDE ANIMADO
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
@@ -382,12 +379,12 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ✅ SPRINGS (Estilo YARHM - MÁS LENTOS)
-    local MenuPosXScale = Spring.new(0.7, 20, 60, 0.5)  -- Damping más bajo = más lento
-    local MenuPosYScale = Spring.new(1, 18, 60, 0.15)   -- Damping más bajo = más lento
-    local MenuSizeXOffset = Spring.new(1.5, 18, 55, 140)
-    local MenuSizeYOffset = Spring.new(1.5, 18, 55, 42)
-    local MenuCorner = Spring.new(1, 20, 55, 21)
+    -- ✅ CONFIGURACIÓN DE SPRINGS MÁS LENTOS (Baja rigidez = Movimiento suave y pausado)
+    local MenuPosXScale = Spring.new(1.2, 14, 25, 0.5)
+    local MenuPosYScale = Spring.new(1.2, 14, 25, 0.15)
+    local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
+    local MenuSizeYOffset = Spring.new(1.5, 14, 25, 42)
+    local MenuCorner = Spring.new(1.2, 14, 25, 21)
 
     local springing = false
 
@@ -448,6 +445,7 @@ function Library:CreateWindow(hubTitle)
         end)
     end
 
+    -- ✅ EFECTO AL CERRAR: Aparece en el centro y regresa suavemente hacia el botón flotante
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
@@ -456,18 +454,18 @@ function Library:CreateWindow(hubTitle)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
+        local fx, fy = getFloatScalePos()
+        
+        -- Coloca el texto "Open Menu" en el centro de la ventana actual y lo muestra
         closeTextLabel.Position = self.WinMain.Position
         closeTextLabel.Visible = true
         closeTextLabel.TextTransparency = 0
-        Tween(closeTextLabel, 0.15, { TextTransparency = 0 })
 
-        local fx, fy = getFloatScalePos()
-        
-        MenuPosXScale.x = 0.5
+        MenuPosXScale.x = self.WinMain.Position.X.Scale
         MenuPosXScale.v = 0
         MenuPosXScale.target = fx
         
-        MenuPosYScale.x = 0.5
+        MenuPosYScale.x = self.WinMain.Position.Y.Scale
         MenuPosYScale.v = 0
         MenuPosYScale.target = fy
         
@@ -476,7 +474,7 @@ function Library:CreateWindow(hubTitle)
         MenuCorner.target = 21
     end
 
-    -- ✅ RENDER STEP (Animación lenta tipo YARHM)
+    -- ✅ RENDER STEP (Sincronización suave de animaciones)
     RunService.RenderStepped:Connect(function(dt)
         if not self.WinMain then return end
 
@@ -511,7 +509,6 @@ function Library:CreateWindow(hubTitle)
                 local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
                 contentGroup.GroupTransparency = 1 - p
                 
-                -- Cuando está completamente abierto
                 if currW > targetMenuWidth - 10 and not springing then
                     contentGroup.GroupTransparency = 0
                     for _, page in ipairs(self.Pages) do
@@ -534,6 +531,11 @@ function Library:CreateWindow(hubTitle)
             local currY = MenuPosYScale:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             
+            -- El texto "Open Menu" acompaña a la ventana mientras se encoge hacia su destino
+            if not self.winOpen then
+                closeTextLabel.Position = self.WinMain.Position
+            end
+
             if self.winOpen then
                 if math.abs(currW - targetMenuWidth) < 1.5 and 
                    math.abs(currH - targetMenuHeight) < 1.5 and 
@@ -546,8 +548,8 @@ function Library:CreateWindow(hubTitle)
                     self.WinMain.Visible = false
                     self.FloatIcon.Visible = true
                     
-                    Tween(closeTextLabel, 0.1, { TextTransparency = 1 })
-                    task.delay(0.1, function()
+                    Tween(closeTextLabel, 0.15, { TextTransparency = 1 })
+                    task.delay(0.15, function()
                         closeTextLabel.Visible = false
                     end)
                 end
@@ -559,7 +561,7 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ✅ DRAG DEL BOTÓN
+    -- ✅ DRAG DEL BOTÓN Y DE LA BARRA DE TÍTULO
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
