@@ -462,47 +462,57 @@ function Library:CreateWindow(hubTitle)
     end
 
     RunService.RenderStepped:Connect(function(dt)
-    if not self.WinMain then return end
+        if not self.WinMain then return end
 
-    local currW = springW:Update(dt)
-    local currH = springH:Update(dt)
-    local currR = springCorner:Update(dt)
+        local currW = springW:Update(dt)
+        local currH = springH:Update(dt)
+        local currR = springCorner:Update(dt)
 
-    self.WinMain.Size = UDim2.fromOffset(currW, currH)
-    if winCorner then
-        winCorner.CornerRadius = UDim.new(0, currR)
-    end
-
-    -- 🔧 FIX DE OVERFLOW: Anchos dinámicos proporcionales a currW
-    local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
-    local availH = math.max(0, currH - 60)
-    
-    self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
-    self.Sidebar.Position = UDim2.fromOffset(6, 50)
-
-    local contentX = sidebarWidth + 12
-    local contentW = math.max(0, currW - contentX - 10)
-
-    self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
-    self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
-
-    for _, page in ipairs(self.Pages) do
-        page.Size = UDim2.new(1, 0, 1, 0)
-    end
-
-    -- Ocultar todo el contenido si la ventana es más pequeña que el umbral para evitar que se desborde visualmente
-    if self.winOpen then
-        if currW < 300 then
-            contentGroup.Visible = false
-            contentGroup.GroupTransparency = 1
-        else
-            contentGroup.Visible = true
-            local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
-            contentGroup.GroupTransparency = 1 - p
+        self.WinMain.Size = UDim2.fromOffset(currW, currH)
+        if winCorner then
+            winCorner.CornerRadius = UDim.new(0, currR)
         end
-    end
-    -- ... resto de tu código de RenderStepped
 
+        -- 🔧 FIX DE OVERFLOW: Anchos dinámicos proporcionales a currW
+        local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
+        local availH = math.max(0, currH - 60)
+        
+        self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
+        self.Sidebar.Position = UDim2.fromOffset(6, 50)
+
+        local contentX = sidebarWidth + 12
+        local contentW = math.max(0, currW - contentX - 10)
+
+        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
+        self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
+
+        -- ✅ FIX: Ajustar el tamaño de las páginas al ContentArea
+        for _, page in ipairs(self.Pages) do
+            if page and page.Parent == self.ContentArea then
+                page.Size = UDim2.new(1, 0, 1, -8)  -- Dejar un pequeño margen inferior
+                -- Mantener el CanvasSize automático
+                if page:FindFirstChildOfClass("UIListLayout") then
+                    local layout = page:FindFirstChildOfClass("UIListLayout")
+                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                        if page then
+                            page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 15)
+                        end
+                    end)
+                end
+            end
+        end
+
+        -- Ocultar todo el contenido si la ventana es más pequeña que el umbral para evitar que se desborde visualmente
+        if self.winOpen then
+            if currW < 300 then
+                contentGroup.Visible = false
+                contentGroup.GroupTransparency = 1
+            else
+                contentGroup.Visible = true
+                local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
+                contentGroup.GroupTransparency = 1 - p
+            end
+        end
 
         if self.transitioning then
             local currX = springX:Update(dt)
@@ -599,7 +609,6 @@ function Library:CreateWindow(hubTitle)
                 self.dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
 
-                -- FIX: Recalcular y sincronizar posición en escala cuando se termina de arrastrar
                 local parentSize = self.GUI.AbsoluteSize
                 if parentSize.X > 0 and parentSize.Y > 0 then
                     local newScaleX = currentX / parentSize.X
@@ -637,7 +646,6 @@ function Library:CreateWindow(hubTitle)
         UserInputService.InputEnded:Connect(function(i)
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
-                -- FIX: Convertir a escala al terminar el arrastre
                 local parentSize = self.GUI.AbsoluteSize
                 if parentSize.X > 0 and parentSize.Y > 0 then
                     local absPos = target.AbsolutePosition
@@ -839,12 +847,13 @@ function Library:CreateTab(name, iconId)
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
-    Pad(page, 8, 16, 8, 8)
+    Pad(page, 8, 8, 8, 8)  -- Reducido el padding inferior para evitar desbordes
 
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
+    -- ✅ FIX: Mantener el CanvasSize actualizado correctamente
     pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
+        if page and page.Parent then
+            page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 10)
+        end
     end)
 
     tabBtn.MouseButton1Click:Connect(function()
@@ -861,6 +870,10 @@ function Library:CreateTab(name, iconId)
         tabStroke.Transparency = 0
         page.Visible = true
         self.ActivePage = page
+        
+        -- ✅ FIX: Asegurar que el contenido se ajuste al tamaño actual
+        task.wait(0.05)
+        page.CanvasPosition = Vector2.zero
     end)
 
     if not self.ActivePage then
