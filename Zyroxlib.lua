@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - YARHM Style) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - YARHM Style Complete) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -119,7 +119,6 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
-    -- ✅ BOTÓN FLOTANTE (se mueve)
     self.FloatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -184,7 +183,6 @@ function Library:CreateWindow(hubTitle)
 
     local targetMenuWidth, targetMenuHeight = 620, 360
 
-    -- ✅ VENTANA PRINCIPAL
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -210,8 +208,60 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
-    -- ... (el resto de la UI decorativa es igual) ...
+    -- ✅ EFECTO DE FONDO GRADIENTE ANIMADO
+    local bgGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
+            ColorSequenceKeypoint.new(0.45, Color3.fromRGB(16, 66, 132)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 38))
+        }),
+        Rotation = 45,
+        Parent = winInner
+    })
 
+    task.spawn(function()
+        local t = 0
+        while bgGradient and bgGradient.Parent do
+            t = t + 0.02
+            bgGradient.Rotation = 45 + math.sin(t) * 4
+            bgGradient.Offset = Vector2.new(math.sin(t * 0.6) * 0.04, math.cos(t * 0.6) * 0.04)
+            task.wait(0.03)
+        end
+    end)
+
+    -- ✅ EFECTO SHEEN (brillo deslizante)
+    local sheen = New("Frame", {
+        Name = "Sheen",
+        Size = UDim2.new(2, 0, 2, 0),
+        Position = UDim2.new(-0.5, 0, -0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(120, 190, 255),
+        BackgroundTransparency = 0.92,
+        BorderSizePixel = 0,
+        ZIndex = 1,
+        Parent = winInner
+    })
+    local sheenGradient = New("UIGradient", {
+        Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.42, 1),
+            NumberSequenceKeypoint.new(0.5, 0.35),
+            NumberSequenceKeypoint.new(0.58, 1),
+            NumberSequenceKeypoint.new(1, 1)
+        }),
+        Rotation = 45,
+        Offset = Vector2.new(-1, -1),
+        Parent = sheen
+    })
+
+    task.spawn(function()
+        while sheenGradient and sheenGradient.Parent do
+            sheenGradient.Offset = Vector2.new(-1, -1)
+            Tween(sheenGradient, 2.2, { Offset = Vector2.new(1, 1) }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+            task.wait(4.5)
+        end
+    end)
+
+    -- ✅ BORDE ANIMADO
     local borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
@@ -332,17 +382,13 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ✅ SPRINGS (Sistema YARHM)
-    -- Posición del menú (usando springs para animación suave)
-    local MenuPosXScale = Spring.new(0.7, 30, 100, 0.5)
-    local MenuPosYScale = Spring.new(1, 25, 100, 0.15)
-    local MenuSizeXOffset = Spring.new(1.5, 25, 100, 140)
-    local MenuSizeYOffset = Spring.new(1.5, 25, 100, 42)
-    local MenuCorner = Spring.new(1, 25, 100, 21)
+    -- ✅ SPRINGS (Estilo YARHM - MÁS LENTOS)
+    local MenuPosXScale = Spring.new(0.7, 20, 60, 0.5)  -- Damping más bajo = más lento
+    local MenuPosYScale = Spring.new(1, 18, 60, 0.15)   -- Damping más bajo = más lento
+    local MenuSizeXOffset = Spring.new(1.5, 18, 55, 140)
+    local MenuSizeYOffset = Spring.new(1.5, 18, 55, 42)
+    local MenuCorner = Spring.new(1, 20, 55, 21)
 
-    -- ✅ Guardar última posición del botón (como YARHM)
-    local lastButtonPos = UDim2.new(0.5, 0, 0, 50)
-    local menuClosedPos = UDim2.new(0.5, 0, 0.15, 0)
     local springing = false
 
     local function getFloatScalePos()
@@ -355,18 +401,6 @@ function Library:CreateWindow(hubTitle)
         return centerX / parentSize.X, centerY / parentSize.Y
     end
 
-    -- ✅ FUNCIONES DE ANIMACIÓN (Estilo YARHM)
-    local function setSpringPosGoal(udim2)
-        MenuPosXScale:SetGoal(udim2.X.Scale)
-        MenuPosYScale:SetGoal(udim2.Y.Scale)
-    end
-
-    local function setSpringSizeGoal(udim2)
-        MenuSizeXOffset:SetGoal(udim2.X.Offset)
-        MenuSizeYOffset:SetGoal(udim2.Y.Offset)
-        MenuCorner:SetGoal(21)
-    end
-
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
@@ -375,16 +409,11 @@ function Library:CreateWindow(hubTitle)
         closeTextLabel.Visible = false
         closeTextLabel.TextTransparency = 1
 
-        -- ✅ Obtener posición actual del botón
         local fx, fy = getFloatScalePos()
-        
-        -- ✅ Guardar posición para restaurar después
-        lastButtonPos = UDim2.new(fx, 0, fy, 0)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         
-        -- ✅ Usar la posición del botón como punto de partida
         MenuPosXScale.x = fx
         MenuPosXScale.v = 0
         MenuPosXScale.target = 0.5
@@ -432,7 +461,6 @@ function Library:CreateWindow(hubTitle)
         closeTextLabel.TextTransparency = 0
         Tween(closeTextLabel, 0.15, { TextTransparency = 0 })
 
-        -- ✅ Volver a la posición del botón
         local fx, fy = getFloatScalePos()
         
         MenuPosXScale.x = 0.5
@@ -448,7 +476,7 @@ function Library:CreateWindow(hubTitle)
         MenuCorner.target = 21
     end
 
-    -- ✅ RENDER STEP (Estilo YARHM)
+    -- ✅ RENDER STEP (Animación lenta tipo YARHM)
     RunService.RenderStepped:Connect(function(dt)
         if not self.WinMain then return end
 
@@ -461,7 +489,6 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        -- ✅ FIX: Calcular tamaños dinámicamente
         local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
         local availH = math.max(0, currH - 60)
         
@@ -475,20 +502,25 @@ function Library:CreateWindow(hubTitle)
         self.ContentArea.Size = UDim2.fromOffset(contentW, contentH)
         self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
 
-        -- ✅ Solo mostrar contenido cuando la ventana esté completamente abierta
-        if self.winOpen and currW > 300 then
-            contentGroup.Visible = true
-            local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
-            contentGroup.GroupTransparency = 1 - p
-            
-            if currW > targetMenuWidth - 10 and not springing then
-                contentGroup.GroupTransparency = 0
-                for _, page in ipairs(self.Pages) do
-                    if page and page.Parent == self.ContentArea then
-                        page.Size = UDim2.fromOffset(contentW, contentH - 8)
-                        local layout = page:FindFirstChildOfClass("UIListLayout")
-                        if layout then
-                            page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+        if self.winOpen then
+            if currW < 300 then
+                contentGroup.Visible = false
+                contentGroup.GroupTransparency = 1
+            else
+                contentGroup.Visible = true
+                local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
+                contentGroup.GroupTransparency = 1 - p
+                
+                -- Cuando está completamente abierto
+                if currW > targetMenuWidth - 10 and not springing then
+                    contentGroup.GroupTransparency = 0
+                    for _, page in ipairs(self.Pages) do
+                        if page and page.Parent == self.ContentArea then
+                            page.Size = UDim2.fromOffset(contentW, contentH - 8)
+                            local layout = page:FindFirstChildOfClass("UIListLayout")
+                            if layout then
+                                page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                            end
                         end
                     end
                 end
@@ -497,13 +529,11 @@ function Library:CreateWindow(hubTitle)
             contentGroup.Visible = false
         end
 
-        -- ✅ Actualizar posición
         if springing then
             local currX = MenuPosXScale:Update(dt)
             local currY = MenuPosYScale:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             
-            -- ✅ Verificar si la animación ha terminado
             if self.winOpen then
                 if math.abs(currW - targetMenuWidth) < 1.5 and 
                    math.abs(currH - targetMenuHeight) < 1.5 and 
@@ -529,7 +559,7 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ✅ DRAG DEL BOTÓN (Estilo YARHM)
+    -- ✅ DRAG DEL BOTÓN
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -588,11 +618,6 @@ function Library:CreateWindow(hubTitle)
                     local newScaleX = currentX / parentSize.X
                     local newScaleY = currentY / parentSize.Y
                     target.Position = UDim2.new(newScaleX, 0, newScaleY, 0)
-                    
-                    -- ✅ Guardar la última posición del botón (como YARHM)
-                    if target == self.FloatIcon then
-                        lastButtonPos = UDim2.new(newScaleX, 0, newScaleY, 0)
-                    end
                 end
 
                 local duration = tick() - inputBeganTime
@@ -627,9 +652,6 @@ function Library:CreateWindow(hubTitle)
                     local centerX = absPos.X + (absSize.X / 2)
                     local centerY = absPos.Y + (absSize.Y / 2)
                     target.Position = UDim2.new(centerX / parentSize.X, 0, centerY / parentSize.Y, 0)
-                    if target == self.FloatIcon then
-                        lastButtonPos = target.Position
-                    end
                 end
             end
         end)
@@ -652,8 +674,6 @@ function Library:CreateWindow(hubTitle)
 
     return self
 end
-
--- ... (el resto de funciones Notify, CreateTab, etc. son iguales) ...
 
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
