@@ -1,6 +1,9 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/CodeVoult1.lib/refs/heads/main/Zyroxlib.lua?v=" .. math.random(1,999999)))()
 
-local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>')
+-- Integración del Webhook enviándolo como 2do argumento a CreateWindow:
+local WebhookURL = "https://discord.com/api/webhooks/1533617917957116016/emQOacmhf3HeRVRFeEv_V0-R_UsotzODLG4aK77KL_DL3bjHjjPPKeMmhEFnU-3A8B2W"
+
+local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>', WebhookURL)
 
 -- ============================================================
 --   TABS (iguales al script grande)
@@ -162,11 +165,6 @@ end)
 -- ============================================================
 local AnimsSec = AnimsTab:CreateSection("Animaciones By Zyrox")
 
--- Aquí puedes poner un botón si tu lib lo soporta:
--- AnimsSec:AddButton("EJECUTAR SCRIPT", function()
---     loadstring(game:HttpGet("https://pastebin.com/raw/B0AFG2tH"))()
--- end)
-
 -- ============================================================
 --   CAMERA TAB
 -- ============================================================
@@ -204,6 +202,8 @@ SizeSec:AddSlider("Ancho/Escala del Hub", 80, 150, 100, function(v)
     Window:SetScale(v / 100) -- Convertir de 80-150 a 0.8-1.5
 end)
 
+local GhostSec = SettingsTab:CreateSection("Ajustes Visuales del Logo")
+
 -- 2) Esconder / Mostrar Logo
 GhostSec:AddToggle("Modo Invisible (Esconder Logo)", false, function(v)
     Window:SetLogoVisible(not v) -- Si activa 'Invisible', ocultamos el logo (false)
@@ -213,7 +213,6 @@ end)
 GhostSec:AddToggle("Bloquear Logo (Estatico)", false, function(v)
     Window:SetLogoLocked(v)
 end)
-
 
 local OptSec = SettingsTab:CreateSection("Optimizacion de Latencia")
 
