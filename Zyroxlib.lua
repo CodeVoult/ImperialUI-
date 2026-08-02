@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Precise Docking Fix - Corrected Overflow) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - Mobile Rendering) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -404,11 +404,15 @@ function Library:CreateWindow(hubTitle)
 
     self.transitioning = false
     self.dragging = false
+    
+    -- ✅ NUEVO: Variable para controlar el redimensionamiento
+    self.contentReady = false
 
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
         self.transitioning = true
+        self.contentReady = false
 
         closeTextLabel.Visible = false
         closeTextLabel.TextTransparency = 1
@@ -433,6 +437,12 @@ function Library:CreateWindow(hubTitle)
                 page.CanvasPosition = Vector2.zero
             end
         end)
+        
+        -- ✅ Forzar actualización después de la animación
+        task.delay(0.6, function()
+            self.contentReady = true
+            self:RefreshPages()
+        end)
     end
 
     local function closeWin()
@@ -440,6 +450,7 @@ function Library:CreateWindow(hubTitle)
         self.winOpen = false
         self.transitioning = true
         self.dragging = false
+        self.contentReady = false
 
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
@@ -459,6 +470,30 @@ function Library:CreateWindow(hubTitle)
         springW.target = 140
         springH.target = 42
         springCorner.target = 21
+    end
+
+    -- ✅ NUEVO: Función para refrescar páginas
+    function self:RefreshPages()
+        if not self.ContentArea then return end
+        
+        local contentW = self.ContentArea.AbsoluteSize.X
+        local contentH = self.ContentArea.AbsoluteSize.Y
+        
+        for _, page in ipairs(self.Pages) do
+            if page and page.Parent == self.ContentArea then
+                page.Size = UDim2.fromOffset(contentW, contentH - 8)
+                local layout = page:FindFirstChildOfClass("UIListLayout")
+                if layout then
+                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                        if page then
+                            page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                        end
+                    end)
+                    -- Forzar actualización
+                    page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                end
+            end
+        end
     end
 
     RunService.RenderStepped:Connect(function(dt)
@@ -482,27 +517,28 @@ function Library:CreateWindow(hubTitle)
 
         local contentX = sidebarWidth + 12
         local contentW = math.max(0, currW - contentX - 10)
+        local contentH = math.max(0, currH - 56)
 
-        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
+        self.ContentArea.Size = UDim2.fromOffset(contentW, contentH)
         self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
 
-        -- ✅ FIX: Ajustar el tamaño de las páginas al ContentArea
-        for _, page in ipairs(self.Pages) do
-            if page and page.Parent == self.ContentArea then
-                page.Size = UDim2.new(1, 0, 1, -8)  -- Dejar un pequeño margen inferior
-                -- Mantener el CanvasSize automático
-                if page:FindFirstChildOfClass("UIListLayout") then
+        -- ✅ FIX DEFINITIVO: Ajustar páginas SOLO cuando la ventana esté completamente cargada
+        if self.winOpen and self.contentReady and currW > 300 then
+            for _, page in ipairs(self.Pages) do
+                if page and page.Parent == self.ContentArea then
+                    -- Forzar el tamaño exacto del ContentArea
+                    page.Size = UDim2.fromOffset(contentW, contentH - 8)
+                    
+                    -- Actualizar CanvasSize
                     local layout = page:FindFirstChildOfClass("UIListLayout")
-                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                        if page then
-                            page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 15)
-                        end
-                    end)
+                    if layout then
+                        page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                    end
                 end
             end
         end
 
-        -- Ocultar todo el contenido si la ventana es más pequeña que el umbral para evitar que se desborde visualmente
+        -- Ocultar todo el contenido si la ventana es más pequeña que el umbral
         if self.winOpen then
             if currW < 300 then
                 contentGroup.Visible = false
@@ -530,6 +566,8 @@ function Library:CreateWindow(hubTitle)
                 and math.abs(springW.v) < 2 then
                 self.transitioning = false
                 self.WinMain.Rotation = 0
+                self.contentReady = true
+                self:RefreshPages()
             end
         else
             springX:Update(dt)
@@ -847,9 +885,9 @@ function Library:CreateTab(name, iconId)
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
-    Pad(page, 8, 8, 8, 8)  -- Reducido el padding inferior para evitar desbordes
+    Pad(page, 8, 8, 8, 8)
 
-    -- ✅ FIX: Mantener el CanvasSize actualizado correctamente
+    -- ✅ FIX: Actualizar CanvasSize correctamente
     pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         if page and page.Parent then
             page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 10)
@@ -871,9 +909,15 @@ function Library:CreateTab(name, iconId)
         page.Visible = true
         self.ActivePage = page
         
-        -- ✅ FIX: Asegurar que el contenido se ajuste al tamaño actual
-        task.wait(0.05)
-        page.CanvasPosition = Vector2.zero
+        -- ✅ FIX: Asegurar que la página se ajuste correctamente
+        task.wait(0.1)
+        if page and page.Parent then
+            local layout = page:FindFirstChildOfClass("UIListLayout")
+            if layout then
+                page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+            end
+            page.CanvasPosition = Vector2.zero
+        end
     end)
 
     if not self.ActivePage then
