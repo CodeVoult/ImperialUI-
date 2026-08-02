@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - Slow Animations & Close Effect) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES (Ajustado para movimiento suave y lento)
+-- 1. MOTOR DE RESORTES
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -66,7 +66,11 @@ local function Cor(obj, r) return New("UICorner", { CornerRadius = UDim.new(0, r
 local function Stk(obj, col, th) return New("UIStroke", { Color = col or T.border, Thickness = th or 1.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = obj }) end
 local function List(obj, dir, pad) return New("UIListLayout", { FillDirection = dir or Enum.FillDirection.Vertical, Padding = UDim.new(0, pad or 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = obj }) end
 local function Pad(obj, t, b, l, r) New("UIPadding", { PaddingTop = UDim.new(0, t or 0), PaddingBottom = UDim.new(0, b or 0), PaddingLeft = UDim.new(0, l or 0), PaddingRight = UDim.new(0, r or 0), Parent = obj }) end
-local function Tween(obj, t, props, style, dir) local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props) anim:Play() return anim end
+local function Tween(obj, t, props, style, dir) 
+    local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props) 
+    anim:Play() 
+    return anim 
+end
 
 local function Shadow(obj, transparency, expand)
     return New("ImageLabel", {
@@ -208,6 +212,7 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
+    -- EFECTO DE FONDO GRADIENTE ANIMADO
     local bgGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
@@ -379,7 +384,7 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ✅ CONFIGURACIÓN DE SPRINGS MÁS LENTOS (Baja rigidez = Movimiento suave y pausado)
+    -- ✅ CONFIGURACIÓN DE SPRINGS (Animación lenta y suave)
     local MenuPosXScale = Spring.new(1.2, 14, 25, 0.5)
     local MenuPosYScale = Spring.new(1.2, 14, 25, 0.15)
     local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
@@ -445,7 +450,6 @@ function Library:CreateWindow(hubTitle)
         end)
     end
 
-    -- ✅ EFECTO AL CERRAR: Aparece en el centro y regresa suavemente hacia el botón flotante
     local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
@@ -456,7 +460,6 @@ function Library:CreateWindow(hubTitle)
 
         local fx, fy = getFloatScalePos()
         
-        -- Coloca el texto "Open Menu" en el centro de la ventana actual y lo muestra
         closeTextLabel.Position = self.WinMain.Position
         closeTextLabel.Visible = true
         closeTextLabel.TextTransparency = 0
@@ -474,7 +477,6 @@ function Library:CreateWindow(hubTitle)
         MenuCorner.target = 21
     end
 
-    -- ✅ RENDER STEP (Sincronización suave de animaciones)
     RunService.RenderStepped:Connect(function(dt)
         if not self.WinMain then return end
 
@@ -531,7 +533,6 @@ function Library:CreateWindow(hubTitle)
             local currY = MenuPosYScale:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             
-            -- El texto "Open Menu" acompaña a la ventana mientras se encoge hacia su destino
             if not self.winOpen then
                 closeTextLabel.Position = self.WinMain.Position
             end
@@ -561,7 +562,6 @@ function Library:CreateWindow(hubTitle)
         if not self.winOpen then openWin() end
     end)
 
-    -- ✅ DRAG DEL BOTÓN Y DE LA BARRA DE TÍTULO
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -856,6 +856,7 @@ function Library:CreateTab(name, iconId)
         end
     end)
 
+    -- ✅ ANIMACIÓN ELÁSTICA AL CAMBIAR DE TAB (ESTILO YARHM)
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
@@ -868,7 +869,20 @@ function Library:CreateTab(name, iconId)
         Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
+        
+        -- ✅ EFECTO ELASTICO: La página "cae" desde arriba con rebote
         page.Visible = true
+        
+        -- Posición inicial: fuera de la pantalla (arriba)
+        page.Position = UDim2.new(0, 0, -0.1, 0)
+        page.Size = UDim2.new(1, 0, 1.2, 0)
+        
+        -- Animación elástica a la posición final (ESTILO YARHM)
+        Tween(page, 0.6, {
+            Position = UDim2.new(0, 0, 0, 0),
+            Size = UDim2.new(1, 0, 1, 0)
+        }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        
         self.ActivePage = page
         
         task.wait(0.1)
