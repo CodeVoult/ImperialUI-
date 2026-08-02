@@ -424,6 +424,9 @@ function Library:CreateWindow(hubTitle)
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
+        for _, page in ipairs(self.Pages) do
+    page.CanvasPosition = Vector2.zero
+end
 
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
@@ -819,10 +822,7 @@ function Library:CreateTab(name, iconId)
 
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
-    end)
-
+   
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
