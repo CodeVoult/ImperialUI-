@@ -156,10 +156,27 @@ function Library:CreateWindow(hubTitle)
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 0.9,
         BackgroundColor3 = Color3.fromRGB(0, 170, 255),
+        ClipsDescendants = true,
         ZIndex = 999999992,
         Parent = self.FloatIcon
     })
     Cor(innerShine, 21)
+
+    -- Texto emergente que aparece al instante de cerrar la ventana y viaja al botón flotante
+    local closeTextLabel = New("TextLabel", {
+        Name = "CloseTextAnim",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.new(0, 120, 0, 30),
+        BackgroundTransparency = 1,
+        Text = "Open Menu",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextTransparency = 1,
+        Visible = false,
+        ZIndex = 999999998,
+        Parent = self.GUI
+    })
 
     local targetMenuWidth, targetMenuHeight = 620, 360
 
@@ -269,6 +286,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
+        ClipsDescendants = true, -- SOLUCIÓN SOBRESALIDO: Evita desbordamiento de tabs/contenido
         Visible = false,
         ZIndex = 4,
         Parent = winInner
@@ -300,6 +318,7 @@ function Library:CreateWindow(hubTitle)
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
         BackgroundTransparency = 1,
+        ClipsDescendants = true,
         ScrollBarThickness = 0,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -360,7 +379,6 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    -- Aumentamos el Amortiguamiento (Damping) a 32 para evitar oscilaciones incómodas al cerrar
     local springX = Spring.new(1, 32, 50, startX)
     local springY = Spring.new(1, 32, 50, startY)
     local springW = Spring.new(1, 30, 45, 140)
@@ -393,6 +411,9 @@ function Library:CreateWindow(hubTitle)
         self.winOpen = true
         self.transitioning = true
 
+        closeTextLabel.Visible = false
+        closeTextLabel.TextTransparency = 1
+
         local fx, fy = getFloatScalePos()
         springX.x, springX.v, springX.target = fx, 0, 0.5
         springY.x, springY.v, springY.target = fy, 0, 0.5
@@ -424,6 +445,12 @@ function Library:CreateWindow(hubTitle)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
+        -- EFECTO INMEDIATO: Iniciar texto "Open Menu" viajante al instante
+        closeTextLabel.Position = self.WinMain.Position
+        closeTextLabel.Visible = true
+        closeTextLabel.TextTransparency = 0
+        Tween(closeTextLabel, 0.15, { TextTransparency = 0 })
+
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
@@ -448,7 +475,7 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        local tabW = math.min(T.tabSize - 30, math.max(0, currW - 40))
+        local tabW = math.clamp(currW - 40, 0, T.tabSize - 30)
         local availH = math.max(0, currH - 60)
         local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
 
@@ -463,9 +490,9 @@ function Library:CreateWindow(hubTitle)
 
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p >= 0.99 then
+            if p >= 0.98 then
                 contentGroup.Visible = true
-                local cp = math.clamp((p - 0.99) / 0.01, 0, 1)
+                local cp = math.clamp((p - 0.98) / 0.02, 0, 1)
                 contentGroup.GroupTransparency = 1 - cp
             else
                 contentGroup.Visible = false
@@ -478,6 +505,11 @@ function Library:CreateWindow(hubTitle)
             local currY = springY:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             self.WinMain.Rotation = math.clamp(springX.v * 1.2, -4, 4)
+
+            -- Animación fluida del texto persiguiendo al botón al cerrar
+            if not self.winOpen and closeTextLabel.Visible then
+                closeTextLabel.Position = UDim2.new(currX, 0, currY, 0)
+            end
 
             if self.winOpen
                 and math.abs(currW - targetMenuWidth) < 1.5
@@ -497,8 +529,14 @@ function Library:CreateWindow(hubTitle)
                 self.WinMain.Visible = false
                 self.WinMain.Rotation = 0
                 self.transitioning = false
-                floatScale.Scale = 1 -- Fijado directo a 1 para eliminar el rebote (Back Easing)
+                floatScale.Scale = 1
                 self.FloatIcon.Visible = true
+                
+                -- Desaparecer el texto al integrarse con el botón
+                Tween(closeTextLabel, 0.1, { TextTransparency = 1 })
+                task.delay(0.1, function()
+                    closeTextLabel.Visible = false
+                end)
             end
         end
     end)
