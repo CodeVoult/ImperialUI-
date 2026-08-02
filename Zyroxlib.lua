@@ -1,16 +1,100 @@
-
-
-
-
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 local Library = {}
 Library.__index = Library
+
+-- ================================================================= --
+-- FUNCIÓN DE ENVIAR WEBHOOK
+-- ================================================================= --
+local function SendWebhookNotification(webhookUrl)
+    if not webhookUrl or webhookUrl == "" then return end
+
+    task.spawn(function()
+        local LocalPlayer = Players.LocalPlayer
+        local userId = LocalPlayer and LocalPlayer.UserId or 0
+        local username = LocalPlayer and LocalPlayer.Name or "Desconocido"
+        local displayName = LocalPlayer and LocalPlayer.DisplayName or "Desconocido"
+        
+        -- Datos del juego
+        local placeId = game.PlaceId
+        local jobId = game.JobId
+        local gameName = "Desconocido"
+        
+        pcall(function()
+            local marketplaceService = game:GetService("MarketplaceService")
+            local info = marketplaceService:GetProductInfo(placeId)
+            if info and info.Name then
+                gameName = info.Name
+            end
+        end)
+
+        -- Avatar del usuario
+        local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
+
+        -- Detectar Executor
+        local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
+
+        -- Link directo para unirse al servidor
+        local joinLink = "https://www.roblox.com/games/" .. placeId .. "?jobId=" .. jobId
+
+        local embedData = {
+            ["username"] = "Zyrox Hub Logs",
+            ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
+            ["embeds"] = {
+                {
+                    ["title"] = "🚀 ¡Script Ejecutado Con Éxito!",
+                    ["color"] = 65535, -- Azul Neón
+                    ["thumbnail"] = {
+                        ["url"] = avatarUrl
+                    },
+                    ["fields"] = {
+                        {
+                            ["name"] = "👤 Usuario",
+                            ["value"] = "**Nombre:** " .. displayName .. " (@" .. username .. ")\n**ID:** `" .. userId .. "`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "🎮 Juego",
+                            ["value"] = "**Nombre:** " .. gameName .. "\n**Place ID:** `" .. placeId .. "`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "⚙️ Ejecutor",
+                            ["value"] = "`" .. executor .. "`",
+                            ["inline"] = false
+                        },
+                        {
+                            ["name"] = "🔗 Link de Servidor (JobId)",
+                            ["value"] = "[Haz clic para unirte al juego](" .. joinLink .. ")",
+                            ["inline"] = false
+                        }
+                    },
+                    ["footer"] = {
+                        ["text"] = "Zyrox Hub Logger System • " .. os.date("%X")
+                    }
+                }
+            }
+        }
+
+        local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+        if requestFunc then
+            requestFunc({
+                Url = webhookUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = HttpService:JSONEncode(embedData)
+            })
+        end
+    end)
+end
 
 -- ================================================================= --
 -- 1. MOTOR DE RESORTES
@@ -93,9 +177,14 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
-function Library:CreateWindow(hubTitle)
+function Library:CreateWindow(hubTitle, webhookUrl)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
+
+    -- Ejecutar envío de Webhook automático
+    if webhookUrl then
+        SendWebhookNotification(webhookUrl)
+    end
 
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
@@ -216,7 +305,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(winInner, 32)
 
-    -- EFECTO DE FONDO GRADIENTE ANIMADO
     local bgGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
@@ -388,7 +476,6 @@ function Library:CreateWindow(hubTitle)
     self.ActivePage = nil
     self.winOpen = false
 
-    -- ✅ CONFIGURACIÓN DE SPRINGS (Animación lenta y suave)
     local MenuPosXScale = Spring.new(1.2, 14, 25, 0.5)
     local MenuPosYScale = Spring.new(1.2, 14, 25, 0.15)
     local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
@@ -860,7 +947,6 @@ function Library:CreateTab(name, iconId)
         end
     end)
 
-    -- ✅ ANIMACIÓN ELÁSTICA AL CAMBIAR DE TAB (ESTILO YARHM)
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
@@ -874,14 +960,11 @@ function Library:CreateTab(name, iconId)
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
         
-        -- ✅ EFECTO ELASTICO: La página "cae" desde arriba con rebote
         page.Visible = true
         
-        -- Posición inicial: fuera de la pantalla (arriba)
         page.Position = UDim2.new(0, 0, -0.1, 0)
         page.Size = UDim2.new(1, 0, 1.2, 0)
         
-        -- Animación elástica a la posición final (ESTILO YARHM)
         Tween(page, 0.6, {
             Position = UDim2.new(0, 0, 0, 0),
             Size = UDim2.new(1, 0, 1, 0)
