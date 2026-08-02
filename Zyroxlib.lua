@@ -263,6 +263,9 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
+    -- ============================================================ --
+    -- FIX 1: CanvasGroup con ClipsDescendants=true --
+    -- ============================================================ --
     local contentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
         Size = UDim2.new(1, 0, 1, 0),
@@ -270,6 +273,7 @@ function Library:CreateWindow(hubTitle)
         GroupTransparency = 1,
         BorderSizePixel = 0,
         Visible = false,
+        ClipsDescendants = true,  -- 👈 FIX: recorta hijos que se desbordan
         ZIndex = 4,
         Parent = winInner
     })
@@ -296,6 +300,9 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
+    -- ============================================================ --
+    -- FIX 2: Sidebar con ClipsDescendants=true --
+    -- ============================================================ --
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -304,6 +311,7 @@ function Library:CreateWindow(hubTitle)
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,  -- 👈 FIX: recorta tabs que se salgan
         ZIndex = 3,
         Parent = contentGroup
     })
@@ -360,9 +368,6 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    -- ============================================================ --
-    -- SPRINGS: parámetros ajustados para feel más elástico (YARHM-like) --
-    -- ============================================================ --
     local springX      = Spring.new(1, 28, 90, startX)
     local springY      = Spring.new(1, 28, 90, startY)
     local springW      = Spring.new(1, 26, 80, 140)
@@ -407,10 +412,10 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.BackgroundTransparency = T.bgTrans
 
         -- ============================================================ --
-        -- FIX: igual que YARHM, dejamos el contentGroup Visible
-        -- y solo animamos GroupTransparency en RenderStepped --
+        -- FIX 3: NO mostramos el contentGroup al inicio del open. --
+        -- Se mostrará cuando el frame tenga espacio suficiente. --
         -- ============================================================ --
-        contentGroup.Visible = true
+        contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
 
@@ -427,12 +432,7 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- ============================================================ --
-        -- FIX: NO ponemos contentGroup.Visible = false aquí.
-        -- Solo dejamos que la transparencia se anime y al final
-        -- del cierre se oculta en RenderStepped. --
-        -- ============================================================ --
-
+        -- Solo animamos la transparencia; se oculta al final en RenderStepped
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
@@ -471,20 +471,25 @@ function Library:CreateWindow(hubTitle)
         end
 
         -- ============================================================ --
-        -- FIX: lógica de contentGroup reescrita al estilo YARHM.
-        -- Apertura: fade-in en el último 30% del progreso.
-        -- Cierre:   fade-out en el primer 30% del progreso
-        --           y se oculta al final. --
+        -- FIX 4: Mostrar contenido solo cuando hay espacio suficiente. --
+        -- Apertura: aparece en >= 60% y hace fade-in. --
+        -- Cierre:   fade-out en el primer 30% y se oculta al final. --
         -- ============================================================ --
         local progress = math.clamp(
             (currW - 140) / (targetMenuWidth - 140), 0, 1
         )
 
         if self.winOpen then
-            contentGroup.Visible = true
-            local fadeIn = math.clamp((progress - 0.7) / 0.3, 0, 1)
-            contentGroup.GroupTransparency = 1 - fadeIn
+            if progress >= 0.6 then
+                contentGroup.Visible = true
+                local fadeIn = math.clamp((progress - 0.6) / 0.4, 0, 1)
+                contentGroup.GroupTransparency = 1 - fadeIn
+            else
+                contentGroup.Visible = false
+                contentGroup.GroupTransparency = 1
+            end
         else
+            contentGroup.Visible = true
             local fadeOut = math.clamp(progress / 0.3, 0, 1)
             contentGroup.GroupTransparency = fadeOut
             if progress <= 0.01 then
@@ -1316,7 +1321,7 @@ function Library:CreateTab(name, iconId)
                 Parent = svBox
             })
             Cor(pickerCursor, 6)
-    Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+            Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
             local hueBar = New("TextButton", {
                 Position = UDim2.new(0, 174, 0, 44),
