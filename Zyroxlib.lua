@@ -1,4 +1,3 @@
-
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
 
 local Players = game:GetService("Players")
@@ -10,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES
+-- 1. MOTOR DE RESORTES (Spring Engine)
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -270,7 +269,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
-        Visible = false,
+        Visible = true,
         ZIndex = 4,
         Parent = winInner
     })
@@ -361,11 +360,12 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    local springX = Spring.new(1, 24, 45, startX)
-    local springY = Spring.new(1, 24, 45, startY)
-    local springW = Spring.new(1, 22, 40, 140)
-    local springH = Spring.new(1, 22, 40, 42)
-    local springCorner = Spring.new(1, 28, 55, 21)
+    -- Parámetros ajustados al estilo elástico de YARHM
+    local springX = Spring.new(1, 22, 50, startX)
+    local springY = Spring.new(1, 22, 50, startY)
+    local springW = Spring.new(1, 20, 45, 140)
+    local springH = Spring.new(1, 20, 45, 42)
+    local springCorner = Spring.new(1, 24, 60, 21)
 
     local function getFloatScalePos()
         local parentSize = self.GUI.AbsoluteSize
@@ -402,15 +402,7 @@ function Library:CreateWindow(hubTitle)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
-        task.delay(0.35, function()
-    for _, page in ipairs(self.Pages) do
-        page.CanvasPosition = Vector2.zero
-    end
-end)
-        self.WinMain.BackgroundTransparency = T.bgTrans
-        
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
+        contentGroup.Visible = true
         borderStroke.Transparency = 0.2
     end
 
@@ -419,9 +411,6 @@ end)
         self.winOpen = false
         self.transitioning = true
         self.dragging = false
-
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
 
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
@@ -456,23 +445,14 @@ end)
 
         self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
         self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
+        
         for _, page in ipairs(self.Pages) do
-    page.Size = UDim2.new(1,0,1,0)
-end
+            page.Size = UDim2.new(1, 0, 1, 0)
+        end
 
-        if self.winOpen then
-    local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-
-    if p >= 0.99 then
-        contentGroup.Visible = true
-
-        local cp = math.clamp((p - 0.99) / 0.01, 0, 1)
-        contentGroup.GroupTransparency = 1 - cp
-    else
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
-    end
-end
+        -- ANIMACIÓN ESTILO YARHM DE TRANSPARENCIA PROGRESIVA
+        local progress = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
+        contentGroup.GroupTransparency = 1 - progress
 
         if self.transitioning then
             local currX = springX:Update(dt)
@@ -492,6 +472,7 @@ end
             springY:Update(dt)
         end
 
+        -- Al encogerse completamente en el cierre:
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
             if self.WinMain.Visible then
                 self.WinMain.Visible = false
@@ -778,14 +759,11 @@ function Library:CreateTab(name, iconId)
     })
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
-Pad(page, 8, 16, 8, 8)
+    Pad(page, 8, 16, 8, 8)
 
-page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
-end)
-
+    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
+    end)
 
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
