@@ -9,7 +9,7 @@ local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES (Spring Engine)
+-- 1. MOTOR DE RESORTES
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -269,7 +269,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
-        Visible = true,
+        Visible = false,
         ZIndex = 4,
         Parent = winInner
     })
@@ -360,12 +360,14 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    -- Parámetros ajustados al estilo elástico de YARHM
-    local springX = Spring.new(1, 22, 50, startX)
-    local springY = Spring.new(1, 22, 50, startY)
-    local springW = Spring.new(1, 20, 45, 140)
-    local springH = Spring.new(1, 20, 45, 42)
-    local springCorner = Spring.new(1, 24, 60, 21)
+    -- ============================================================ --
+    -- SPRINGS: parámetros ajustados para feel más elástico (YARHM-like) --
+    -- ============================================================ --
+    local springX      = Spring.new(1, 28, 90, startX)
+    local springY      = Spring.new(1, 28, 90, startY)
+    local springW      = Spring.new(1, 26, 80, 140)
+    local springH      = Spring.new(1, 26, 80, 42)
+    local springCorner = Spring.new(1, 30, 90, 21)
 
     local function getFloatScalePos()
         local parentSize = self.GUI.AbsoluteSize
@@ -402,8 +404,21 @@ function Library:CreateWindow(hubTitle)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
+        self.WinMain.BackgroundTransparency = T.bgTrans
+
+        -- ============================================================ --
+        -- FIX: igual que YARHM, dejamos el contentGroup Visible
+        -- y solo animamos GroupTransparency en RenderStepped --
+        -- ============================================================ --
         contentGroup.Visible = true
+        contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
+
+        task.delay(0.35, function()
+            for _, page in ipairs(self.Pages) do
+                page.CanvasPosition = Vector2.zero
+            end
+        end)
     end
 
     local function closeWin()
@@ -411,6 +426,12 @@ function Library:CreateWindow(hubTitle)
         self.winOpen = false
         self.transitioning = true
         self.dragging = false
+
+        -- ============================================================ --
+        -- FIX: NO ponemos contentGroup.Visible = false aquí.
+        -- Solo dejamos que la transparencia se anime y al final
+        -- del cierre se oculta en RenderStepped. --
+        -- ============================================================ --
 
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
@@ -445,14 +466,31 @@ function Library:CreateWindow(hubTitle)
 
         self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
         self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
-        
         for _, page in ipairs(self.Pages) do
             page.Size = UDim2.new(1, 0, 1, 0)
         end
 
-        -- ANIMACIÓN ESTILO YARHM DE TRANSPARENCIA PROGRESIVA
-        local progress = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-        contentGroup.GroupTransparency = 1 - progress
+        -- ============================================================ --
+        -- FIX: lógica de contentGroup reescrita al estilo YARHM.
+        -- Apertura: fade-in en el último 30% del progreso.
+        -- Cierre:   fade-out en el primer 30% del progreso
+        --           y se oculta al final. --
+        -- ============================================================ --
+        local progress = math.clamp(
+            (currW - 140) / (targetMenuWidth - 140), 0, 1
+        )
+
+        if self.winOpen then
+            contentGroup.Visible = true
+            local fadeIn = math.clamp((progress - 0.7) / 0.3, 0, 1)
+            contentGroup.GroupTransparency = 1 - fadeIn
+        else
+            local fadeOut = math.clamp(progress / 0.3, 0, 1)
+            contentGroup.GroupTransparency = fadeOut
+            if progress <= 0.01 then
+                contentGroup.Visible = false
+            end
+        end
 
         if self.transitioning then
             local currX = springX:Update(dt)
@@ -472,7 +510,6 @@ function Library:CreateWindow(hubTitle)
             springY:Update(dt)
         end
 
-        -- Al encogerse completamente en el cierre:
         if not self.winOpen and math.abs(currW - 140) < 3 and math.abs(currH - 42) < 3 then
             if self.WinMain.Visible then
                 self.WinMain.Visible = false
@@ -760,6 +797,8 @@ function Library:CreateTab(name, iconId)
     Cor(page, 8)
     local pageList = List(page, Enum.FillDirection.Vertical, 6)
     Pad(page, 8, 16, 8, 8)
+
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
     pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
@@ -1277,7 +1316,7 @@ function Library:CreateTab(name, iconId)
                 Parent = svBox
             })
             Cor(pickerCursor, 6)
-            Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+    Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
             local hueBar = New("TextButton", {
                 Position = UDim2.new(0, 174, 0, 44),
