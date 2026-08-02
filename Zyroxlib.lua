@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (DEFINITIVE FIX - Force Render) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (ROUNDED POSITIONS FIX) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -391,7 +391,8 @@ function Library:CreateWindow(hubTitle)
         local absSize = self.FloatIcon.AbsoluteSize
         local centerX = absPos.X + (absSize.X / 2)
         local centerY = absPos.Y + (absSize.Y / 2)
-        return centerX / parentSize.X, centerY / parentSize.Y
+        -- ✅ REDONDEAR a 3 decimales para evitar decimales infinitos
+        return math.round(centerX / parentSize.X * 1000) / 1000, math.round(centerY / parentSize.Y * 1000) / 1000
     end
 
     local function getWinScalePos()
@@ -406,15 +407,13 @@ function Library:CreateWindow(hubTitle)
     self.dragging = false
     self.contentReady = false
 
-    -- ✅ FUNCIÓN PARA FORZAR EL RENDER CORRECTO
     local function forceRenderPages()
         if not self.ContentArea then return end
         
-        -- Esperar un frame para que Roblox actualice el tamaño
         task.wait()
         
-        local contentW = self.ContentArea.AbsoluteSize.X
-        local contentH = self.ContentArea.AbsoluteSize.Y
+        local contentW = math.round(self.ContentArea.AbsoluteSize.X)
+        local contentH = math.round(self.ContentArea.AbsoluteSize.Y)
         
         if contentW > 0 and contentH > 0 then
             for _, page in ipairs(self.Pages) do
@@ -442,6 +441,7 @@ function Library:CreateWindow(hubTitle)
 
         local fx, fy = getFloatScalePos()
         
+        -- ✅ RESETEAR completamente los springs con valores redondeados
         springX.x = fx
         springX.v = 0
         springX.target = 0.5
@@ -467,7 +467,6 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Position = UDim2.new(fx, 0, fy, 0)
         self.WinMain.BackgroundTransparency = T.bgTrans
 
-        -- ✅ NO mostrar el contenido hasta que la animación termine
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -513,36 +512,38 @@ function Library:CreateWindow(hubTitle)
         local currH = springH:Update(dt)
         local currR = springCorner:Update(dt)
 
+        -- ✅ REDONDEAR tamaños a números enteros para evitar problemas de renderizado
+        currW = math.round(currW)
+        currH = math.round(currH)
+        currR = math.round(currR)
+
         self.WinMain.Size = UDim2.fromOffset(currW, currH)
         if winCorner then
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
-        local availH = math.max(0, currH - 60)
+        local sidebarWidth = math.round(math.clamp(currW * 0.32, 50, T.tabSize - 30))
+        local availH = math.round(math.max(0, currH - 60))
         
         self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
         self.Sidebar.Position = UDim2.fromOffset(6, 50)
 
         local contentX = sidebarWidth + 12
-        local contentW = math.max(0, currW - contentX - 10)
-        local contentH = math.max(0, currH - 56)
+        local contentW = math.round(math.max(0, currW - contentX - 10))
+        local contentH = math.round(math.max(0, currH - 56))
 
         self.ContentArea.Size = UDim2.fromOffset(contentW, contentH)
         self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
 
-        -- ✅ SOLO mostrar contenido cuando la ventana esté completamente abierta
         if self.winOpen then
             if currW < 300 then
                 contentGroup.Visible = false
                 contentGroup.GroupTransparency = 1
             else
-                -- Si la transición ha terminado y el contenido está listo
                 if not self.transitioning and self.contentReady then
                     contentGroup.Visible = true
                     contentGroup.GroupTransparency = 0
                     
-                    -- ✅ Forzar render de páginas
                     for _, page in ipairs(self.Pages) do
                         if page and page.Parent == self.ContentArea then
                             page.Size = UDim2.fromOffset(contentW, contentH - 8)
@@ -553,7 +554,6 @@ function Library:CreateWindow(hubTitle)
                         end
                     end
                 else
-                    -- Mostrar con transparencia durante la transición
                     contentGroup.Visible = true
                     local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
                     contentGroup.GroupTransparency = 1 - p
@@ -571,7 +571,6 @@ function Library:CreateWindow(hubTitle)
                 closeTextLabel.Position = UDim2.new(currX, 0, currY, 0)
             end
 
-            -- ✅ Cuando la animación termina, activar el contenido
             if self.winOpen
                 and math.abs(currW - targetMenuWidth) < 1.5
                 and math.abs(currH - targetMenuHeight) < 1.5
@@ -580,7 +579,6 @@ function Library:CreateWindow(hubTitle)
                 self.WinMain.Rotation = 0
                 self.contentReady = true
                 
-                -- ✅ Forzar render con delay para asegurar tamaños correctos
                 task.delay(0.1, function()
                     forceRenderPages()
                 end)
@@ -666,8 +664,8 @@ function Library:CreateWindow(hubTitle)
 
                 local parentSize = self.GUI.AbsoluteSize
                 if parentSize.X > 0 and parentSize.Y > 0 then
-                    local newScaleX = currentX / parentSize.X
-                    local newScaleY = currentY / parentSize.Y
+                    local newScaleX = math.round(currentX / parentSize.X * 1000) / 1000
+                    local newScaleY = math.round(currentY / parentSize.Y * 1000) / 1000
                     target.Position = UDim2.new(newScaleX, 0, newScaleY, 0)
                     
                     if target == self.FloatIcon then
@@ -730,6 +728,9 @@ function Library:CreateWindow(hubTitle)
 
     return self
 end
+
+-- [El resto del código (Notify, CreateTab, etc.) permanece igual]
+-- ... (las funciones Notify y CreateTab son las mismas que antes)
 
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
