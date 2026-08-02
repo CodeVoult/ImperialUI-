@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (FINAL FIX - Position Reset) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (DEFINITIVE FIX - Force Render) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -406,6 +406,31 @@ function Library:CreateWindow(hubTitle)
     self.dragging = false
     self.contentReady = false
 
+    -- ✅ FUNCIÓN PARA FORZAR EL RENDER CORRECTO
+    local function forceRenderPages()
+        if not self.ContentArea then return end
+        
+        -- Esperar un frame para que Roblox actualice el tamaño
+        task.wait()
+        
+        local contentW = self.ContentArea.AbsoluteSize.X
+        local contentH = self.ContentArea.AbsoluteSize.Y
+        
+        if contentW > 0 and contentH > 0 then
+            for _, page in ipairs(self.Pages) do
+                if page and page.Parent == self.ContentArea then
+                    page.Size = UDim2.fromOffset(contentW, contentH - 8)
+                    local layout = page:FindFirstChildOfClass("UIListLayout")
+                    if layout then
+                        page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                    end
+                end
+            end
+            return true
+        end
+        return false
+    end
+
     local function openWin()
         if self.winOpen then return end
         self.winOpen = true
@@ -415,17 +440,15 @@ function Library:CreateWindow(hubTitle)
         closeTextLabel.Visible = false
         closeTextLabel.TextTransparency = 1
 
-        -- ✅ FIX: Obtener posición actual del botón y usarla como punto de partida
         local fx, fy = getFloatScalePos()
         
-        -- ✅ FIX: Resetear completamente los springs de posición
         springX.x = fx
         springX.v = 0
-        springX.target = 0.5  -- Centro de la pantalla
+        springX.target = 0.5
         
         springY.x = fy
         springY.v = 0
-        springY.target = 0.5  -- Centro de la pantalla
+        springY.target = 0.5
         
         springW.x = 140
         springW.v = 0
@@ -441,9 +464,10 @@ function Library:CreateWindow(hubTitle)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
-        self.WinMain.Position = UDim2.new(fx, 0, fy, 0) -- Posición inicial
+        self.WinMain.Position = UDim2.new(fx, 0, fy, 0)
         self.WinMain.BackgroundTransparency = T.bgTrans
 
+        -- ✅ NO mostrar el contenido hasta que la animación termine
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -452,12 +476,6 @@ function Library:CreateWindow(hubTitle)
             for _, page in ipairs(self.Pages) do
                 page.CanvasPosition = Vector2.zero
             end
-        end)
-        
-        -- ✅ Forzar actualización después de la animación
-        task.delay(0.7, function()
-            self.contentReady = true
-            self:RefreshPages()
         end)
     end
 
@@ -488,28 +506,6 @@ function Library:CreateWindow(hubTitle)
         springCorner.target = 21
     end
 
-    function self:RefreshPages()
-        if not self.ContentArea then return end
-        
-        local contentW = self.ContentArea.AbsoluteSize.X
-        local contentH = self.ContentArea.AbsoluteSize.Y
-        
-        for _, page in ipairs(self.Pages) do
-            if page and page.Parent == self.ContentArea then
-                page.Size = UDim2.fromOffset(contentW, contentH - 8)
-                local layout = page:FindFirstChildOfClass("UIListLayout")
-                if layout then
-                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                        if page then
-                            page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
-                        end
-                    end)
-                    page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
-                end
-            end
-        end
-    end
-
     RunService.RenderStepped:Connect(function(dt)
         if not self.WinMain then return end
 
@@ -522,7 +518,6 @@ function Library:CreateWindow(hubTitle)
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        -- 🔧 FIX DE OVERFLOW: Anchos dinámicos proporcionales a currW
         local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
         local availH = math.max(0, currH - 60)
         
@@ -536,28 +531,33 @@ function Library:CreateWindow(hubTitle)
         self.ContentArea.Size = UDim2.fromOffset(contentW, contentH)
         self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
 
-        -- ✅ FIX: Ajustar páginas SOLO cuando la ventana esté completamente cargada
-        if self.winOpen and self.contentReady and currW > 300 then
-            for _, page in ipairs(self.Pages) do
-                if page and page.Parent == self.ContentArea then
-                    page.Size = UDim2.fromOffset(contentW, contentH - 8)
-                    local layout = page:FindFirstChildOfClass("UIListLayout")
-                    if layout then
-                        page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
-                    end
-                end
-            end
-        end
-
-        -- Ocultar todo el contenido si la ventana es más pequeña que el umbral
+        -- ✅ SOLO mostrar contenido cuando la ventana esté completamente abierta
         if self.winOpen then
             if currW < 300 then
                 contentGroup.Visible = false
                 contentGroup.GroupTransparency = 1
             else
-                contentGroup.Visible = true
-                local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
-                contentGroup.GroupTransparency = 1 - p
+                -- Si la transición ha terminado y el contenido está listo
+                if not self.transitioning and self.contentReady then
+                    contentGroup.Visible = true
+                    contentGroup.GroupTransparency = 0
+                    
+                    -- ✅ Forzar render de páginas
+                    for _, page in ipairs(self.Pages) do
+                        if page and page.Parent == self.ContentArea then
+                            page.Size = UDim2.fromOffset(contentW, contentH - 8)
+                            local layout = page:FindFirstChildOfClass("UIListLayout")
+                            if layout then
+                                page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+                            end
+                        end
+                    end
+                else
+                    -- Mostrar con transparencia durante la transición
+                    contentGroup.Visible = true
+                    local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
+                    contentGroup.GroupTransparency = 1 - p
+                end
             end
         end
 
@@ -571,6 +571,7 @@ function Library:CreateWindow(hubTitle)
                 closeTextLabel.Position = UDim2.new(currX, 0, currY, 0)
             end
 
+            -- ✅ Cuando la animación termina, activar el contenido
             if self.winOpen
                 and math.abs(currW - targetMenuWidth) < 1.5
                 and math.abs(currH - targetMenuHeight) < 1.5
@@ -578,7 +579,11 @@ function Library:CreateWindow(hubTitle)
                 self.transitioning = false
                 self.WinMain.Rotation = 0
                 self.contentReady = true
-                self:RefreshPages()
+                
+                -- ✅ Forzar render con delay para asegurar tamaños correctos
+                task.delay(0.1, function()
+                    forceRenderPages()
+                end)
             end
         else
             springX:Update(dt)
@@ -590,6 +595,7 @@ function Library:CreateWindow(hubTitle)
                 self.WinMain.Visible = false
                 self.WinMain.Rotation = 0
                 self.transitioning = false
+                self.contentReady = false
                 floatScale.Scale = 1
                 self.FloatIcon.Visible = true
                 
