@@ -428,6 +428,15 @@ function Library:CreateWindow(hubTitle)
     page.CanvasPosition = Vector2.zero
 end
 
+task.wait()
+
+self.Sidebar.CanvasPosition = Vector2.zero
+self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y + 10)
+
+RunService.Heartbeat:Wait()
+
+self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y + 10)
+
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -493,7 +502,7 @@ end
 
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p >= 0.98 then
+            if p >= 1 then
                 contentGroup.Visible = true
                 local cp = math.clamp((p - 0.98) / 0.02, 0, 1)
                 contentGroup.GroupTransparency = 1 - cp
@@ -848,6 +857,12 @@ function Library:CreateTab(name, iconId)
 
     table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
     table.insert(self.Pages, page)
+    task.defer(function()
+    self.Sidebar.CanvasSize = UDim2.fromOffset(
+        0,
+        sidebarList.AbsoluteContentSize.Y + 10
+    )
+end)
 
     local TabMethods = { Library = self, Page = page }
 
