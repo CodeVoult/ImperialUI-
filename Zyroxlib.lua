@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Precise Docking Fix) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Precise Docking Fix - Corrected Overflow) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -162,7 +162,6 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(innerShine, 21)
 
-    -- Texto emergente que aparece al instante de cerrar la ventana y viaja al botón flotante
     local closeTextLabel = New("TextLabel", {
         Name = "CloseTextAnim",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -286,7 +285,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         BorderSizePixel = 0,
-        ClipsDescendants = true, -- SOLUCIÓN SOBRESALIDO: Evita desbordamiento de tabs/contenido
+        ClipsDescendants = true,
         Visible = false,
         ZIndex = 4,
         Parent = winInner
@@ -424,18 +423,6 @@ function Library:CreateWindow(hubTitle)
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
-        for _, page in ipairs(self.Pages) do
-    page.CanvasPosition = Vector2.zero
-end
-
-task.wait()
-
-self.Sidebar.CanvasPosition = Vector2.zero
-self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y + 10)
-
-RunService.Heartbeat:Wait()
-
-self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y + 10)
 
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
@@ -457,7 +444,6 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
-        -- EFECTO INMEDIATO: Iniciar texto "Open Menu" viajante al instante
         closeTextLabel.Position = self.WinMain.Position
         closeTextLabel.Visible = true
         closeTextLabel.TextTransparency = 0
@@ -487,11 +473,12 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
             winCorner.CornerRadius = UDim.new(0, currR)
         end
 
-        local tabW = math.clamp(currW - 40, 0, T.tabSize - 30)
+        -- FIX CRÍTICO: Cálculo estricto de los límites para prevenir que sobresalga cualquier pestaña
+        local maxTabW = math.clamp(currW - 40, 0, T.tabSize - 30)
         local availH = math.max(0, currH - 60)
-        local contentW = math.max(0, currW - (T.tabSize - 20) - 10)
+        local contentW = math.max(0, currW - T.tabSize + 14)
 
-        self.Sidebar.Size = UDim2.fromOffset(tabW, availH)
+        self.Sidebar.Size = UDim2.fromOffset(maxTabW, availH)
         self.Sidebar.Position = UDim2.fromOffset(6, 50)
 
         self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
@@ -502,7 +489,7 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
 
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p >= 1 then
+            if p >= 0.98 then
                 contentGroup.Visible = true
                 local cp = math.clamp((p - 0.98) / 0.02, 0, 1)
                 contentGroup.GroupTransparency = 1 - cp
@@ -518,7 +505,6 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
             self.WinMain.Rotation = math.clamp(springX.v * 1.2, -4, 4)
 
-            -- Animación fluida del texto persiguiendo al botón al cerrar
             if not self.winOpen and closeTextLabel.Visible then
                 closeTextLabel.Position = UDim2.new(currX, 0, currY, 0)
             end
@@ -535,7 +521,6 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
             springY:Update(dt)
         end
 
-        -- Transición ultra-limpia y exacta al terminar el cierre
         if not self.winOpen and math.abs(currW - 140) < 2 and math.abs(currH - 42) < 2 then
             if self.WinMain.Visible then
                 self.WinMain.Visible = false
@@ -544,7 +529,6 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
                 floatScale.Scale = 1
                 self.FloatIcon.Visible = true
                 
-                -- Desaparecer el texto al integrarse con el botón
                 Tween(closeTextLabel, 0.1, { TextTransparency = 1 })
                 task.delay(0.1, function()
                     closeTextLabel.Visible = false
@@ -609,6 +593,20 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
                 dragging = false
                 self.dragging = false
                 if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
+
+                -- FIX: Recalcular y sincronizar posición en escala cuando se termina de arrastrar
+                local parentSize = self.GUI.AbsoluteSize
+                if parentSize.X > 0 and parentSize.Y > 0 then
+                    local newScaleX = currentX / parentSize.X
+                    local newScaleY = currentY / parentSize.Y
+                    target.Position = UDim2.new(newScaleX, 0, newScaleY, 0)
+                    
+                    if target == self.FloatIcon then
+                        springX.x = newScaleX
+                        springY.x = newScaleY
+                    end
+                end
+
                 local duration = tick() - inputBeganTime
                 if duration < 0.25 and clickCallback then clickCallback() end
             end
@@ -634,6 +632,15 @@ self.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarList.AbsoluteContentSize.Y 
         UserInputService.InputEnded:Connect(function(i)
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
+                -- FIX: Convertir a escala al terminar el arrastre
+                local parentSize = self.GUI.AbsoluteSize
+                if parentSize.X > 0 and parentSize.Y > 0 then
+                    local absPos = target.AbsolutePosition
+                    local absSize = target.AbsoluteSize
+                    local centerX = absPos.X + (absSize.X / 2)
+                    local centerY = absPos.Y + (absSize.Y / 2)
+                    target.Position = UDim2.new(centerX / parentSize.X, 0, centerY / parentSize.Y, 0)
+                end
             end
         end)
     end
@@ -831,7 +838,10 @@ function Library:CreateTab(name, iconId)
 
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-   
+    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 15)
+    end)
+
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(self.Tabs) do
             Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
