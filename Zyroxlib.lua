@@ -857,12 +857,6 @@ function Library:CreateTab(name, iconId)
 
     table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
     table.insert(self.Pages, page)
-    task.defer(function()
-    self.Sidebar.CanvasSize = UDim2.fromOffset(
-        0,
-        sidebarList.AbsoluteContentSize.Y + 10
-    )
-end)
 
     local TabMethods = { Library = self, Page = page }
 
