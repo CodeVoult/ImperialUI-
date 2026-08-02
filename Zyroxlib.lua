@@ -403,7 +403,6 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
 
-        -- FIX: ocultamos al inicio (igual que tu original)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -421,13 +420,10 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- ============================================================ --
-        -- FIX: NO ocultamos el contentGroup al cerrar.
-        -- Lo dejamos visible para que el GroupTransparency se anime
-        -- suavemente de 0 → 1, igual que YARHM. --
-        -- ============================================================ --
-        contentGroup.Visible = true
-        contentGroup.GroupTransparency = 0
+        -- FIX DEFINITIVO: ocultamos el contenido al iniciar el cierre.
+        -- El frame se encoge solo, sin renderizar tabs/páginas.
+        contentGroup.Visible = false
+        contentGroup.GroupTransparency = 1
 
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
@@ -466,14 +462,9 @@ function Library:CreateWindow(hubTitle)
             page.Size = UDim2.new(1, 0, 1, 0)
         end
 
-        -- ============================================================ --
-        -- FIX: lógica reescrita con comportamiento simétrico.
-        -- Apertura: aparece en p >= 0.99, fade-in instantáneo.
-        -- Cierre:   fade-out progresivo basado en p, se oculta al final. --
-        -- ============================================================ --
-        local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-
+        -- Solo manejamos la apertura. El cierre ya ocultó el contenido en closeWin().
         if self.winOpen then
+            local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
             if p >= 0.99 then
                 contentGroup.Visible = true
                 local cp = math.clamp((p - 0.99) / 0.01, 0, 1)
@@ -481,13 +472,6 @@ function Library:CreateWindow(hubTitle)
             else
                 contentGroup.Visible = false
                 contentGroup.GroupTransparency = 1
-            end
-        else
-            -- Cierre: animamos la transparencia de 0 → 1 mientras el frame se encoge.
-            -- Cuando el frame está casi cerrado (p cerca de 0), ocultamos.
-            contentGroup.GroupTransparency = 1 - p
-            if p <= 0.05 then
-                contentGroup.Visible = false
             end
         end
 
