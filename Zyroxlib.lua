@@ -462,42 +462,47 @@ function Library:CreateWindow(hubTitle)
     end
 
     RunService.RenderStepped:Connect(function(dt)
-        if not self.WinMain then return end
+    if not self.WinMain then return end
 
-        local currW = springW:Update(dt)
-        local currH = springH:Update(dt)
-        local currR = springCorner:Update(dt)
+    local currW = springW:Update(dt)
+    local currH = springH:Update(dt)
+    local currR = springCorner:Update(dt)
 
-        self.WinMain.Size = UDim2.fromOffset(currW, currH)
-        if winCorner then
-            winCorner.CornerRadius = UDim.new(0, currR)
+    self.WinMain.Size = UDim2.fromOffset(currW, currH)
+    if winCorner then
+        winCorner.CornerRadius = UDim.new(0, currR)
+    end
+
+    -- 🔧 FIX DE OVERFLOW: Anchos dinámicos proporcionales a currW
+    local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
+    local availH = math.max(0, currH - 60)
+    
+    self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
+    self.Sidebar.Position = UDim2.fromOffset(6, 50)
+
+    local contentX = sidebarWidth + 12
+    local contentW = math.max(0, currW - contentX - 10)
+
+    self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
+    self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
+
+    for _, page in ipairs(self.Pages) do
+        page.Size = UDim2.new(1, 0, 1, 0)
+    end
+
+    -- Ocultar todo el contenido si la ventana es más pequeña que el umbral para evitar que se desborde visualmente
+    if self.winOpen then
+        if currW < 300 then
+            contentGroup.Visible = false
+            contentGroup.GroupTransparency = 1
+        else
+            contentGroup.Visible = true
+            local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
+            contentGroup.GroupTransparency = 1 - p
         end
+    end
+    -- ... resto de tu código de RenderStepped
 
-        -- FIX CRÍTICO: Cálculo estricto de los límites para prevenir que sobresalga cualquier pestaña
-        local maxTabW = math.clamp(currW - 40, 0, T.tabSize - 30)
-        local availH = math.max(0, currH - 60)
-        local contentW = math.max(0, currW - T.tabSize + 14)
-
-        self.Sidebar.Size = UDim2.fromOffset(maxTabW, availH)
-        self.Sidebar.Position = UDim2.fromOffset(6, 50)
-
-        self.ContentArea.Size = UDim2.fromOffset(contentW, math.max(0, currH - 56))
-        self.ContentArea.Position = UDim2.fromOffset(T.tabSize - 20, 50)
-        for _, page in ipairs(self.Pages) do
-            page.Size = UDim2.new(1, 0, 1, 0)
-        end
-
-        if self.winOpen then
-            local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
-            if p >= 0.98 then
-                contentGroup.Visible = true
-                local cp = math.clamp((p - 0.98) / 0.02, 0, 1)
-                contentGroup.GroupTransparency = 1 - cp
-            else
-                contentGroup.Visible = false
-                contentGroup.GroupTransparency = 1
-            end
-        end
 
         if self.transitioning then
             local currX = springX:Update(dt)
