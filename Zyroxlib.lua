@@ -502,12 +502,13 @@ if not self.winOpen and math.abs(currW - 140) < 1 and math.abs(currH - 42) < 1 t
         self.WinMain.Rotation = 0
         self.transitioning = false
         
-        -- Sincronizamos la posición exacta del botón con la ventana al terminar
-        self.FloatIcon.Position = UDim2.new(springX.x, 0, springY.x, 0)
+        -- Usamos la posición actual de WinMain (o los targets) para evitar cualquier discrepancia
+        self.FloatIcon.Position = UDim2.new(springX.target, 0, springY.target, 0)
         self.FloatIcon.Visible = true
-        floatScale.Scale = 1 -- Sin tweens ni brincos
+        floatScale.Scale = 1
     end
 end
+
 
 
     self.FloatIcon.MouseButton1Click:Connect(function()
