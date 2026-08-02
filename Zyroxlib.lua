@@ -263,9 +263,6 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    -- ============================================================ --
-    -- FIX 1: CanvasGroup con ClipsDescendants=true --
-    -- ============================================================ --
     local contentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
         Size = UDim2.new(1, 0, 1, 0),
@@ -273,7 +270,6 @@ function Library:CreateWindow(hubTitle)
         GroupTransparency = 1,
         BorderSizePixel = 0,
         Visible = false,
-        ClipsDescendants = true,  -- 👈 FIX: recorta hijos que se desbordan
         ZIndex = 4,
         Parent = winInner
     })
@@ -300,9 +296,6 @@ function Library:CreateWindow(hubTitle)
         Parent = titleBar
     })
 
-    -- ============================================================ --
-    -- FIX 2: Sidebar con ClipsDescendants=true --
-    -- ============================================================ --
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -311,7 +304,6 @@ function Library:CreateWindow(hubTitle)
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ClipsDescendants = true,  -- 👈 FIX: recorta tabs que se salgan
         ZIndex = 3,
         Parent = contentGroup
     })
@@ -368,11 +360,11 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    local springX      = Spring.new(1, 28, 90, startX)
-    local springY      = Spring.new(1, 28, 90, startY)
-    local springW      = Spring.new(1, 26, 80, 140)
-    local springH      = Spring.new(1, 26, 80, 42)
-    local springCorner = Spring.new(1, 30, 90, 21)
+    local springX = Spring.new(1, 24, 45, startX)
+    local springY = Spring.new(1, 24, 45, startY)
+    local springW = Spring.new(1, 22, 40, 140)
+    local springH = Spring.new(1, 22, 40, 42)
+    local springCorner = Spring.new(1, 28, 55, 21)
 
     local function getFloatScalePos()
         local parentSize = self.GUI.AbsoluteSize
@@ -411,10 +403,7 @@ function Library:CreateWindow(hubTitle)
         self.WinMain.Visible = true
         self.WinMain.BackgroundTransparency = T.bgTrans
 
-        -- ============================================================ --
-        -- FIX 3: NO mostramos el contentGroup al inicio del open. --
-        -- Se mostrará cuando el frame tenga espacio suficiente. --
-        -- ============================================================ --
+        -- FIX: ocultamos al inicio (igual que tu original)
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
         borderStroke.Transparency = 0.2
@@ -432,7 +421,14 @@ function Library:CreateWindow(hubTitle)
         self.transitioning = true
         self.dragging = false
 
-        -- Solo animamos la transparencia; se oculta al final en RenderStepped
+        -- ============================================================ --
+        -- FIX: NO ocultamos el contentGroup al cerrar.
+        -- Lo dejamos visible para que el GroupTransparency se anime
+        -- suavemente de 0 → 1, igual que YARHM. --
+        -- ============================================================ --
+        contentGroup.Visible = true
+        contentGroup.GroupTransparency = 0
+
         local cx, cy = getWinScalePos()
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
@@ -471,28 +467,26 @@ function Library:CreateWindow(hubTitle)
         end
 
         -- ============================================================ --
-        -- FIX 4: Mostrar contenido solo cuando hay espacio suficiente. --
-        -- Apertura: aparece en >= 60% y hace fade-in. --
-        -- Cierre:   fade-out en el primer 30% y se oculta al final. --
+        -- FIX: lógica reescrita con comportamiento simétrico.
+        -- Apertura: aparece en p >= 0.99, fade-in instantáneo.
+        -- Cierre:   fade-out progresivo basado en p, se oculta al final. --
         -- ============================================================ --
-        local progress = math.clamp(
-            (currW - 140) / (targetMenuWidth - 140), 0, 1
-        )
+        local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
 
         if self.winOpen then
-            if progress >= 0.6 then
+            if p >= 0.99 then
                 contentGroup.Visible = true
-                local fadeIn = math.clamp((progress - 0.6) / 0.4, 0, 1)
-                contentGroup.GroupTransparency = 1 - fadeIn
+                local cp = math.clamp((p - 0.99) / 0.01, 0, 1)
+                contentGroup.GroupTransparency = 1 - cp
             else
                 contentGroup.Visible = false
                 contentGroup.GroupTransparency = 1
             end
         else
-            contentGroup.Visible = true
-            local fadeOut = math.clamp(progress / 0.3, 0, 1)
-            contentGroup.GroupTransparency = fadeOut
-            if progress <= 0.01 then
+            -- Cierre: animamos la transparencia de 0 → 1 mientras el frame se encoge.
+            -- Cuando el frame está casi cerrado (p cerca de 0), ocultamos.
+            contentGroup.GroupTransparency = 1 - p
+            if p <= 0.05 then
                 contentGroup.Visible = false
             end
         end
