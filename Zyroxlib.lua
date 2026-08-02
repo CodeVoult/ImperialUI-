@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Spring Physics Engine Fixed) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (Precise Docking Fix) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -360,11 +360,12 @@ function Library:CreateWindow(hubTitle)
     local startX = self.FloatIcon.Position.X.Scale
     local startY = self.FloatIcon.Position.Y.Scale
 
-    local springX = Spring.new(1, 24, 45, startX)
-    local springY = Spring.new(1, 24, 45, startY)
-    local springW = Spring.new(1, 22, 40, 140)
-    local springH = Spring.new(1, 22, 40, 42)
-    local springCorner = Spring.new(1, 28, 55, 21)
+    -- Aumentamos el Amortiguamiento (Damping) a 32 para evitar oscilaciones incómodas al cerrar
+    local springX = Spring.new(1, 32, 50, startX)
+    local springY = Spring.new(1, 32, 50, startY)
+    local springW = Spring.new(1, 30, 45, 140)
+    local springH = Spring.new(1, 30, 45, 42)
+    local springCorner = Spring.new(1, 32, 60, 21)
 
     local function getFloatScalePos()
         local parentSize = self.GUI.AbsoluteSize
@@ -414,22 +415,18 @@ function Library:CreateWindow(hubTitle)
         end)
     end
 
-        local function closeWin()
+    local function closeWin()
         if not self.winOpen then return end
         self.winOpen = false
         self.transitioning = true
         self.dragging = false
 
-        -- Ocultamos el contenido de inmediato para que solo se encoja el marco
         contentGroup.Visible = false
         contentGroup.GroupTransparency = 1
 
         local cx, cy = getWinScalePos()
-        -- Reseteamos velocidad para evitar inercia/brincos
         springX.x, springX.v = cx, 0
         springY.x, springY.v = cy, 0
-        springW.v = 0
-        springH.v = 0
 
         local fx, fy = getFloatScalePos()
         springX.target = fx
@@ -464,7 +461,6 @@ function Library:CreateWindow(hubTitle)
             page.Size = UDim2.new(1, 0, 1, 0)
         end
 
-        -- Solo manejamos la apertura. El cierre ya ocultó el contenido en closeWin().
         if self.winOpen then
             local p = math.clamp((currW - 140) / (targetMenuWidth - 140), 0, 1)
             if p >= 0.99 then
@@ -495,21 +491,17 @@ function Library:CreateWindow(hubTitle)
             springY:Update(dt)
         end
 
-        -- REEMPLAZO EXACTO Y FLUIDO:
-if not self.winOpen and math.abs(currW - 140) < 1 and math.abs(currH - 42) < 1 then
-    if self.WinMain.Visible then
-        self.WinMain.Visible = false
-        self.WinMain.Rotation = 0
-        self.transitioning = false
-        
-        -- Usamos la posición actual de WinMain (o los targets) para evitar cualquier discrepancia
-        self.FloatIcon.Position = UDim2.new(springX.target, 0, springY.target, 0)
-        self.FloatIcon.Visible = true
-        floatScale.Scale = 1
-    end
-end
-
-
+        -- Transición ultra-limpia y exacta al terminar el cierre
+        if not self.winOpen and math.abs(currW - 140) < 2 and math.abs(currH - 42) < 2 then
+            if self.WinMain.Visible then
+                self.WinMain.Visible = false
+                self.WinMain.Rotation = 0
+                self.transitioning = false
+                floatScale.Scale = 1 -- Fijado directo a 1 para eliminar el rebote (Back Easing)
+                self.FloatIcon.Visible = true
+            end
+        end
+    end)
 
     self.FloatIcon.MouseButton1Click:Connect(function()
         if not self.winOpen then openWin() end
