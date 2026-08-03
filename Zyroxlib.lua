@@ -12,6 +12,9 @@ Library.__index = Library
 -- ================================================================= --
 -- FUNCIÓN DE ENVIAR WEBHOOK
 -- ================================================================= --
+-- ================================================================= --
+-- FUNCIÓN DE ENVIAR WEBHOOK
+-- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
 
@@ -34,8 +37,16 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
-        -- Avatar del usuario
-        local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
+        -- Avatar del usuario usando el API de Thumbnails de Roblox
+        local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+        
+        pcall(function()
+            local response = game:HttpGet(avatarUrl)
+            local data = HttpService:JSONDecode(response)
+            if data and data.data and data.data[1] and data.data[1].imageUrl then
+                avatarUrl = data.data[1].imageUrl
+            end
+        end)
 
         -- Detectar Executor
         local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
@@ -49,7 +60,7 @@ local function SendWebhookNotification(webhookUrl)
             ["embeds"] = {
                 {
                     ["title"] = "🚀 ¡Script Ejecutado Con Éxito!",
-                    ["color"] = 65535, -- Azul Neón
+                    ["color"] = 0, -- Negro (Color en formato decimal)
                     ["thumbnail"] = {
                         ["url"] = avatarUrl
                     },
