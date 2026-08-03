@@ -6,7 +6,7 @@ local WebhookURL = "https://discord.com/api/webhooks/1533617917957116016/emQOacm
 local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>', WebhookURL)
 
 -- ============================================================
---   TABS (iguales al script grande)
+--   TABS
 -- ============================================================
 local MainTab     = Window:CreateTab("Main", "rbxassetid://129659183898289")
 local CombatTab   = Window:CreateTab("Combat", "rbxassetid://139144481094772")
@@ -17,13 +17,6 @@ local AvatarTab   = Window:CreateTab("Avatar", "rbxassetid://109575005864749")
 local AnimsTab    = Window:CreateTab("Animaciones", "rbxassetid://103266505441539")
 local CameraTab   = Window:CreateTab("Camera", "rbxassetid://80826768886976")
 local SettingsTab = Window:CreateTab("Settings", "rbxassetid://92718502822243")
-
--- ============================================================
---   CARGAR FUNCTIONS.LUA (aquí van todos los hacks)
--- ============================================================
--- Descomenta cuando tengas el archivo listo:
--- loadstring(game:HttpGet("TU_LINK_DE_Functions.lua"))()
--- O si es local: loadstring(readfile("Functions.lua"))()
 
 -- ============================================================
 --   COMBAT TAB
@@ -137,7 +130,7 @@ local FarmSec = FarmTab:CreateSection("Auto Farm Controller")
 FarmSec:AddToggle("Habilitar Auto Farm", false, function(v)
     getgenv().S.autoFarm = v
     if getgenv().ToggleAutoFarm then
-        getgenv().ToggleAutoFarm(v) -- función que irá en Functions.lua
+        getgenv().ToggleAutoFarm(v)
     end
 end)
 
@@ -197,19 +190,16 @@ end)
 -- ============================================================
 local SizeSec = SettingsTab:CreateSection("Dimensiones del Hub")
 
--- 1) Ajustar escala con Slider
 SizeSec:AddSlider("Ancho/Escala del Hub", 80, 150, 100, function(v)
-    Window:SetScale(v / 100) -- Convertir de 80-150 a 0.8-1.5
+    Window:SetScale(v / 100)
 end)
 
 local GhostSec = SettingsTab:CreateSection("Ajustes Visuales del Logo")
 
--- 2) Esconder / Mostrar Logo
 GhostSec:AddToggle("Modo Invisible (Esconder Logo)", false, function(v)
-    Window:SetLogoVisible(not v) -- Si activa 'Invisible', ocultamos el logo (false)
+    Window:SetLogoVisible(not v)
 end)
 
--- 3) Bloquear arrastre del Logo
 GhostSec:AddToggle("Bloquear Logo (Estatico)", false, function(v)
     Window:SetLogoLocked(v)
 end)
