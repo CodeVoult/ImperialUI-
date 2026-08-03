@@ -8,12 +8,8 @@ local HttpService = game:GetService("HttpService")
 
 local Library = {}
 Library.__index = Library
-
 -- ================================================================= --
--- FUNCIÓN DE ENVIAR WEBHOOK
--- ================================================================= --
--- ================================================================= --
--- FUNCIÓN DE ENVIAR WEBHOOK
+-- FUNCIÓN DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
 -- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
@@ -37,8 +33,8 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
-        -- Avatar del usuario usando el API de Thumbnails de Roblox
-        local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+        -- Avatar de CUERPO COMPLETO (Full Body 420x420 PNG)
+        local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
         
         pcall(function()
             local response = game:HttpGet(avatarUrl)
@@ -56,38 +52,34 @@ local function SendWebhookNotification(webhookUrl)
 
         local embedData = {
             ["username"] = "Zyrox Hub Logs",
-            ["avatar_url"] = "https://imgur.com/a/Qg9P3zH.png",
+            ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
             ["embeds"] = {
                 {
-                    ["title"] = "🚀 ¡Script Ejecutado Con Éxito!",
-                    ["color"] = 0, -- Negro (Color en formato decimal)
-                    ["thumbnail"] = {
-                        ["url"] = avatarUrl
-                    },
+                    ["title"] = "⚡ ¡NUEVA EJECUCIÓN DETECTADA!",
+                    ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\n──────────────────────────────",
+                    ["color"] = 0, -- Negro Elegante
                     ["fields"] = {
                         {
-                            ["name"] = "👤 Usuario",
-                            ["value"] = "**Nombre:** " .. displayName .. " (@" .. username .. ")\n**ID:** `" .. userId .. "`",
+                            ["name"] = "👤 **INFORMACIÓN DEL JUGADOR**",
+                            ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@`" .. username .. "\n> **User ID:** `" .. userId .. "`",
                             ["inline"] = true
                         },
                         {
-                            ["name"] = "🎮 Juego",
-                            ["value"] = "**Nombre:** " .. gameName .. "\n**Place ID:** `" .. placeId .. "`",
+                            ["name"] = "🎮 **DETALLES DEL JUEGO**",
+                            ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`",
                             ["inline"] = true
                         },
                         {
-                            ["name"] = "⚙️ Ejecutor",
-                            ["value"] = "`" .. executor .. "`",
-                            ["inline"] = false
-                        },
-                        {
-                            ["name"] = "🔗 Link de Servidor (JobId)",
-                            ["value"] = "[Haz clic para unirte al juego](" .. joinLink .. ")",
+                            ["name"] = "⚙️ **ENTORNO Y SERVIDOR**",
+                            ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [👉 Unirse al Servidor](" .. joinLink .. ")",
                             ["inline"] = false
                         }
                     },
+                    ["image"] = {
+                        ["url"] = avatarUrl -- Foto de cuerpo completo gigante abajo
+                    },
                     ["footer"] = {
-                        ["text"] = "Zyrox Hub Logger System • " .. os.date("%X")
+                        ["text"] = "Zyrox Hub System • " .. os.date("%d/%m/%Y | %H:%M:%S")
                     }
                 }
             }
