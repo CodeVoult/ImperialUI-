@@ -56,7 +56,7 @@ local function SendWebhookNotification(webhookUrl)
 
         local embedData = {
             ["username"] = "Zyrox Hub Logs",
-            ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
+            ["avatar_url"] = "https://imgur.com/a/Qg9P3zH.png",
             ["embeds"] = {
                 {
                     ["title"] = "🚀 ¡Script Ejecutado Con Éxito!",
