@@ -1,4 +1,6 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]]
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
+-- v2.0: Notificaciones con contorno animado + loader plateado, ColorPicker estilo Rayfield
+--      con paleta ZyroxHub, Dropdown con animacion de expand suave.
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,8 +10,9 @@ local HttpService = game:GetService("HttpService")
 
 local Library = {}
 Library.__index = Library
+
 -- ================================================================= --
--- FUNCIÓN DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
+-- WEBHOOK (sin cambios)
 -- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
@@ -19,12 +22,11 @@ local function SendWebhookNotification(webhookUrl)
         local userId = LocalPlayer and LocalPlayer.UserId or 0
         local username = LocalPlayer and LocalPlayer.Name or "Desconocido"
         local displayName = LocalPlayer and LocalPlayer.DisplayName or "Desconocido"
-        
-        -- Datos del juego
+
         local placeId = game.PlaceId
         local jobId = game.JobId
         local gameName = "Desconocido"
-        
+
         pcall(function()
             local marketplaceService = game:GetService("MarketplaceService")
             local info = marketplaceService:GetProductInfo(placeId)
@@ -33,9 +35,8 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
-        -- Avatar de CUERPO COMPLETO (Full Body 420x420 PNG)
         local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
-        
+
         pcall(function()
             local response = game:HttpGet(avatarUrl)
             local data = HttpService:JSONDecode(response)
@@ -44,45 +45,31 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
-        -- Detectar Executor
         local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
 
-        -- Link directo para unirse al servidor
         local joinLink = "https://www.roblox.com/games/" .. placeId .. "?jobId=" .. jobId
 
         local embedData = {
             ["username"] = "Zyrox Hub Logs",
             ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
-            ["embeds"] = {
-                {
-                    ["title"] = "⚡ ¡NUEVA EJECUCIÓN DETECTADA!",
-                    ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\n──────────────────────────────",
-                    ["color"] = 0, -- Negro Elegante
-                    ["fields"] = {
-                        {
-                            ["name"] = "👤 **INFORMACIÓN DEL JUGADOR**",
-                            ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@`" .. username .. "\n> **User ID:** `" .. userId .. "`",
-                            ["inline"] = true
-                        },
-                        {
-                            ["name"] = "🎮 **DETALLES DEL JUEGO**",
-                            ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`",
-                            ["inline"] = true
-                        },
-                        {
-                            ["name"] = "⚙️ **ENTORNO Y SERVIDOR**",
-                            ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [👉 Unirse al Servidor](" .. joinLink .. ")",
-                            ["inline"] = false
-                        }
-                    },
-                    ["image"] = {
-                        ["url"] = avatarUrl -- Foto de cuerpo completo gigante abajo
-                    },
-                    ["footer"] = {
-                        ["text"] = "Zyrox Hub System • " .. os.date("%d/%m/%Y | %H:%M:%S")
-                    }
-                }
-            }
+            ["embeds"] = {{
+                ["title"] = "? NUEVA EJECUCION DETECTADA!",
+                ["description"] = "```\nSe ha iniciado el script correctamente en el servidor.```\n------------------------------",
+                ["color"] = 0,
+                ["fields"] = {
+                    {["name"] = "INFORMACION DEL JUGADOR",
+                     ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@" .. username .. "`\n> **User ID:** `" .. userId .. "`",
+                     ["inline"] = true},
+                    {["name"] = "DETALLES DEL JUEGO",
+                     ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`",
+                     ["inline"] = true},
+                    {["name"] = "ENTORNO Y SERVIDOR",
+                     ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [Unirse al Servidor](" .. joinLink .. ")",
+                     ["inline"] = false}
+                },
+                ["image"] = {["url"] = avatarUrl},
+                ["footer"] = {["text"] = "Zyrox Hub System " .. os.date("%d/%m/%Y | %H:%M:%S")}
+            }}
         }
 
         local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
@@ -90,9 +77,7 @@ local function SendWebhookNotification(webhookUrl)
             requestFunc({
                 Url = webhookUrl,
                 Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
+                Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode(embedData)
             })
         end
@@ -100,7 +85,7 @@ local function SendWebhookNotification(webhookUrl)
 end
 
 -- ================================================================= --
--- 1. MOTOR DE RESORTES
+-- 1. MOTOR DE RESORTES (sin cambios)
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -143,9 +128,39 @@ local T = {
     green = Color3.fromRGB(50, 255, 100),
     sep = Color3.fromRGB(10, 35, 60),
     switchOff = Color3.fromRGB(10, 30, 50),
+    -- Colores nuevos para loader plateado
+    silver = Color3.fromRGB(200, 210, 220),
+    silverDark = Color3.fromRGB(120, 130, 145),
+    silverLight = Color3.fromRGB(230, 240, 250),
     bgTrans = 0.1,
     tabSize = 200,
 }
+
+-- Helper para crear el gradiente animado que usan las tabs (reutilizable)
+local function makeAnimatedBorderStroke(parent, thickness)
+    local stk = New("UIStroke", {
+        Thickness = thickness or 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = parent
+    })
+    local grad = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = stk
+    })
+    task.spawn(function()
+        while grad and grad.Parent do
+            grad.Rotation = (grad.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
+    return stk, grad
+end
 
 local function New(cls, props)
     local o = Instance.new(cls)
@@ -157,10 +172,10 @@ local function Cor(obj, r) return New("UICorner", { CornerRadius = UDim.new(0, r
 local function Stk(obj, col, th) return New("UIStroke", { Color = col or T.border, Thickness = th or 1.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Parent = obj }) end
 local function List(obj, dir, pad) return New("UIListLayout", { FillDirection = dir or Enum.FillDirection.Vertical, Padding = UDim.new(0, pad or 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = obj }) end
 local function Pad(obj, t, b, l, r) New("UIPadding", { PaddingTop = UDim.new(0, t or 0), PaddingBottom = UDim.new(0, b or 0), PaddingLeft = UDim.new(0, l or 0), PaddingRight = UDim.new(0, r or 0), Parent = obj }) end
-local function Tween(obj, t, props, style, dir) 
-    local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props) 
-    anim:Play() 
-    return anim 
+local function Tween(obj, t, props, style, dir)
+    local anim = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
+    anim:Play()
+    return anim
 end
 
 local function Shadow(obj, transparency, expand)
@@ -184,7 +199,6 @@ function Library:CreateWindow(hubTitle, webhookUrl)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
 
-    -- Ejecutar envío de Webhook automático
     if webhookUrl then
         SendWebhookNotification(webhookUrl)
     end
@@ -211,13 +225,13 @@ function Library:CreateWindow(hubTitle, webhookUrl)
         Name = "Notifs",
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.new(1, -20, 1, -20),
-        Size = UDim2.new(0, 260, 0, 10),
+        Size = UDim2.new(0, 280, 0, 10),
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundTransparency = 1,
         ZIndex = 999999995,
         Parent = self.GUI
     })
-    List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
+    List(self.NotifLayer, Enum.FillDirection.Vertical, 10)
 
     self.FloatIcon = New("TextButton", {
         Name = "FloatIcon",
@@ -509,23 +523,23 @@ function Library:CreateWindow(hubTitle, webhookUrl)
 
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
-        
+
         MenuPosXScale.x = fx
         MenuPosXScale.v = 0
         MenuPosXScale.target = 0.5
-        
+
         MenuPosYScale.x = fy
         MenuPosYScale.v = 0
         MenuPosYScale.target = 0.5
-        
+
         MenuSizeXOffset.x = 140
         MenuSizeXOffset.v = 0
         MenuSizeXOffset.target = targetMenuWidth
-        
+
         MenuSizeYOffset.x = 42
         MenuSizeYOffset.v = 0
         MenuSizeYOffset.target = targetMenuHeight
-        
+
         MenuCorner.x = 21
         MenuCorner.v = 0
         MenuCorner.target = 32
@@ -553,7 +567,7 @@ function Library:CreateWindow(hubTitle, webhookUrl)
         contentGroup.GroupTransparency = 1
 
         local fx, fy = getFloatScalePos()
-        
+
         closeTextLabel.Position = self.WinMain.Position
         closeTextLabel.Visible = true
         closeTextLabel.TextTransparency = 0
@@ -561,11 +575,11 @@ function Library:CreateWindow(hubTitle, webhookUrl)
         MenuPosXScale.x = self.WinMain.Position.X.Scale
         MenuPosXScale.v = 0
         MenuPosXScale.target = fx
-        
+
         MenuPosYScale.x = self.WinMain.Position.Y.Scale
         MenuPosYScale.v = 0
         MenuPosYScale.target = fy
-        
+
         MenuSizeXOffset.target = 140
         MenuSizeYOffset.target = 42
         MenuCorner.target = 21
@@ -585,7 +599,7 @@ function Library:CreateWindow(hubTitle, webhookUrl)
 
         local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
         local availH = math.max(0, currH - 60)
-        
+
         self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
         self.Sidebar.Position = UDim2.fromOffset(6, 50)
 
@@ -604,7 +618,7 @@ function Library:CreateWindow(hubTitle, webhookUrl)
                 contentGroup.Visible = true
                 local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
                 contentGroup.GroupTransparency = 1 - p
-                
+
                 if currW > targetMenuWidth - 10 and not springing then
                     contentGroup.GroupTransparency = 0
                     for _, page in ipairs(self.Pages) do
@@ -626,14 +640,14 @@ function Library:CreateWindow(hubTitle, webhookUrl)
             local currX = MenuPosXScale:Update(dt)
             local currY = MenuPosYScale:Update(dt)
             self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
-            
+
             if not self.winOpen then
                 closeTextLabel.Position = self.WinMain.Position
             end
 
             if self.winOpen then
-                if math.abs(currW - targetMenuWidth) < 1.5 and 
-                   math.abs(currH - targetMenuHeight) < 1.5 and 
+                if math.abs(currW - targetMenuWidth) < 1.5 and
+                   math.abs(currH - targetMenuHeight) < 1.5 and
                    math.abs(MenuSizeXOffset.v) < 2 then
                     springing = false
                 end
@@ -642,7 +656,7 @@ function Library:CreateWindow(hubTitle, webhookUrl)
                     springing = false
                     self.WinMain.Visible = false
                     self.FloatIcon.Visible = true
-                    
+
                     Tween(closeTextLabel, 0.15, { TextTransparency = 1 })
                     task.delay(0.15, function()
                         closeTextLabel.Visible = false
@@ -771,42 +785,70 @@ function Library:CreateWindow(hubTitle, webhookUrl)
     return self
 end
 
+-- ================================================================= --
+-- NOTIFY v2: contorno animado (mismo stroke de tabs), loader plateado
+--            y font GothamMedium (no bold)
+-- ================================================================= --
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
 
     local card = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 50),
+        Size = UDim2.new(1, 0, 0, 60),
         BackgroundColor3 = T.panel,
         BackgroundTransparency = 1,
+        ClipsDescendants = true,
         ZIndex = 999999996,
         Parent = self.NotifLayer
     })
     Cor(card, 12)
 
-    local st = Stk(card, T.border, 1.2)
+    -- Contorno animado IGUAL al de las tabs (UIGradient rotando 225° -> 360°)
+    local st = New("UIStroke", {
+        Thickness = 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = card
+    })
     st.Transparency = 1
-    local sh = Shadow(card, 1, 24)
-    local cs = New("UIScale", { Scale = 0.8, Parent = card })
+    local stkGrad = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = st
+    })
+    task.spawn(function()
+        while stkGrad and stkGrad.Parent do
+            stkGrad.Rotation = (stkGrad.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
 
-    local bar = New("Frame", {
-        Position = UDim2.new(0, 10, 0.5, -12),
-        Size = UDim2.new(0, 3, 0, 24),
+    local sh = Shadow(card, 1, 24)
+    local cs = New("UIScale", { Scale = 0.85, Parent = card })
+
+    -- Icono a la izquierda (cuadradito con el color de estado)
+    local dot = New("Frame", {
+        Position = UDim2.new(0, 12, 0, 12),
+        Size = UDim2.new(0, 8, 0, 36),
         BackgroundColor3 = accent,
         BackgroundTransparency = 1,
         ZIndex = 999999997,
         Parent = card
     })
-    Cor(bar, 2)
+    Cor(dot, 4)
 
     local title = New("TextLabel", {
-        Position = UDim2.new(0, 20, 0, 8),
-        Size = UDim2.new(1, -30, 0, 16),
+        Position = UDim2.new(0, 28, 0, 10),
+        Size = UDim2.new(1, -40, 0, 16),
         BackgroundTransparency = 1,
         Text = titleTxt,
         TextColor3 = accent,
-        Font = Enum.Font.GothamBold,
-        TextSize = 11,
+        Font = Enum.Font.GothamMedium,   -- font normal, no bold
+        TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
         ZIndex = 999999997,
@@ -814,12 +856,12 @@ function Library:Notify(feature, state)
     })
 
     local sub = New("TextLabel", {
-        Position = UDim2.new(0, 20, 0, 24),
-        Size = UDim2.new(1, -30, 0, 16),
+        Position = UDim2.new(0, 28, 0, 28),
+        Size = UDim2.new(1, -40, 0, 14),
         BackgroundTransparency = 1,
         Text = feature,
         TextColor3 = T.text,
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.GothamMedium,   -- font normal
         TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
@@ -827,10 +869,11 @@ function Library:Notify(feature, state)
         Parent = card
     })
 
+    -- LOADER BAR PLATEADO (horizontal, dentro de la card, abajo)
     local track = New("Frame", {
         AnchorPoint = Vector2.new(0, 1),
         Position = UDim2.new(0, 0, 1, 0),
-        Size = UDim2.new(1, 0, 0, 2),
+        Size = UDim2.new(1, 0, 0, 3),
         BackgroundColor3 = T.sep,
         BackgroundTransparency = 1,
         ZIndex = 999999997,
@@ -839,31 +882,42 @@ function Library:Notify(feature, state)
 
     local fill = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = accent,
+        BackgroundColor3 = T.silver,
         BackgroundTransparency = 1,
         ZIndex = 999999998,
         Parent = track
     })
     Cor(fill, 1)
+    -- Brillo plateado: degradado de izquierda a derecha
+    New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(160, 175, 195)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(240, 248, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 195, 215))
+        }),
+        Rotation = 0,
+        Parent = fill
+    })
 
+    -- Animaciones de entrada
     Tween(cs, 0.4, { Scale = 1 }, Enum.EasingStyle.Back)
     Tween(card, 0.35, { BackgroundTransparency = T.bgTrans })
     Tween(st, 0.35, { Transparency = 0 })
-    Tween(sh, 0.35, { ImageTransparency = 0.6 })
-    Tween(bar, 0.35, { BackgroundTransparency = 0 })
+    Tween(sh, 0.35, { ImageTransparency = 0.55 })
+    Tween(dot, 0.35, { BackgroundTransparency = 0 })
     Tween(title, 0.35, { TextTransparency = 0 })
     Tween(sub, 0.35, { TextTransparency = 0 })
-    Tween(track, 0.35, { BackgroundTransparency = 0.5 })
+    Tween(track, 0.35, { BackgroundTransparency = 0.4 })
     Tween(fill, 0.35, { BackgroundTransparency = 0 })
-    Tween(fill, 2.0, { Size = UDim2.new(0, 0, 1, 0) }, Enum.EasingStyle.Linear)
+    Tween(fill, 2.4, { Size = UDim2.new(0, 0, 1, 0) }, Enum.EasingStyle.Linear)
 
-    task.delay(2.1, function()
+    task.delay(2.5, function()
         if not card or not card.Parent then return end
-        Tween(cs, 0.3, { Scale = 0.8 }, Enum.EasingStyle.Quad)
+        Tween(cs, 0.3, { Scale = 0.85 }, Enum.EasingStyle.Quad)
         Tween(card, 0.3, { BackgroundTransparency = 1 })
         Tween(st, 0.3, { Transparency = 1 })
         Tween(sh, 0.3, { ImageTransparency = 1 })
-        Tween(bar, 0.3, { BackgroundTransparency = 1 })
+        Tween(dot, 0.3, { BackgroundTransparency = 1 })
         Tween(title, 0.3, { TextTransparency = 1 })
         Tween(sub, 0.3, { TextTransparency = 1 })
         track:Destroy()
@@ -962,19 +1016,19 @@ function Library:CreateTab(name, iconId)
         Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
-        
+
         page.Visible = true
-        
+
         page.Position = UDim2.new(0, 0, -0.1, 0)
         page.Size = UDim2.new(1, 0, 1.2, 0)
-        
+
         Tween(page, 0.6, {
             Position = UDim2.new(0, 0, 0, 0),
             Size = UDim2.new(1, 0, 1, 0)
         }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        
+
         self.ActivePage = page
-        
+
         task.wait(0.1)
         if page and page.Parent then
             local layout = page:FindFirstChildOfClass("UIListLayout")
@@ -1239,13 +1293,13 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ===================================================================== --
-        -- BUILD SELECTOR / DROPDOWN (ESTILO RAYFIELD) - Animaciones exactas    --
-        -- ===================================================================== --
-        function ElementMethods:AddDropdown(lbl, options, defaultOpt, cb)
-            local currentOption = defaultOpt or options[1]
+        -- =================================================================
+        -- DROPDOWN v2: animacion de expand tipo Rayfield (Size 0.5s Exponential
+        -- + stagger fade en los options al abrir) con paleta ZyroxHub
+        -- =================================================================
+        function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
+            local currIdx = defaultIdx
             local dropdownOpen = false
-            local debounce = false
 
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -1255,10 +1309,8 @@ function Library:CreateTab(name, iconId)
                 Parent = card
             })
             Cor(row, 20)
-            local rowStroke = Stk(row, T.border, 1.5)
-            rowStroke.Transparency = 0
+            Stk(row, T.border, 1.5)
 
-            -- Header (siempre visible)
             local header = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundTransparency = 1,
@@ -1282,11 +1334,11 @@ function Library:CreateTab(name, iconId)
             local selectBtn = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.new(0, 110, 0, 26),
+                Size = UDim2.new(0, 120, 0, 26),
                 BackgroundColor3 = T.switchOff,
-                Text = currentOption .. " ▼",
+                Text = options[defaultIdx] .. " v",
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                Font = Enum.Font.GothamBold,
+                Font = Enum.Font.GothamMedium,
                 TextSize = 11,
                 ZIndex = 6,
                 Parent = header
@@ -1294,245 +1346,128 @@ function Library:CreateTab(name, iconId)
             Cor(selectBtn, 13)
             Stk(selectBtn, T.border, 1.5)
 
-            -- Contenedor de opciones (se oculta/muestra con animación)
+            -- Chevron rotatorio (igual que Rayfield: rotacion 180 al abrir)
+            local chevron = New("TextLabel", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -4, 0.5, 0),
+                Size = UDim2.new(0, 14, 0, 14),
+                BackgroundTransparency = 1,
+                Text = "v",
+                TextColor3 = Color3.fromRGB(200, 220, 240),
+                Font = Enum.Font.GothamBold,
+                TextSize = 12,
+                Rotation = 180,
+                ZIndex = 7,
+                Parent = selectBtn
+            })
+
             local optionsHolder = New("ScrollingFrame", {
                 Position = UDim2.new(0, 10, 0, 44),
-                Size = UDim2.new(1, -20, 0, 110),
+                Size = UDim2.new(1, -20, 0, 0),
                 BackgroundTransparency = 1,
-                CanvasSize = UDim2.new(0, 0, 0, (#options * 32) + 6),
+                CanvasSize = UDim2.new(0, 0, 0, (#options * 30) + 6),
                 ScrollBarThickness = 3,
+                ScrollBarImageColor3 = T.border,
+                ScrollingDirection = Enum.ScrollingDirection.Y,
                 ZIndex = 6,
-                Visible = false,
                 Parent = row
             })
-            List(optionsHolder, Enum.FillDirection.Vertical, 6)
+            List(optionsHolder, Enum.FillDirection.Vertical, 4)
             Pad(optionsHolder, 2, 2, 2, 2)
 
-            local optionButtons = {}
+            local optFrames = {}
             for i, opt in ipairs(options) do
-                local isSelected = (opt == currentOption)
+                local isSelected = (i == currIdx)
                 local optBtn = New("TextButton", {
-                    Size = UDim2.new(0.96, 0, 0, 26),
+                    Size = UDim2.new(0.98, 0, 0, 26),
                     AnchorPoint = Vector2.new(0.5, 0),
                     Position = UDim2.new(0.5, 0, 0, 0),
-                    BackgroundColor3 = isSelected and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30),
+                    BackgroundColor3 = isSelected and T.border or Color3.fromRGB(12, 20, 32),
                     Text = opt,
-                    TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230),
-                    Font = Enum.Font.GothamBold,
+                    TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(190, 210, 230),
+                    Font = Enum.Font.GothamMedium,
                     TextSize = 11,
+                    BackgroundTransparency = 1,   -- arranca invisible (stagger)
+                    TextTransparency = 1,
                     ZIndex = 7,
                     Parent = optionsHolder
                 })
                 Cor(optBtn, 13)
-                Stk(optBtn, T.border, 1.2)
+                local optStroke = Stk(optBtn, T.border, 1.2)
+                optStroke.Transparency = 1
+
+                table.insert(optFrames, {btn = optBtn, stroke = optStroke, idx = i, opt = opt})
 
                 optBtn.MouseButton1Click:Connect(function()
-                    if debounce then return end
-                    currentOption = opt
+                    currIdx = i
                     cb(opt)
+                    -- cerrar dropdown
                     dropdownOpen = false
-                    selectBtn.Text = currentOption .. " ▼"
-                    
-                    -- Cerrar con animación
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
-                    for _, btn in ipairs(optionButtons) do
-                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-                        Tween(btn:FindFirstChild("UIStroke"), 0.2, { Transparency = 1 })
-                    end
-                    task.delay(0.3, function()
-                        optionsHolder.Visible = false
-                        for _, btn in ipairs(optionButtons) do
-                            btn.BackgroundTransparency = 0
-                            btn.TextTransparency = 0
-                            local st = btn:FindFirstChild("UIStroke")
-                            if st then st.Transparency = 0 end
-                        end
-                        optionsHolder.BackgroundTransparency = 1
+                    selectBtn.Text = options[currIdx] .. " v"
+                    selectBtn.TextXAlignment = Enum.TextXAlignment.Center
+                    -- re-ajustar texto sin chevron pegado
+                    pcall(function()
+                        selectBtn.Text = "  " .. options[currIdx] .. "  v"
                     end)
-                    debounce = false
+                    Tween(chevron, 0.4, { Rotation = 180 }, Enum.EasingStyle.Exponential)
+                    -- cerrar
+                    local contentHeight = math.min((#options * 30) + 12, 140)
+                    for _, of in ipairs(optFrames) do
+                        Tween(of.btn, 0.25, { BackgroundTransparency = 1 })
+                        Tween(of.btn, 0.25, { TextTransparency = 1 })
+                        Tween(of.stroke, 0.25, { Transparency = 1 })
+                    end
+                    Tween(optionsHolder, 0.3, { Size = UDim2.new(1, -20, 0, 0) }, Enum.EasingStyle.Exponential)
+                    Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Exponential)
                 end)
-                table.insert(optionButtons, optBtn)
             end
 
-            -- Abrir/Cerrar con animación al hacer click en el botón selector
             selectBtn.MouseButton1Click:Connect(function()
-                if debounce then return end
-                debounce = true
                 dropdownOpen = not dropdownOpen
-
+                local contentHeight = math.min((#options * 30) + 12, 140)
                 if dropdownOpen then
-                    -- Abrir: mostrar opciones con animación
-                    optionsHolder.Visible = true
-                    optionsHolder.BackgroundTransparency = 1
-                    for _, btn in ipairs(optionButtons) do
-                        btn.BackgroundTransparency = 1
-                        btn.TextTransparency = 1
-                        local st = btn:FindFirstChild("UIStroke")
-                        if st then st.Transparency = 1 end
-                    end
-                    
-                    local contentHeight = (#options * 32) + 12
-                    local holderHeight = math.min(contentHeight, 110)
-                    optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
-                    selectBtn.Text = currentOption .. " ▲"
-                    
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 48 + holderHeight + 8) })
-                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 0 })
-                    for i, btn in ipairs(optionButtons) do
-                        task.delay(i * 0.03, function()
-                            Tween(btn, 0.2, { BackgroundTransparency = 0, TextTransparency = 0 })
-                            local st = btn:FindFirstChild("UIStroke")
-                            if st then Tween(st, 0.2, { Transparency = 0 }) end
-                        end)
-                    end
-                    task.delay(0.35, function() debounce = false end)
-                else
-                    -- Cerrar: ocultar opciones con animación
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
-                    for _, btn in ipairs(optionButtons) do
-                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-                        local st = btn:FindFirstChild("UIStroke")
-                        if st then Tween(st, 0.2, { Transparency = 1 }) end
-                    end
-                    task.delay(0.3, function()
-                        optionsHolder.Visible = false
-                        for _, btn in ipairs(optionButtons) do
-                            btn.BackgroundTransparency = 0
-                            btn.TextTransparency = 0
-                            local st = btn:FindFirstChild("UIStroke")
-                            if st then st.Transparency = 0 end
+                    -- ABRIR: animar tamano + stagger de options
+                    optionsHolder.Size = UDim2.new(1, -20, 0, contentHeight)
+                    selectBtn.Text = "  " .. options[currIdx] .. "  ^"
+                    Tween(chevron, 0.5, { Rotation = 0 }, Enum.EasingStyle.Exponential)
+                    Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 44 + contentHeight + 8) }, Enum.EasingStyle.Exponential)
+                    task.delay(0.08, function()
+                        for idx, of in ipairs(optFrames) do
+                            task.delay(idx * 0.04, function()
+                                if not of.btn or not of.btn.Parent then return end
+                                Tween(of.btn, 0.3, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                                Tween(of.btn, 0.3, { TextTransparency = 0 }, Enum.EasingStyle.Exponential)
+                                local isSel = (of.idx == currIdx)
+                                if not isSel then
+                                    Tween(of.stroke, 0.3, { Transparency = 0 })
+                                end
+                            end)
                         end
-                        optionsHolder.BackgroundTransparency = 1
                     end)
-                    selectBtn.Text = currentOption .. " ▼"
-                    task.delay(0.35, function() debounce = false end)
+                else
+                    -- CERRAR
+                    selectBtn.Text = "  " .. options[currIdx] .. "  v"
+                    Tween(chevron, 0.4, { Rotation = 180 }, Enum.EasingStyle.Exponential)
+                    for _, of in ipairs(optFrames) do
+                        Tween(of.btn, 0.2, { BackgroundTransparency = 1 })
+                        Tween(of.btn, 0.2, { TextTransparency = 1 })
+                        Tween(of.stroke, 0.2, { Transparency = 1 })
+                    end
+                    Tween(optionsHolder, 0.3, { Size = UDim2.new(1, -20, 0, 0) }, Enum.EasingStyle.Exponential)
+                    Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Exponential)
                 end
             end)
-            
-            -- Actualizar opciones seleccionadas visualmente
-            local function updateSelected(selected)
-                for _, btn in ipairs(optionButtons) do
-                    local isSel = (btn.Text == selected)
-                    btn.BackgroundColor3 = isSel and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30)
-                    btn.TextColor3 = isSel and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230)
-                end
-            end
-
-            -- Función para actualizar el dropdown desde fuera
-            local dropdownMethods = {}
-            function dropdownMethods:Set(newOption)
-                currentOption = newOption
-                selectBtn.Text = currentOption .. " ▼"
-                updateSelected(currentOption)
-                cb(currentOption)
-                -- Si estaba abierto, cerrarlo
-                if dropdownOpen then
-                    dropdownOpen = false
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
-                    for _, btn in ipairs(optionButtons) do
-                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-                        local st = btn:FindFirstChild("UIStroke")
-                        if st then Tween(st, 0.2, { Transparency = 1 }) end
-                    end
-                    task.delay(0.3, function()
-                        optionsHolder.Visible = false
-                        for _, btn in ipairs(optionButtons) do
-                            btn.BackgroundTransparency = 0
-                            btn.TextTransparency = 0
-                            local st = btn:FindFirstChild("UIStroke")
-                            if st then st.Transparency = 0 end
-                        end
-                        optionsHolder.BackgroundTransparency = 1
-                    end)
-                    selectBtn.Text = currentOption .. " ▼"
-                end
-            end
-
-            function dropdownMethods:Refresh(newOptions)
-                -- Limpiar opciones antiguas
-                for _, btn in ipairs(optionButtons) do
-                    btn:Destroy()
-                end
-                optionButtons = {}
-                options = newOptions or options
-                
-                -- Recrear botones de opción
-                for i, opt in ipairs(options) do
-                    local isSelected = (opt == currentOption)
-                    local optBtn = New("TextButton", {
-                        Size = UDim2.new(0.96, 0, 0, 26),
-                        AnchorPoint = Vector2.new(0.5, 0),
-                        Position = UDim2.new(0.5, 0, 0, 0),
-                        BackgroundColor3 = isSelected and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30),
-                        Text = opt,
-                        TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230),
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 11,
-                        ZIndex = 7,
-                        Parent = optionsHolder
-                    })
-                    Cor(optBtn, 13)
-                    Stk(optBtn, T.border, 1.2)
-                    
-                    optBtn.MouseButton1Click:Connect(function()
-                        if debounce then return end
-                        currentOption = opt
-                        cb(opt)
-                        dropdownOpen = false
-                        selectBtn.Text = currentOption .. " ▼"
-                        
-                        Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                        Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
-                        for _, btn in ipairs(optionButtons) do
-                            Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-                            local st = btn:FindFirstChild("UIStroke")
-                            if st then Tween(st, 0.2, { Transparency = 1 }) end
-                        end
-                        task.delay(0.3, function()
-                            optionsHolder.Visible = false
-                            for _, btn in ipairs(optionButtons) do
-                                btn.BackgroundTransparency = 0
-                                btn.TextTransparency = 0
-                                local st = btn:FindFirstChild("UIStroke")
-                                if st then st.Transparency = 0 end
-                            end
-                            optionsHolder.BackgroundTransparency = 1
-                        end)
-                        debounce = false
-                    end)
-                    table.insert(optionButtons, optBtn)
-                end
-                
-                -- Actualizar tamaño del contenedor
-                local contentHeight = (#options * 32) + 12
-                local holderHeight = math.min(contentHeight, 110)
-                optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
-                optionsHolder.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 6)
-                
-                -- Si está abierto, actualizar visualmente
-                if dropdownOpen then
-                    for _, btn in ipairs(optionButtons) do
-                        btn.BackgroundTransparency = 0
-                        btn.TextTransparency = 0
-                        local st = btn:FindFirstChild("UIStroke")
-                        if st then st.Transparency = 0 end
-                    end
-                end
-            end
-
-            return dropdownMethods
         end
 
-        -- ===================================================================== --
-        -- COLOR PICKER (ESTILO RAYFIELD) - Animaciones exactas                --
-        -- ===================================================================== --
+        -- =================================================================
+        -- COLOR PICKER v2: misma animacion que Rayfield (Size 0.6s Exponential
+        -- en expand + drag suave con RenderStepped + hex) en paleta ZyroxHub
+        -- =================================================================
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
-            local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
-            local tempColor = savedColor
-            local h, s, v = Color3.toHSV(savedColor)
+            local savedColor = defaultColor or Color3.fromRGB(0, 166, 255)
+            local h, s, v = savedColor:ToHSV()
+            local color = savedColor
+
             local opened = false
 
             local row = New("Frame", {
@@ -1543,11 +1478,11 @@ function Library:CreateTab(name, iconId)
                 Parent = card
             })
             Cor(row, 20)
-            local rowStroke = Stk(row, T.border, 1.5)
+            Stk(row, T.border, 1.5)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 14, 0, 0),
-                Size = UDim2.new(0.5, 0, 1, 0),
+                Size = UDim2.new(1, -60, 1, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
@@ -1558,42 +1493,80 @@ function Library:CreateTab(name, iconId)
                 Parent = row
             })
 
-            local colorPreview = New("TextButton", {
+            -- Preview chico (estilo Rayfield: 39x22 cuando cerrado, 173x86 cuando abierto)
+            local preview = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.new(0, 40, 0, 22),
                 BackgroundColor3 = savedColor,
                 Text = "",
+                AutoButtonColor = false,
                 ZIndex = 6,
                 Parent = row
             })
-            Cor(colorPreview, 11)
-            Stk(colorPreview, T.border, 1.2)
+            Cor(preview, 11)
+            Stk(preview, T.border, 1.2)
 
-            -- Panel desplegable del color picker
-            local pickerPanel = New("Frame", {
-                Position = UDim2.new(0, 10, 0, 44),
-                Size = UDim2.new(1, -20, 0, 0),
+            -- ============== MODAL OVERLAY (oscurece detras) ==============
+            local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
+            local modalOverlay = New("Frame", {
+                Position = UDim2.new(0, -200, 0, -200),
+                Size = UDim2.new(1, 400, 1, 400),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 1,
+                Visible = false,
+                ZIndex = 100,
+                Parent = screenGui
+            })
+
+            local modalFrame = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, 40, 0, 22),    -- arranca chico (animacion Rayfield)
+                BackgroundColor3 = T.panel,
                 BackgroundTransparency = 1,
                 ClipsDescendants = true,
-                Visible = false,
-                ZIndex = 7,
-                Parent = row
+                ZIndex = 101,
+                Parent = modalOverlay
             })
+            Cor(modalFrame, 16)
+            local modalShadow = Shadow(modalFrame, 0.5, 30)
+            modalShadow.ZIndex = 100
 
-            -- Área de selección de Saturación/Valor
+            local modalStroke = New("UIStroke", {
+                Thickness = 1.8,
+                Color = Color3.fromRGB(255, 255, 255),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = modalFrame
+            })
+            local modalGradient = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+                }),
+                Rotation = 225,
+                Parent = modalStroke
+            })
+            task.spawn(function()
+                while modalGradient and modalGradient.Parent do
+                    modalGradient.Rotation = (modalGradient.Rotation + 1.2) % 360
+                    task.wait(0.03)
+                end
+            end)
+
+            -- ============== SV BOX (cuadrado saturacion/brillo) ==============
             local svBox = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0),
-                Position = UDim2.new(0.5, 0, 0, 0),
-                Size = UDim2.new(0, 150, 0, 130),
-                BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+                Position = UDim2.new(0, 14, 0, 40),
+                Size = UDim2.new(0, 0, 0, 0),
+                BackgroundColor3 = Color3.fromHSV(h, 1, 1),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 8,
-                Parent = pickerPanel
+                BackgroundTransparency = 1,
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(svBox, 10)
-
             New("UIGradient", {
                 Color = ColorSequence.new(Color3.fromRGB(255, 255, 255)),
                 Transparency = NumberSequence.new({
@@ -1603,49 +1576,49 @@ function Library:CreateTab(name, iconId)
                 Parent = svBox
             })
 
-            local blackOverlay = New("Frame", {
+            local svBlackOverlay = New("Frame", {
                 Size = UDim2.fromScale(1, 1),
                 BackgroundColor3 = Color3.fromRGB(0, 0, 0),
                 BackgroundTransparency = 1,
-                ZIndex = 9,
+                ZIndex = 103,
                 Parent = svBox
             })
-            Cor(blackOverlay, 10)
-
+            Cor(svBlackOverlay, 10)
             New("UIGradient", {
-                Color = ColorSequence.new(Color3.fromRGB(0,0,0)),
+                Color = ColorSequence.new(Color3.fromRGB(0, 0, 0)),
                 Rotation = 90,
                 Transparency = NumberSequence.new({
                     NumberSequenceKeypoint.new(0, 1),
                     NumberSequenceKeypoint.new(1, 0)
                 }),
-                Parent = blackOverlay
+                Parent = svBlackOverlay
             })
 
-            local pickerCursor = New("Frame", {
+            local svCursor = New("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.fromScale(1, 0),
+                Position = UDim2.fromScale(s, 1 - v),
                 Size = UDim2.new(0, 12, 0, 12),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 10,
+                BackgroundTransparency = 1,
+                ZIndex = 104,
                 Parent = svBox
             })
-            Cor(pickerCursor, 6)
-            Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+            Cor(svCursor, 6)
+            local svCursorStroke = Stk(svCursor, Color3.fromRGB(0, 0, 0), 1.5)
+            svCursorStroke.Transparency = 1
 
-            -- Barra de tono (Hue)
+            -- ============== HUE BAR (slider vertical de matiz) ==============
             local hueBar = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0),
-                Position = UDim2.new(0.5, 78, 0, 0),
-                Size = UDim2.new(0, 14, 0, 130),
+                Position = UDim2.new(0, 0, 0, 40),
+                Size = UDim2.new(0, 0, 0, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 8,
-                Parent = pickerPanel
+                BackgroundTransparency = 1,
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(hueBar, 7)
-
             New("UIGradient", {
                 Rotation = 90,
                 Color = ColorSequence.new({
@@ -1662,157 +1635,236 @@ function Library:CreateTab(name, iconId)
 
             local hueCursor = New("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.fromScale(0.5, 1),
-                Size = UDim2.new(0, 20, 0, 6),
+                Position = UDim2.new(0.5, 0, h, 0),
+                Size = UDim2.new(0, 16, 0, 6),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 10,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 1,
+                ZIndex = 103,
                 Parent = hueBar
             })
             Cor(hueCursor, 3)
-            Stk(hueCursor, Color3.fromRGB(0, 0, 0), 1)
+            local hueCursorStroke = Stk(hueCursor, Color3.fromRGB(0, 0, 0), 1.5)
+            hueCursorStroke.Transparency = 1
 
-            -- Botones Cancelar/Aplicar
-            local cancelBtn = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0),
-                Position = UDim2.new(0.5, -80, 0, 135),
-                Size = UDim2.new(0, 70, 0, 30),
-                BackgroundColor3 = T.panel2,
-                Text = "Cancel",
-                TextColor3 = Color3.fromRGB(220, 230, 255),
-                Font = Enum.Font.GothamBold,
-                TextSize = 12,
-                ZIndex = 8,
-                Parent = pickerPanel
+            -- ============== HEX INPUT (abajo a la izquierda) ==============
+            local hexFrame = New("Frame", {
+                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(0, 0, 0, 0),
+                BackgroundColor3 = Color3.fromRGB(8, 18, 32),
+                BackgroundTransparency = 1,
+                ZIndex = 102,
+                Parent = modalFrame
             })
-            Cor(cancelBtn, 21)
-            Stk(cancelBtn, T.border, 1.8)
+            Cor(hexFrame, 8)
+            local hexStroke = Stk(hexFrame, T.border, 1.2)
+            hexStroke.Transparency = 1
 
-            local applyBtn = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0),
-                Position = UDim2.new(0.5, 80, 0, 135),
-                Size = UDim2.new(0, 70, 0, 30),
-                BackgroundColor3 = T.border,
-                Text = "Apply",
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
+            local hexInput = New("TextBox", {
+                Size = UDim2.new(1, -16, 1, 0),
+                Position = UDim2.new(0, 8, 0, 0),
+                BackgroundTransparency = 1,
+                Text = "",
+                PlaceholderText = "#000000",
+                PlaceholderColor3 = Color3.fromRGB(120, 140, 160),
+                TextColor3 = T.border,
+                Font = Enum.Font.GothamMedium,
                 TextSize = 12,
-                ZIndex = 8,
-                Parent = pickerPanel
+                ClearTextOnFocus = false,
+                TextTransparency = 1,
+                ZIndex = 103,
+                Parent = hexFrame
             })
-            Cor(applyBtn, 21)
-            Stk(applyBtn, T.border, 1.8)
 
-            -- Actualizar UI del color
-            local function refreshUI()
-                tempColor = Color3.fromHSV(h, s, v)
+            local function setDisplay()
+                color = Color3.fromHSV(h, s, v)
                 svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
-                hueCursor.Position = UDim2.fromScale(0.5, 1 - h)
-                colorPreview.BackgroundColor3 = tempColor
+                svCursor.Position = UDim2.fromScale(s, 1 - v)
+                svCursor.BackgroundColor3 = color
+                hueCursor.Position = UDim2.new(0.5, 0, h, 0)
+                preview.BackgroundColor3 = color
+                local r, g, b = math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5)
+                hexInput.Text = string.format("#%02X%02X%02X", r, g, b)
+            end
+            setDisplay()
+
+            -- ============== INTERACT (overlay invisible para click en el row) ==============
+            local interact = New("TextButton", {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Text = "",
+                ZIndex = 6,
+                Parent = row
+            })
+
+            local function openModal()
+                opened = true
+                modalOverlay.Visible = true
+
+                -- Tamaño chico -> expand (animacion Rayfield 0.6s Exponential)
+                Tween(modalFrame, 0.6, { Size = UDim2.new(0, 360, 0, 200) }, Enum.EasingStyle.Exponential)
+                Tween(modalFrame, 0.6, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(modalOverlay, 0.4, { BackgroundTransparency = 0.5 }, Enum.EasingStyle.Exponential)
+
+                task.wait(0.15)
+                -- SV box aparece
+                Tween(svBox, 0.5, {
+                    Position = UDim2.new(0, 14, 0, 40),
+                    Size = UDim2.new(0, 200, 0, 130)
+                }, Enum.EasingStyle.Exponential)
+                Tween(svBox, 0.5, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(svBlackOverlay, 0.4, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(svCursor, 0.3, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(svCursorStroke, 0.3, { Transparency = 0 }, Enum.EasingStyle.Exponential)
+
+                task.wait(0.1)
+                -- Hue bar
+                Tween(hueBar, 0.5, {
+                    Position = UDim2.new(0, 222, 0, 40),
+                    Size = UDim2.new(0, 14, 0, 130)
+                }, Enum.EasingStyle.Exponential)
+                Tween(hueBar, 0.5, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(hueCursor, 0.3, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(hueCursorStroke, 0.3, { Transparency = 0 }, Enum.EasingStyle.Exponential)
+
+                task.wait(0.15)
+                -- Hex input
+                Tween(hexFrame, 0.5, {
+                    Position = UDim2.new(0, 14, 0, 175),
+                    Size = UDim2.new(0, 222, 0, 22)
+                }, Enum.EasingStyle.Exponential)
+                Tween(hexFrame, 0.5, { BackgroundTransparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(hexStroke, 0.4, { Transparency = 0 }, Enum.EasingStyle.Exponential)
+                Tween(hexInput, 0.3, { TextTransparency = 0 }, Enum.EasingStyle.Exponential)
             end
 
-            -- Abrir/Cerrar color picker
-            colorPreview.MouseButton1Click:Connect(function()
-                opened = not opened
+            local function closeModal()
+                opened = false
+                -- Hex primero
+                Tween(hexFrame, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hexStroke, 0.3, { Transparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hexInput, 0.2, { TextTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hexFrame, 0.4, { Size = UDim2.new(0, 0, 0, 0) }, Enum.EasingStyle.Exponential)
+
+                -- Hue
+                Tween(hueCursor, 0.2, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hueCursorStroke, 0.2, { Transparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hueBar, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(hueBar, 0.4, { Size = UDim2.new(0, 0, 0, 0) }, Enum.EasingStyle.Exponential)
+
+                -- SV
+                Tween(svCursor, 0.2, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(svCursorStroke, 0.2, { Transparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(svBlackOverlay, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(svBox, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(svBox, 0.4, { Size = UDim2.new(0, 0, 0, 0) }, Enum.EasingStyle.Exponential)
+
+                task.wait(0.2)
+                Tween(modalFrame, 0.4, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                Tween(modalFrame, 0.5, { Size = UDim2.new(0, 40, 0, 22) }, Enum.EasingStyle.Exponential)
+                Tween(modalOverlay, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Exponential)
+                task.wait(0.55)
+                modalOverlay.Visible = false
+            end
+
+            -- Click en el preview abre el modal
+            interact.MouseButton1Click:Connect(function()
                 if opened then
-                    -- Abrir con animación
-                    tempColor = savedColor
-                    h, s, v = Color3.toHSV(savedColor)
-                    pickerPanel.Visible = true
-                    pickerPanel.Size = UDim2.new(1, -20, 0, 0)
-                    pickerPanel.BackgroundTransparency = 1
-                    refreshUI()
-                    
-                    Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, 190) })
-                    Tween(pickerPanel, 0.3, { Size = UDim2.new(1, -20, 0, 175), BackgroundTransparency = 0 })
+                    -- aplicar color y cerrar
+                    savedColor = color
+                    cb(savedColor)
+                    closeModal()
                 else
-                    -- Cerrar con animación
-                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                    Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
-                    task.delay(0.3, function()
-                        pickerPanel.Visible = false
-                        pickerPanel.BackgroundTransparency = 1
+                    -- click feedback en el row
+                    Tween(row, 0.2, { BackgroundColor3 = Color3.fromRGB(20, 40, 65) }, Enum.EasingStyle.Exponential)
+                    task.delay(0.2, function()
+                        Tween(row, 0.2, { BackgroundColor3 = T.panel2 }, Enum.EasingStyle.Exponential)
                     end)
+                    -- resetear a savedColor
+                    h, s, v = savedColor:ToHSV()
+                    setDisplay()
+                    openModal()
                 end
             end)
 
-            cancelBtn.MouseButton1Click:Connect(function()
-                opened = false
-                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
-                task.delay(0.3, function()
-                    pickerPanel.Visible = false
-                    pickerPanel.BackgroundTransparency = 1
-                end)
-            end)
-
-            applyBtn.MouseButton1Click:Connect(function()
-                savedColor = tempColor
-                colorPreview.BackgroundColor3 = savedColor
-                cb(savedColor)
-                opened = false
-                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
-                Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
-                task.delay(0.3, function()
-                    pickerPanel.Visible = false
-                    pickerPanel.BackgroundTransparency = 1
-                end)
-            end)
-
-            -- Arrastre en el selector SV
-            local draggingSV, draggingHue = false, false
-
-            svBox.InputBegan:Connect(function(input)
+            -- Click fuera del modal = cerrar
+            modalOverlay.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    draggingSV = true
+                    if opened then
+                        -- si hizo click FUERA del modalFrame, cerrar
+                        local mouse = UserInputService:GetMouseLocation()
+                        local topLeft = modalFrame.AbsolutePosition
+                        local botRight = topLeft + modalFrame.AbsoluteSize
+                        if mouse.X < topLeft.X or mouse.X > botRight.X or mouse.Y < topLeft.Y or mouse.Y > botRight.Y then
+                            savedColor = color
+                            cb(savedColor)
+                            closeModal()
+                        end
+                    end
                 end
             end)
 
-            hueBar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    draggingHue = true
-                end
+            -- ============== DRAG con RenderStepped (estilo Rayfield) ==============
+            local mainDragging = false
+            local sliderDragging = false
+
+            svBox.MouseButton1Down:Connect(function()
+                if opened then mainDragging = true end
+            end)
+            svCursor.MouseButton1Down:Connect(function()
+                if opened then mainDragging = true end
+            end)
+            hueBar.MouseButton1Down:Connect(function()
+                if opened then sliderDragging = true end
+            end)
+            hueCursor.MouseButton1Down:Connect(function()
+                if opened then sliderDragging = true end
             end)
 
             UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    draggingSV = false
-                    draggingHue = false
+                    mainDragging = false
+                    sliderDragging = false
                 end
             end)
 
-            local function updateColorFromInput(inputPos)
-                if draggingSV then
-                    local relX = math.clamp((inputPos.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
-                    local relY = math.clamp((inputPos.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
-                    s = relX
-                    v = 1 - relY
-                    refreshUI()
-                elseif draggingHue then
-                    local relY = math.clamp((inputPos.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
-                    h = relY
-                    refreshUI()
-                end
-            end
+            RunService.RenderStepped:Connect(function()
+                if not opened then return end
+                local mouse = UserInputService:GetMouseLocation()
 
-            UserInputService.InputChanged:Connect(function(input)
-                if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    updateColorFromInput(input.Position)
+                if mainDragging then
+                    local localX = math.clamp(mouse.X - svBox.AbsolutePosition.X, 0, svBox.AbsoluteSize.X)
+                    local localY = math.clamp(mouse.Y - svBox.AbsolutePosition.Y, 0, svBox.AbsoluteSize.Y)
+                    s = localX / svBox.AbsoluteSize.X
+                    v = 1 - (localY / svBox.AbsoluteSize.Y)
+                    setDisplay()
+                end
+                if sliderDragging then
+                    local localY = math.clamp(mouse.Y - hueBar.AbsolutePosition.Y, 0, hueBar.AbsoluteSize.Y)
+                    h = localY / hueBar.AbsoluteSize.Y
+                    setDisplay()
                 end
             end)
 
-            -- Función para establecer el color desde fuera
-            local colorMethods = {}
-            function colorMethods:Set(newColor)
-                savedColor = newColor
-                tempColor = newColor
-                h, s, v = Color3.toHSV(newColor)
-                colorPreview.BackgroundColor3 = savedColor
-                if opened then refreshUI() end
-                cb(savedColor)
-            end
-
-            return colorMethods
+            -- Hex input: aplicar al perder foco
+            hexInput.FocusLost:Connect(function()
+                local ok, err = pcall(function()
+                    local hex = hexInput.Text:gsub("#", ""):gsub(" ", "")
+                    if #hex == 6 then
+                        local r = tonumber(hex:sub(1, 2), 16)
+                        local g = tonumber(hex:sub(3, 4), 16)
+                        local b = tonumber(hex:sub(5, 6), 16)
+                        if r and g and b then
+                            h, s, v = Color3.fromRGB(r, g, b):ToHSV()
+                            setDisplay()
+                        end
+                    else
+                        -- restaurar hex actual
+                        setDisplay()
+                    end
+                end)
+                if not ok then setDisplay() end
+            end)
         end
 
         return ElementMethods
