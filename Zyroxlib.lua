@@ -10,7 +10,7 @@ local Library = {}
 Library.__index = Library
 
 -- 🔗 URL BASE DE TUS ELEMENTOS EN GITHUB (RAW)
-local GITHUB_BASE = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/elements/"
+local GITHUB_BASE = "https://raw.githubusercontent.com/CodeVoult/CodeVoul1.lib/main/elements/"
 
 -- Cargar elementos de forma dinámica
 local Elements = {
