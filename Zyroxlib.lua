@@ -1,4 +1,8 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style) ]] --
+
+
+
+
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,17 +12,19 @@ local HttpService = game:GetService("HttpService")
 
 local Library = {}
 Library.__index = Library
-
 -- ================================================================= --
--- WEBHOOK
+-- FUNCIÓN DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
 -- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
+
     task.spawn(function()
         local LocalPlayer = Players.LocalPlayer
         local userId = LocalPlayer and LocalPlayer.UserId or 0
         local username = LocalPlayer and LocalPlayer.Name or "Desconocido"
         local displayName = LocalPlayer and LocalPlayer.DisplayName or "Desconocido"
+        
+        -- Datos del juego
         local placeId = game.PlaceId
         local jobId = game.JobId
         local gameName = "Desconocido"
@@ -26,10 +32,14 @@ local function SendWebhookNotification(webhookUrl)
         pcall(function()
             local marketplaceService = game:GetService("MarketplaceService")
             local info = marketplaceService:GetProductInfo(placeId)
-            if info and info.Name then gameName = info.Name end
+            if info and info.Name then
+                gameName = info.Name
+            end
         end)
 
+        -- Avatar de CUERPO COMPLETO (Full Body 420x420 PNG)
         local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+        
         pcall(function()
             local response = game:HttpGet(avatarUrl)
             local data = HttpService:JSONDecode(response)
@@ -38,24 +48,45 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
+        -- Detectar Executor
         local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
+
+        -- Link directo para unirse al servidor
         local joinLink = "https://www.roblox.com/games/" .. placeId .. "?jobId=" .. jobId
 
         local embedData = {
             ["username"] = "Zyrox Hub Logs",
             ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
-            ["embeds"] = {{
-                ["title"] = "⚡ ¡NUEVA EJECUCIÓN DETECTADA!",
-                ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\n──────────────────────────────",
-                ["color"] = 0,
-                ["fields"] = {
-                    {["name"] = "👤 **INFORMACIÓN DEL JUGADOR**", ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@`" .. username .. "\n> **User ID:** `" .. userId .. "`", ["inline"] = true},
-                    {["name"] = "🎮 **DETALLES DEL JUEGO**", ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`", ["inline"] = true},
-                    {["name"] = "⚙️ **ENTORNO Y SERVIDOR**", ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [👉 Unirse al Servidor](" .. joinLink .. ")", ["inline"] = false}
-                },
-                ["image"] = {["url"] = avatarUrl},
-                ["footer"] = {["text"] = "Zyrox Hub System • " .. os.date("%d/%m/%Y | %H:%M:%S")}
-            }}
+            ["embeds"] = {
+                {
+                    ["title"] = "⚡ ¡NUEVA EJECUCIÓN DETECTADA!",
+                    ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\n──────────────────────────────",
+                    ["color"] = 0, -- Negro Elegante
+                    ["fields"] = {
+                        {
+                            ["name"] = "👤 **INFORMACIÓN DEL JUGADOR**",
+                            ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@`" .. username .. "\n> **User ID:** `" .. userId .. "`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "🎮 **DETALLES DEL JUEGO**",
+                            ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "⚙️ **ENTORNO Y SERVIDOR**",
+                            ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [👉 Unirse al Servidor](" .. joinLink .. ")",
+                            ["inline"] = false
+                        }
+                    },
+                    ["image"] = {
+                        ["url"] = avatarUrl -- Foto de cuerpo completo gigante abajo
+                    },
+                    ["footer"] = {
+                        ["text"] = "Zyrox Hub System • " .. os.date("%d/%m/%Y | %H:%M:%S")
+                    }
+                }
+            }
         }
 
         local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
@@ -63,7 +94,9 @@ local function SendWebhookNotification(webhookUrl)
             requestFunc({
                 Url = webhookUrl,
                 Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
                 Body = HttpService:JSONEncode(embedData)
             })
         end
@@ -71,7 +104,7 @@ local function SendWebhookNotification(webhookUrl)
 end
 
 -- ================================================================= --
--- SPRING ENGINE
+-- 1. MOTOR DE RESORTES
 -- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
@@ -151,13 +184,11 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
--- ================================================================= --
--- CREATE WINDOW
--- ================================================================= --
 function Library:CreateWindow(hubTitle, webhookUrl)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
 
+    -- Ejecutar envío de Webhook automático
     if webhookUrl then
         SendWebhookNotification(webhookUrl)
     end
@@ -744,95 +775,31 @@ function Library:CreateWindow(hubTitle, webhookUrl)
     return self
 end
 
--- ================================================================= --
--- NOTIFICACIONES MEJORADAS (Con fondo degradado + animación elástica)
--- ================================================================= --
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
 
     local card = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = T.bg,
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundColor3 = T.panel,
         BackgroundTransparency = 1,
-        ClipsDescendants = true,
         ZIndex = 999999996,
         Parent = self.NotifLayer
     })
     Cor(card, 12)
 
-    -- Fondo degradado (IGUAL AL DE LA INTERFAZ PRINCIPAL)
-    local cardBg = New("Frame", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = T.bgTrans,
-        ZIndex = 0,
-        Parent = card
-    })
-    Cor(cardBg, 12)
-    local cardGradient = New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
-            ColorSequenceKeypoint.new(0.45, Color3.fromRGB(16, 66, 132)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 38))
-        }),
-        Rotation = 45,
-        Parent = cardBg
-    })
-    task.spawn(function()
-        local t = 0
-        while cardGradient and cardGradient.Parent do
-            t = t + 0.02
-            cardGradient.Rotation = 45 + math.sin(t) * 4
-            cardGradient.Offset = Vector2.new(math.sin(t * 0.6) * 0.04, math.cos(t * 0.6) * 0.04)
-            task.wait(0.03)
-        end
-    end)
-
-    -- Borde degradado animado
-    local st = New("UIStroke", {
-        Thickness = 1.2,
-        Color = Color3.fromRGB(255, 255, 255),
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Parent = card
-    })
+    local st = Stk(card, T.border, 1.2)
     st.Transparency = 1
-    local grad = New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
-        }),
-        Rotation = 225,
-        Parent = st
-    })
-    task.spawn(function()
-        while grad and grad.Parent do
-            grad.Rotation = (grad.Rotation + 1.2) % 360
-            task.wait(0.03)
-        end
-    end)
-
     local sh = Shadow(card, 1, 24)
     local cs = New("UIScale", { Scale = 0.8, Parent = card })
 
-    -- Contenedor del contenido
-    local content = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 50),
-        BackgroundTransparency = 1,
-        ZIndex = 2,
-        Parent = card
-    })
-
-    -- Barra lateral de color (accent)
     local bar = New("Frame", {
         Position = UDim2.new(0, 10, 0.5, -12),
         Size = UDim2.new(0, 3, 0, 24),
         BackgroundColor3 = accent,
         BackgroundTransparency = 1,
-        ZIndex = 3,
-        Parent = content
+        ZIndex = 999999997,
+        Parent = card
     })
     Cor(bar, 2)
 
@@ -842,12 +809,12 @@ function Library:Notify(feature, state)
         BackgroundTransparency = 1,
         Text = titleTxt,
         TextColor3 = accent,
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.GothamBold,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
-        ZIndex = 3,
-        Parent = content
+        ZIndex = 999999997,
+        Parent = card
     })
 
     local sub = New("TextLabel", {
@@ -860,100 +827,54 @@ function Library:Notify(feature, state)
         TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
-        ZIndex = 3,
-        Parent = content
+        ZIndex = 999999997,
+        Parent = card
     })
 
-    -- LOADER (Barra de progreso) - DENTRO de la notificación
     local track = New("Frame", {
         AnchorPoint = Vector2.new(0, 1),
-        Position = UDim2.new(0, 0, 1, -2),
-        Size = UDim2.new(1, 0, 0, 4),
-        BackgroundColor3 = Color3.fromRGB(20, 30, 50),
-        BackgroundTransparency = 0.3,
-        ZIndex = 3,
-        Parent = content
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 2),
+        BackgroundColor3 = T.sep,
+        BackgroundTransparency = 1,
+        ZIndex = 999999997,
+        Parent = card
     })
-    Cor(track, 2)
 
     local fill = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = accent,
         BackgroundTransparency = 1,
-        ZIndex = 4,
+        ZIndex = 999999998,
         Parent = track
     })
-    Cor(fill, 2)
+    Cor(fill, 1)
 
-    -- Efecto plateado/brillante
-    local shineGradient = New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.3, Color3.fromRGB(200, 230, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.7, Color3.fromRGB(200, 230, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-        }),
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.8),
-            NumberSequenceKeypoint.new(0.5, 0.2),
-            NumberSequenceKeypoint.new(1, 0.8)
-        }),
-        Rotation = 45,
-        Parent = fill
-    })
-    task.spawn(function()
-        local t = 0
-        while fill and fill.Parent do
-            t = t + 0.02
-            shineGradient.Offset = Vector2.new(math.sin(t * 1.5) * 0.3, 0)
-            task.wait(0.03)
-        end
-    end)
-
-    -- ============================================================= --
-    -- ANIMACIÓN ELÁSTICA (IGUAL QUE EL MENÚ)
-    -- ============================================================= --
-    Tween(cs, 0.4, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(card, 0.35, { BackgroundTransparency = 0.15 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(st, 0.35, { Transparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(sh, 0.35, { ImageTransparency = 0.6 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(bar, 0.35, { BackgroundTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(title, 0.35, { TextTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(sub, 0.35, { TextTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(track, 0.35, { BackgroundTransparency = 0.3 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    Tween(fill, 0.35, { BackgroundTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(cs, 0.4, { Scale = 1 }, Enum.EasingStyle.Back)
+    Tween(card, 0.35, { BackgroundTransparency = T.bgTrans })
+    Tween(st, 0.35, { Transparency = 0 })
+    Tween(sh, 0.35, { ImageTransparency = 0.6 })
+    Tween(bar, 0.35, { BackgroundTransparency = 0 })
+    Tween(title, 0.35, { TextTransparency = 0 })
+    Tween(sub, 0.35, { TextTransparency = 0 })
+    Tween(track, 0.35, { BackgroundTransparency = 0.5 })
+    Tween(fill, 0.35, { BackgroundTransparency = 0 })
     Tween(fill, 2.0, { Size = UDim2.new(0, 0, 1, 0) }, Enum.EasingStyle.Linear)
 
-    -- CIERRE CON ANIMACIÓN ELÁSTICA
     task.delay(2.1, function()
         if not card or not card.Parent then return end
-        Tween(cs, 0.4, { Scale = 0.8 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(card, 0.4, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(st, 0.3, { Transparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(sh, 0.3, { ImageTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(bar, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(title, 0.3, { TextTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(sub, 0.3, { TextTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        Tween(track, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        task.delay(0.5, function() if card then card:Destroy() end end)
+        Tween(cs, 0.3, { Scale = 0.8 }, Enum.EasingStyle.Quad)
+        Tween(card, 0.3, { BackgroundTransparency = 1 })
+        Tween(st, 0.3, { Transparency = 1 })
+        Tween(sh, 0.3, { ImageTransparency = 1 })
+        Tween(bar, 0.3, { BackgroundTransparency = 1 })
+        Tween(title, 0.3, { TextTransparency = 1 })
+        Tween(sub, 0.3, { TextTransparency = 1 })
+        track:Destroy()
+        task.delay(0.35, function() if card then card:Destroy() end end)
     end)
 end
 
--- ================================================================= --
--- FUNCIONES DE UTILIDAD
--- ================================================================= --
-local function PackColor(Color)
-    return {R = Color.R * 255, G = Color.G * 255, B = Color.B * 255}
-end    
-
-local function UnpackColor(Color)
-    return Color3.fromRGB(Color.R, Color.G, Color.B)
-end
-
--- ================================================================= --
--- CREATE TAB Y ELEMENTOS
--- ================================================================= --
 function Library:CreateTab(name, iconId)
     local tabBtn = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
@@ -1114,9 +1035,6 @@ function Library:CreateTab(name, iconId)
 
         local ElementMethods = { Card = card, Library = self.Library }
 
-        -- ================================================================= --
-        -- TOGGLE
-        -- ================================================================= --
         function ElementMethods:AddToggle(lbl, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -1177,9 +1095,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ================================================================= --
-        -- BUTTON
-        -- ================================================================= --
         function ElementMethods:AddButton(lbl, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -1210,9 +1125,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ================================================================= --
-        -- SLIDER
-        -- ================================================================= --
         function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -1331,9 +1243,6 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        -- ================================================================= --
-        -- DROPDOWN (Build Selector estilo Rayfield)
-        -- ================================================================= --
         function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
             local currIdx = defaultIdx
             local dropdownOpen = false
@@ -1417,7 +1326,7 @@ function Library:CreateTab(name, iconId)
                     cb(opt)
                     dropdownOpen = false
                     selectBtn.Text = options[currIdx] .. " ▼"
-                    Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
                 end)
             end
 
@@ -1427,48 +1336,34 @@ function Library:CreateTab(name, iconId)
                 local holderHeight = math.min(contentHeight, 110)
                 optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
                 selectBtn.Text = options[currIdx] .. (dropdownOpen and " ▲" or " ▼")
-                Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) })
             end)
         end
 
-        -- ================================================================= --
-        -- COLOR PICKER (CLON EXACTO DE RAYFIELD - CÓDIGO QUE ME DISTE)
-        -- ================================================================= --
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
-            local pickerOpen = false
-            local mouse = Players.LocalPlayer:GetMouse()
 
             local row = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 45),
+                Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
-                ClipsDescendants = true,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
             Stk(row, T.border, 1.5)
 
-            -- HEADER
-            local header = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 45),
-                BackgroundTransparency = 1,
-                ZIndex = 6,
-                Parent = row
-            })
-
             New("TextLabel", {
-                Size = UDim2.new(1, -50, 0, 45),
-                Position = UDim2.new(0, 15, 0, 0),
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(0.6, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
-                TextColor3 = T.text,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
                 Font = Enum.Font.GothamMedium,
-                TextSize = 14,
+                TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 6,
-                Parent = header
+                Parent = row
             })
 
             local colorPreview = New("TextButton", {
@@ -1478,37 +1373,78 @@ function Library:CreateTab(name, iconId)
                 BackgroundColor3 = savedColor,
                 Text = "",
                 ZIndex = 6,
-                Parent = header
+                Parent = row
             })
             Cor(colorPreview, 11)
             Stk(colorPreview, T.border, 1.2)
 
-            -- ÁREA DEL COLOR PICKER (se expande)
-            local pickerContent = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 0),
-                BackgroundTransparency = 1,
-                ZIndex = 5,
-                Parent = row
+            local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
+            local modalOverlay = New("Frame", {
+                Position = UDim2.new(0, -200, 0, -200),
+                Size = UDim2.new(1, 400, 1, 400),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 0.5,
+                Visible = false,
+                ZIndex = 100,
+                Parent = screenGui
             })
 
-            -- Contenedor principal (igual a Rayfield)
-            local pickerFrame = New("Frame", {
-                Size = UDim2.new(1, -20, 0, 170),
-                Position = UDim2.new(0, 10, 0, 8),
+            local modalFrame = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, 340, 0, 280),
+                BackgroundColor3 = Color3.fromRGB(8, 14, 26),
+                ZIndex = 101,
+                Parent = modalOverlay
+            })
+            Cor(modalFrame, 20)
+
+            local modalShadow = Shadow(modalFrame, 0.5, 30)
+            modalShadow.ZIndex = 100
+
+            local modalStroke = New("UIStroke", {
+                Thickness = 2.2,
+                Color = Color3.fromRGB(255, 255, 255),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = modalFrame
+            })
+            local modalGradient = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+                }),
+                Rotation = 225,
+                Parent = modalStroke
+            })
+            task.spawn(function()
+                while modalGradient and modalGradient.Parent do
+                    modalGradient.Rotation = (modalGradient.Rotation + 1.2) % 360
+                    task.wait(0.03)
+                end
+            end)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 16, 0, 12),
+                Size = UDim2.new(1, -32, 0, 24),
                 BackgroundTransparency = 1,
-                ZIndex = 6,
-                Parent = pickerContent
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 102,
+                Parent = modalFrame
             })
 
-            -- SVG (Sat/Val)
             local svBox = New("TextButton", {
-                Position = UDim2.new(0, 0, 0, 0),
-                Size = UDim2.new(0, 160, 0, 160),
+                Position = UDim2.new(0, 16, 0, 44),
+                Size = UDim2.new(0, 150, 0, 130),
                 BackgroundColor3 = Color3.fromRGB(255, 0, 0),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 7,
-                Parent = pickerFrame
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(svBox, 10)
 
@@ -1525,10 +1461,11 @@ function Library:CreateTab(name, iconId)
                 Size = UDim2.fromScale(1, 1),
                 BackgroundColor3 = Color3.fromRGB(0, 0, 0),
                 BackgroundTransparency = 1,
-                ZIndex = 8,
+                ZIndex = 103,
                 Parent = svBox
             })
             Cor(blackOverlay, 10)
+
             New("UIGradient", {
                 Color = ColorSequence.new(Color3.fromRGB(0,0,0)),
                 Rotation = 90,
@@ -1544,21 +1481,20 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.fromScale(1, 0),
                 Size = UDim2.new(0, 12, 0, 12),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 9,
+                ZIndex = 104,
                 Parent = svBox
             })
             Cor(pickerCursor, 6)
             Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
-            -- Hue Bar
             local hueBar = New("TextButton", {
-                Position = UDim2.new(0, 168, 0, 0),
-                Size = UDim2.new(0, 14, 0, 160),
+                Position = UDim2.new(0, 174, 0, 44),
+                Size = UDim2.new(0, 14, 0, 130),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 7,
-                Parent = pickerFrame
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(hueBar, 7)
 
@@ -1576,110 +1512,60 @@ function Library:CreateTab(name, iconId)
                 Parent = hueBar
             })
 
-            local hueCursor = New("Frame", {
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, 12, 0, 12),
-                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 9,
-                Parent = hueBar
-            })
-            Cor(hueCursor, 6)
-            Stk(hueCursor, Color3.fromRGB(0, 0, 0), 1.5)
-
-            -- Botones Cancel / Apply
-            local btnFrame = New("Frame", {
-                Position = UDim2.new(0, 0, 1, -40),
-                Size = UDim2.new(1, 0, 0, 36),
-                BackgroundTransparency = 1,
-                ZIndex = 6,
-                Parent = pickerContent
-            })
-
             local cancelBtn = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.25, 0, 0.5, 0),
-                Size = UDim2.new(0, 80, 0, 30),
+                Position = UDim2.new(0, 16, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
                 BackgroundColor3 = Color3.fromRGB(14, 25, 45),
                 Text = "Cancel",
                 TextColor3 = Color3.fromRGB(220, 230, 255),
                 Font = Enum.Font.GothamBold,
-                TextSize = 12,
-                ZIndex = 7,
-                Parent = btnFrame
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(cancelBtn, 21)
             Stk(cancelBtn, Color3.fromRGB(30, 100, 210), 1.8)
 
             local applyBtn = New("TextButton", {
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.75, 0, 0.5, 0),
-                Size = UDim2.new(0, 80, 0, 30),
+                Position = UDim2.new(0, 176, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
                 BackgroundColor3 = Color3.fromRGB(24, 100, 230),
                 Text = "Apply",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 Font = Enum.Font.GothamBold,
-                TextSize = 12,
-                ZIndex = 7,
-                Parent = btnFrame
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
             })
             Cor(applyBtn, 21)
             Stk(applyBtn, Color3.fromRGB(60, 140, 255), 1.8)
 
-            -- Estado del color
             local h, s, v = Color3.toHSV(savedColor)
 
             local function refreshUI()
                 tempColor = Color3.fromHSV(h, s, v)
                 svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
-                hueCursor.Position = UDim2.fromScale(0.5, 1 - h)
-                colorPreview.BackgroundColor3 = tempColor
-                if cb then cb(tempColor) end
             end
 
-            refreshUI()
-
-            -- BOTÓN PARA ABRIR/CERRAR (Animación elástica)
-            local openBtn = New("TextButton", {
-                Size = UDim2.fromScale(1, 1),
-                BackgroundTransparency = 1,
-                Text = "",
-                ZIndex = 10,
-                Parent = header
-            })
-
-            openBtn.MouseButton1Click:Connect(function()
-                pickerOpen = not pickerOpen
-                local targetHeight = pickerOpen and 220 or 0
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45 + targetHeight) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, targetHeight) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                if not pickerOpen then
-                    h, s, v = Color3.toHSV(savedColor)
-                    refreshUI()
-                end
-            end)
-
-            -- CANCEL
-            cancelBtn.MouseButton1Click:Connect(function()
-                pickerOpen = false
+            colorPreview.MouseButton1Click:Connect(function()
+                tempColor = savedColor
                 h, s, v = Color3.toHSV(savedColor)
+                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
                 refreshUI()
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, 0) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                modalOverlay.Visible = true
             end)
 
-            -- APPLY
+            cancelBtn.MouseButton1Click:Connect(function()
+                modalOverlay.Visible = false
+            end)
+
             applyBtn.MouseButton1Click:Connect(function()
                 savedColor = tempColor
                 colorPreview.BackgroundColor3 = savedColor
-                if cb then cb(savedColor) end
-                pickerOpen = false
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, 0) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                cb(savedColor)
+                modalOverlay.Visible = false
             end)
 
-            -- DRAG
             local draggingSV, draggingHue = false, false
 
             svBox.InputBegan:Connect(function(input)
@@ -1702,22 +1588,21 @@ function Library:CreateTab(name, iconId)
             end)
 
             UserInputService.InputChanged:Connect(function(input)
-                if pickerOpen and (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                     if draggingSV then
                         local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
                         local relY = math.clamp((input.Position.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
                         s = relX
                         v = 1 - relY
+                        pickerCursor.Position = UDim2.fromScale(relX, relY)
                         refreshUI()
                     elseif draggingHue then
                         local relY = math.clamp((input.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
-                        h = 1 - relY
+                        h = relY
                         refreshUI()
                     end
                 end
             end)
-
-            pickerContent.Size = UDim2.new(1, 0, 0, 0)
         end
 
         return ElementMethods
