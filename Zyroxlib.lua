@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,23 +8,8 @@ local HttpService = game:GetService("HttpService")
 
 local Library = {}
 Library.__index = Library
-
--- 🔗 URL BASE DE TUS ELEMENTOS EN GITHUB (RAW)
-local GITHUB_BASE = "https://raw.githubusercontent.com/CodeVoult/CodeVoul1.lib/main/elements/"
-
--- Cargar elementos de forma dinámica (SOLO UNA VEZ AL INICIO)
-local Elements = {
-    Tabs = loadstring(game:HttpGet(GITHUB_BASE .. "Tabs.lua"))(),
-    Toggle = loadstring(game:HttpGet(GITHUB_BASE .. "Toggle.lua"))(),
-    Button = loadstring(game:HttpGet(GITHUB_BASE .. "Button.lua"))(),
-    Slider = loadstring(game:HttpGet(GITHUB_BASE .. "Slider.lua"))(),
-    Dropdown = loadstring(game:HttpGet(GITHUB_BASE .. "Dropdown.lua"))(),
-    ColorPicker = loadstring(game:HttpGet(GITHUB_BASE .. "ColorPicker.lua"))()
-    Section = loadstring(game:HttpGet(GITHUB_BASE .. "Section.lua"))()
-}
-
 -- ================================================================= --
--- FUNCIÓN DE ENVIAR WEBHOOK
+-- FUNCIÓN DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
 -- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
@@ -35,6 +20,7 @@ local function SendWebhookNotification(webhookUrl)
         local username = LocalPlayer and LocalPlayer.Name or "Desconocido"
         local displayName = LocalPlayer and LocalPlayer.DisplayName or "Desconocido"
         
+        -- Datos del juego
         local placeId = game.PlaceId
         local jobId = game.JobId
         local gameName = "Desconocido"
@@ -47,6 +33,7 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
+        -- Avatar de CUERPO COMPLETO (Full Body 420x420 PNG)
         local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
         
         pcall(function()
@@ -57,7 +44,10 @@ local function SendWebhookNotification(webhookUrl)
             end
         end)
 
+        -- Detectar Executor
         local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
+
+        -- Link directo para unirse al servidor
         local joinLink = "https://www.roblox.com/games/" .. placeId .. "?jobId=" .. jobId
 
         local embedData = {
@@ -67,7 +57,7 @@ local function SendWebhookNotification(webhookUrl)
                 {
                     ["title"] = "⚡ ¡NUEVA EJECUCIÓN DETECTADA!",
                     ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\n──────────────────────────────",
-                    ["color"] = 0,
+                    ["color"] = 0, -- Negro Elegante
                     ["fields"] = {
                         {
                             ["name"] = "👤 **INFORMACIÓN DEL JUGADOR**",
@@ -86,7 +76,7 @@ local function SendWebhookNotification(webhookUrl)
                         }
                     },
                     ["image"] = {
-                        ["url"] = avatarUrl
+                        ["url"] = avatarUrl -- Foto de cuerpo completo gigante abajo
                     },
                     ["footer"] = {
                         ["text"] = "Zyrox Hub System • " .. os.date("%d/%m/%Y | %H:%M:%S")
@@ -194,6 +184,7 @@ function Library:CreateWindow(hubTitle, webhookUrl)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
 
+    -- Ejecutar envío de Webhook automático
     if webhookUrl then
         SendWebhookNotification(webhookUrl)
     end
@@ -777,14 +768,6 @@ function Library:CreateWindow(hubTitle, webhookUrl)
         self.LogoLocked = locked
     end
 
-    -- ============================================================
-    -- MÉTODOS DE LA LIBRERÍA (LLAMAN A LOS ELEMENTOS CARGADOS)
-    -- ============================================================
-    
-    function self:CreateTab(name, iconId)
-        return Elements.Tabs.Create(self, name, iconId)
-    end
-
     return self
 end
 
@@ -886,6 +869,742 @@ function Library:Notify(feature, state)
         track:Destroy()
         task.delay(0.35, function() if card then card:Destroy() end end)
     end)
+end
+
+function Library:CreateTab(name, iconId)
+    local tabBtn = New("TextButton", {
+        Size = UDim2.new(1, 0, 0, 42),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 4,
+        Parent = self.Sidebar
+    })
+    Cor(tabBtn, 21)
+    local tabStroke = New("UIStroke", {
+        Thickness = 1.6,
+        Color = Color3.fromRGB(255, 255, 255),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = tabBtn
+    })
+    tabStroke.Transparency = 0
+
+    local tabGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+        }),
+        Rotation = 225,
+        Parent = tabStroke
+    })
+    task.spawn(function()
+        while tabGradient and tabGradient.Parent do
+            tabGradient.Rotation = (tabGradient.Rotation + 1.2) % 360
+            task.wait(0.03)
+        end
+    end)
+
+    local icon = New("ImageLabel", {
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0, 12, 0.5, -12),
+        BackgroundTransparency = 1,
+        Image = iconId or "",
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
+        ZIndex = 5,
+        Parent = tabBtn
+    })
+
+    local txt = New("TextLabel", {
+        Size = UDim2.new(1, -46, 1, 0),
+        Position = UDim2.new(0, 44, 0, 0),
+        BackgroundTransparency = 1,
+        Text = name,
+        TextColor3 = Color3.fromRGB(180, 200, 220),
+        Font = Enum.Font.GothamMedium,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 5,
+        Parent = tabBtn
+    })
+
+    local page = New("ScrollingFrame", {
+        Size = UDim2.fromScale(1, 1),
+        ClipsDescendants = true,
+        BackgroundTransparency = 1,
+        Visible = false,
+        ScrollBarThickness = 0,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        Parent = self.ContentArea
+    })
+    Cor(page, 8)
+    local pageList = List(page, Enum.FillDirection.Vertical, 6)
+    Pad(page, 8, 8, 8, 8)
+
+    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if page and page.Parent then
+            page.CanvasSize = UDim2.fromOffset(0, pageList.AbsoluteContentSize.Y + 10)
+        end
+    end)
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, t in pairs(self.Tabs) do
+            Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
+            t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
+            t.stroke.Transparency = 0
+        end
+        for _, p in pairs(self.Pages) do
+            p.Visible = false
+        end
+        Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
+        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tabStroke.Transparency = 0
+        
+        page.Visible = true
+        
+        page.Position = UDim2.new(0, 0, -0.1, 0)
+        page.Size = UDim2.new(1, 0, 1.2, 0)
+        
+        Tween(page, 0.6, {
+            Position = UDim2.new(0, 0, 0, 0),
+            Size = UDim2.new(1, 0, 1, 0)
+        }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        
+        self.ActivePage = page
+        
+        task.wait(0.1)
+        if page and page.Parent then
+            local layout = page:FindFirstChildOfClass("UIListLayout")
+            if layout then
+                page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
+            end
+            page.CanvasPosition = Vector2.zero
+        end
+    end)
+
+    if not self.ActivePage then
+        self.ActivePage = page
+        page.Visible = true
+        tabBtn.BackgroundTransparency = 0.85
+        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+
+    table.insert(self.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
+    table.insert(self.Pages, page)
+
+    local TabMethods = { Library = self, Page = page }
+
+    function TabMethods:CreateSection(title)
+        local container = New("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            ZIndex = 5,
+            Parent = page
+        })
+        List(container, Enum.FillDirection.Vertical, 8)
+
+        New("TextLabel", {
+            Size = UDim2.new(1, -4, 0, 26),
+            Position = UDim2.new(0, 4, 0, 0),
+            BackgroundTransparency = 1,
+            Text = title,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Font = Enum.Font.GothamMedium,
+            TextSize = 18,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 6,
+            Parent = container
+        })
+
+        local card = New("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            ZIndex = 5,
+            Parent = container
+        })
+        List(card, Enum.FillDirection.Vertical, 8)
+
+        local ElementMethods = { Card = card, Library = self.Library }
+
+        function ElementMethods:AddToggle(lbl, def, cb)
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(1, -80, 1, 0),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            local switchBg = New("Frame", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -10, 0.5, 0),
+                Size = UDim2.new(0, 50, 0, 26),
+                BackgroundColor3 = T.switchOff,
+                ZIndex = 6,
+                Parent = row
+            })
+            Cor(switchBg, 13)
+            Stk(switchBg, T.border, 1.5)
+
+            local knob = New("Frame", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                Size = UDim2.new(0, 20, 0, 20),
+                Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 7,
+                Parent = switchBg
+            })
+            Cor(knob, 8)
+
+            local click = New("TextButton", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Text = "",
+                ZIndex = 9,
+                Parent = row
+            })
+
+            click.MouseButton1Click:Connect(function()
+                def = not def
+                cb(def)
+                self.Library:Notify(lbl, def)
+                Tween(knob, 0.3, { Position = def and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) })
+            end)
+        end
+
+        function ElementMethods:AddButton(lbl, cb)
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            local btn = New("TextButton", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 13,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            btn.MouseButton1Click:Connect(function()
+                Tween(row, 0.1, { BackgroundColor3 = T.border })
+                task.delay(0.1, function()
+                    Tween(row, 0.2, { BackgroundColor3 = T.panel2 })
+                end)
+                cb()
+            end)
+        end
+
+        function ElementMethods:AddSlider(lbl, mn, mx, def, cb)
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 21)
+            Stk(row, T.border, 1)
+
+            local valInput = New("TextBox", {
+                Position = UDim2.new(0, 12, 0.5, -10),
+                Size = UDim2.new(0, 35, 0, 20),
+                BackgroundTransparency = 1,
+                Text = tostring(def),
+                TextColor3 = T.border,
+                Font = Enum.Font.GothamBold,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ClearTextOnFocus = false,
+                ZIndex = 8,
+                Parent = row
+            })
+
+            New("TextLabel", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -12, 0.5, 0),
+                Size = UDim2.new(0, 130, 0, 20),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            local track = New("Frame", {
+                Position = UDim2.new(0, 52, 0.5, -2),
+                Size = UDim2.new(1, -200, 0, 6),
+                BackgroundColor3 = Color3.fromRGB(12, 22, 38),
+                ZIndex = 6,
+                Parent = row
+            })
+            Cor(track, 3)
+
+            local trackStroke = Stk(track, Color3.fromRGB(255, 255, 255), 1.6)
+            New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+                }),
+                Rotation = 225,
+                Parent = trackStroke
+            })
+
+            local fill = New("Frame", {
+                BackgroundColor3 = T.border,
+                Size = UDim2.new((def - mn) / (mx - mn), 0, 1, 0),
+                ZIndex = 7,
+                Parent = track
+            })
+            Cor(fill, 3)
+
+            local thumb = New("TextButton", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new((def - mn) / (mx - mn), 0, 0.5, 0),
+                Size = UDim2.new(0, 14, 0, 14),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 8,
+                Parent = track
+            })
+            Cor(thumb, 7)
+
+            local function setVal(newVal)
+                newVal = math.clamp(newVal, mn, mx)
+                valInput.Text = tostring(newVal)
+                local tt = (newVal - mn) / (mx - mn)
+                Tween(fill, 0.15, { Size = UDim2.new(tt, 0, 1, 0) })
+                Tween(thumb, 0.15, { Position = UDim2.new(tt, 0, 0.5, 0) })
+                cb(newVal)
+            end
+
+            local dragging = false
+            local function update(posX)
+                local t = math.clamp((posX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                setVal(math.clamp(math.floor(mn + t * (mx - mn) + 0.5), mn, mx))
+            end
+
+            thumb.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    update(input.Position.X)
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    update(input.Position.X)
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+
+            valInput.FocusLost:Connect(function()
+                local num = tonumber(valInput.Text)
+                if num then setVal(math.round(num)) end
+            end)
+        end
+
+        function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
+            local currIdx = defaultIdx
+            local dropdownOpen = false
+
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ClipsDescendants = true,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            local header = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundTransparency = 1,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(0.5, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 6,
+                Parent = header
+            })
+
+            local selectBtn = New("TextButton", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -10, 0.5, 0),
+                Size = UDim2.new(0, 110, 0, 26),
+                BackgroundColor3 = T.switchOff,
+                Text = options[defaultIdx] .. " ▼",
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 11,
+                ZIndex = 6,
+                Parent = header
+            })
+            Cor(selectBtn, 13)
+            Stk(selectBtn, T.border, 1.5)
+
+            local optionsHolder = New("ScrollingFrame", {
+                Position = UDim2.new(0, 10, 0, 44),
+                Size = UDim2.new(1, -20, 0, 110),
+                BackgroundTransparency = 1,
+                CanvasSize = UDim2.new(0, 0, 0, (#options * 32) + 6),
+                ScrollBarThickness = 3,
+                ZIndex = 6,
+                Parent = row
+            })
+            List(optionsHolder, Enum.FillDirection.Vertical, 6)
+            Pad(optionsHolder, 2, 2, 2, 2)
+
+            for i, opt in ipairs(options) do
+                local isSelected = (i == currIdx)
+                local optBtn = New("TextButton", {
+                    Size = UDim2.new(0.96, 0, 0, 26),
+                    AnchorPoint = Vector2.new(0.5, 0),
+                    Position = UDim2.new(0.5, 0, 0, 0),
+                    BackgroundColor3 = isSelected and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30),
+                    Text = opt,
+                    TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 11,
+                    ZIndex = 7,
+                    Parent = optionsHolder
+                })
+                Cor(optBtn, 13)
+                Stk(optBtn, T.border, 1.2)
+
+                optBtn.MouseButton1Click:Connect(function()
+                    currIdx = i
+                    cb(opt)
+                    dropdownOpen = false
+                    selectBtn.Text = options[currIdx] .. " ▼"
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                end)
+            end
+
+            selectBtn.MouseButton1Click:Connect(function()
+                dropdownOpen = not dropdownOpen
+                local contentHeight = (#options * 32) + 12
+                local holderHeight = math.min(contentHeight, 110)
+                optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
+                selectBtn.Text = options[currIdx] .. (dropdownOpen and " ▲" or " ▼")
+                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) })
+            end)
+        end
+
+        function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
+            local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
+            local tempColor = savedColor
+
+            local row = New("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = T.panel2,
+                ZIndex = 5,
+                Parent = card
+            })
+            Cor(row, 20)
+            Stk(row, T.border, 1.5)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(0.6, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 6,
+                Parent = row
+            })
+
+            local colorPreview = New("TextButton", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -10, 0.5, 0),
+                Size = UDim2.new(0, 40, 0, 22),
+                BackgroundColor3 = savedColor,
+                Text = "",
+                ZIndex = 6,
+                Parent = row
+            })
+            Cor(colorPreview, 11)
+            Stk(colorPreview, T.border, 1.2)
+
+            local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
+            local modalOverlay = New("Frame", {
+                Position = UDim2.new(0, -200, 0, -200),
+                Size = UDim2.new(1, 400, 1, 400),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 0.5,
+                Visible = false,
+                ZIndex = 100,
+                Parent = screenGui
+            })
+
+            local modalFrame = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(0.5, 0.5),
+                Size = UDim2.new(0, 340, 0, 280),
+                BackgroundColor3 = Color3.fromRGB(8, 14, 26),
+                ZIndex = 101,
+                Parent = modalOverlay
+            })
+            Cor(modalFrame, 20)
+
+            local modalShadow = Shadow(modalFrame, 0.5, 30)
+            modalShadow.ZIndex = 100
+
+            local modalStroke = New("UIStroke", {
+                Thickness = 2.2,
+                Color = Color3.fromRGB(255, 255, 255),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = modalFrame
+            })
+            local modalGradient = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
+                }),
+                Rotation = 225,
+                Parent = modalStroke
+            })
+            task.spawn(function()
+                while modalGradient and modalGradient.Parent do
+                    modalGradient.Rotation = (modalGradient.Rotation + 1.2) % 360
+                    task.wait(0.03)
+                end
+            end)
+
+            New("TextLabel", {
+                Position = UDim2.new(0, 16, 0, 12),
+                Size = UDim2.new(1, -32, 0, 24),
+                BackgroundTransparency = 1,
+                Text = lbl,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+
+            local svBox = New("TextButton", {
+                Position = UDim2.new(0, 16, 0, 44),
+                Size = UDim2.new(0, 150, 0, 130),
+                BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(svBox, 10)
+
+            New("UIGradient", {
+                Color = ColorSequence.new(Color3.fromRGB(255, 255, 255)),
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(1, 1)
+                }),
+                Parent = svBox
+            })
+
+            local blackOverlay = New("Frame", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                BackgroundTransparency = 1,
+                ZIndex = 103,
+                Parent = svBox
+            })
+            Cor(blackOverlay, 10)
+
+            New("UIGradient", {
+                Color = ColorSequence.new(Color3.fromRGB(0,0,0)),
+                Rotation = 90,
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 1),
+                    NumberSequenceKeypoint.new(1, 0)
+                }),
+                Parent = blackOverlay
+            })
+
+            local pickerCursor = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(1, 0),
+                Size = UDim2.new(0, 12, 0, 12),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 104,
+                Parent = svBox
+            })
+            Cor(pickerCursor, 6)
+            Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+
+            local hueBar = New("TextButton", {
+                Position = UDim2.new(0, 174, 0, 44),
+                Size = UDim2.new(0, 14, 0, 130),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(hueBar, 7)
+
+            New("UIGradient", {
+                Rotation = 90,
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                }),
+                Parent = hueBar
+            })
+
+            local cancelBtn = New("TextButton", {
+                Position = UDim2.new(0, 16, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
+                BackgroundColor3 = Color3.fromRGB(14, 25, 45),
+                Text = "Cancel",
+                TextColor3 = Color3.fromRGB(220, 230, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(cancelBtn, 21)
+            Stk(cancelBtn, Color3.fromRGB(30, 100, 210), 1.8)
+
+            local applyBtn = New("TextButton", {
+                Position = UDim2.new(0, 176, 0, 222),
+                Size = UDim2.new(0, 148, 0, 42),
+                BackgroundColor3 = Color3.fromRGB(24, 100, 230),
+                Text = "Apply",
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                ZIndex = 102,
+                Parent = modalFrame
+            })
+            Cor(applyBtn, 21)
+            Stk(applyBtn, Color3.fromRGB(60, 140, 255), 1.8)
+
+            local h, s, v = Color3.toHSV(savedColor)
+
+            local function refreshUI()
+                tempColor = Color3.fromHSV(h, s, v)
+                svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+            end
+
+            colorPreview.MouseButton1Click:Connect(function()
+                tempColor = savedColor
+                h, s, v = Color3.toHSV(savedColor)
+                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
+                refreshUI()
+                modalOverlay.Visible = true
+            end)
+
+            cancelBtn.MouseButton1Click:Connect(function()
+                modalOverlay.Visible = false
+            end)
+
+            applyBtn.MouseButton1Click:Connect(function()
+                savedColor = tempColor
+                colorPreview.BackgroundColor3 = savedColor
+                cb(savedColor)
+                modalOverlay.Visible = false
+            end)
+
+            local draggingSV, draggingHue = false, false
+
+            svBox.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = true
+                end
+            end)
+
+            hueBar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = true
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = false
+                    draggingHue = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    if draggingSV then
+                        local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
+                        local relY = math.clamp((input.Position.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
+                        s = relX
+                        v = 1 - relY
+                        pickerCursor.Position = UDim2.fromScale(relX, relY)
+                        refreshUI()
+                    elseif draggingHue then
+                        local relY = math.clamp((input.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
+                        h = relY
+                        refreshUI()
+                    end
+                end
+            end)
+        end
+
+        return ElementMethods
+    end
+
+    return TabMethods
 end
 
 return Library
