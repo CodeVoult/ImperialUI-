@@ -1,6 +1,3 @@
-
---233
-
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style) ]] --
 
 local Players = game:GetService("Players")
@@ -748,21 +745,50 @@ function Library:CreateWindow(hubTitle, webhookUrl)
 end
 
 -- ================================================================= --
--- NOTIFICACIONES MEJORADAS (Con Loader Interno + Efecto Plateado)
+-- NOTIFICACIONES MEJORADAS (Con fondo degradado + animación elástica)
 -- ================================================================= --
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
 
     local card = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 50),
-        BackgroundColor3 = T.panel,
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = T.bg,
         BackgroundTransparency = 1,
         ClipsDescendants = true,
         ZIndex = 999999996,
         Parent = self.NotifLayer
     })
     Cor(card, 12)
+
+    -- Fondo degradado (IGUAL AL DE LA INTERFAZ PRINCIPAL)
+    local cardBg = New("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = T.bgTrans,
+        ZIndex = 0,
+        Parent = card
+    })
+    Cor(cardBg, 12)
+    local cardGradient = New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 132, 230)),
+            ColorSequenceKeypoint.new(0.45, Color3.fromRGB(16, 66, 132)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 38))
+        }),
+        Rotation = 45,
+        Parent = cardBg
+    })
+    task.spawn(function()
+        local t = 0
+        while cardGradient and cardGradient.Parent do
+            t = t + 0.02
+            cardGradient.Rotation = 45 + math.sin(t) * 4
+            cardGradient.Offset = Vector2.new(math.sin(t * 0.6) * 0.04, math.cos(t * 0.6) * 0.04)
+            task.wait(0.03)
+        end
+    end)
 
     -- Borde degradado animado
     local st = New("UIStroke", {
@@ -791,14 +817,22 @@ function Library:Notify(feature, state)
     local sh = Shadow(card, 1, 24)
     local cs = New("UIScale", { Scale = 0.8, Parent = card })
 
+    -- Contenedor del contenido
+    local content = New("Frame", {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 1,
+        ZIndex = 2,
+        Parent = card
+    })
+
     -- Barra lateral de color (accent)
     local bar = New("Frame", {
         Position = UDim2.new(0, 10, 0.5, -12),
         Size = UDim2.new(0, 3, 0, 24),
         BackgroundColor3 = accent,
         BackgroundTransparency = 1,
-        ZIndex = 999999997,
-        Parent = card
+        ZIndex = 3,
+        Parent = content
     })
     Cor(bar, 2)
 
@@ -812,8 +846,8 @@ function Library:Notify(feature, state)
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
-        ZIndex = 999999997,
-        Parent = card
+        ZIndex = 3,
+        Parent = content
     })
 
     local sub = New("TextLabel", {
@@ -826,36 +860,32 @@ function Library:Notify(feature, state)
         TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTransparency = 1,
-        ZIndex = 999999997,
-        Parent = card
+        ZIndex = 3,
+        Parent = content
     })
 
-    -- ============================================================= --
-    -- LOADER (BARRA DE PROGRESO) DENTRO DE LA NOTIFICACIÓN
-    -- Con efecto plateado/brillante
-    -- ============================================================= --
+    -- LOADER (Barra de progreso) - DENTRO de la notificación
     local track = New("Frame", {
         AnchorPoint = Vector2.new(0, 1),
         Position = UDim2.new(0, 0, 1, -2),
-        Size = UDim2.new(1, 0, 0, 4), -- Más grueso (4px)
+        Size = UDim2.new(1, 0, 0, 4),
         BackgroundColor3 = Color3.fromRGB(20, 30, 50),
         BackgroundTransparency = 0.3,
-        ZIndex = 999999997,
-        Parent = card
+        ZIndex = 3,
+        Parent = content
     })
     Cor(track, 2)
 
-    -- Fill con efecto plateado
     local fill = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = accent,
         BackgroundTransparency = 1,
-        ZIndex = 999999998,
+        ZIndex = 4,
         Parent = track
     })
     Cor(fill, 2)
 
-    -- Efecto plateado (brillo) en el fill
+    -- Efecto plateado/brillante
     local shineGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -872,8 +902,6 @@ function Library:Notify(feature, state)
         Rotation = 45,
         Parent = fill
     })
-
-    -- Animación del brillo
     task.spawn(function()
         local t = 0
         while fill and fill.Parent do
@@ -884,29 +912,31 @@ function Library:Notify(feature, state)
     end)
 
     -- ============================================================= --
-
-    Tween(cs, 0.4, { Scale = 1 }, Enum.EasingStyle.Back)
-    Tween(card, 0.35, { BackgroundTransparency = T.bgTrans })
-    Tween(st, 0.35, { Transparency = 0 })
-    Tween(sh, 0.35, { ImageTransparency = 0.6 })
-    Tween(bar, 0.35, { BackgroundTransparency = 0 })
-    Tween(title, 0.35, { TextTransparency = 0 })
-    Tween(sub, 0.35, { TextTransparency = 0 })
-    Tween(track, 0.35, { BackgroundTransparency = 0.3 })
-    Tween(fill, 0.35, { BackgroundTransparency = 0 })
+    -- ANIMACIÓN ELÁSTICA (IGUAL QUE EL MENÚ)
+    -- ============================================================= --
+    Tween(cs, 0.4, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(card, 0.35, { BackgroundTransparency = 0.15 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(st, 0.35, { Transparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(sh, 0.35, { ImageTransparency = 0.6 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(bar, 0.35, { BackgroundTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(title, 0.35, { TextTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(sub, 0.35, { TextTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(track, 0.35, { BackgroundTransparency = 0.3 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    Tween(fill, 0.35, { BackgroundTransparency = 0 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     Tween(fill, 2.0, { Size = UDim2.new(0, 0, 1, 0) }, Enum.EasingStyle.Linear)
 
+    -- CIERRE CON ANIMACIÓN ELÁSTICA
     task.delay(2.1, function()
         if not card or not card.Parent then return end
-        Tween(cs, 0.3, { Scale = 0.8 }, Enum.EasingStyle.Quad)
-        Tween(card, 0.3, { BackgroundTransparency = 1 })
-        Tween(st, 0.3, { Transparency = 1 })
-        Tween(sh, 0.3, { ImageTransparency = 1 })
-        Tween(bar, 0.3, { BackgroundTransparency = 1 })
-        Tween(title, 0.3, { TextTransparency = 1 })
-        Tween(sub, 0.3, { TextTransparency = 1 })
-        Tween(track, 0.3, { BackgroundTransparency = 1 })
-        task.delay(0.35, function() if card then card:Destroy() end end)
+        Tween(cs, 0.4, { Scale = 0.8 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(card, 0.4, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(st, 0.3, { Transparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(sh, 0.3, { ImageTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(bar, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(title, 0.3, { TextTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(sub, 0.3, { TextTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        Tween(track, 0.3, { BackgroundTransparency = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        task.delay(0.5, function() if card then card:Destroy() end end)
     end)
 end
 
@@ -1402,18 +1432,16 @@ function Library:CreateTab(name, iconId)
         end
 
         -- ================================================================= --
-        -- COLOR PICKER (CLON EXACTO DE RAYFIELD)
+        -- COLOR PICKER (CLON EXACTO DE RAYFIELD - CÓDIGO QUE ME DISTE)
         -- ================================================================= --
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
             local pickerOpen = false
-
-            -- Obtener el mouse una sola vez
             local mouse = Players.LocalPlayer:GetMouse()
 
             local row = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 40),
+                Size = UDim2.new(1, 0, 0, 45),
                 BackgroundColor3 = T.panel2,
                 ClipsDescendants = true,
                 ZIndex = 5,
@@ -1424,20 +1452,20 @@ function Library:CreateTab(name, iconId)
 
             -- HEADER
             local header = New("Frame", {
-                Size = UDim2.new(1, 0, 0, 40),
+                Size = UDim2.new(1, 0, 0, 45),
                 BackgroundTransparency = 1,
                 ZIndex = 6,
                 Parent = row
             })
 
             New("TextLabel", {
-                Position = UDim2.new(0, 14, 0, 0),
-                Size = UDim2.new(0.6, 0, 1, 0),
+                Size = UDim2.new(1, -50, 0, 45),
+                Position = UDim2.new(0, 15, 0, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
-                TextColor3 = Color3.fromRGB(240, 245, 255),
+                TextColor3 = T.text,
                 Font = Enum.Font.GothamMedium,
-                TextSize = 13,
+                TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 6,
                 Parent = header
@@ -1455,7 +1483,7 @@ function Library:CreateTab(name, iconId)
             Cor(colorPreview, 11)
             Stk(colorPreview, T.border, 1.2)
 
-            -- ÁREA DEL COLOR PICKER
+            -- ÁREA DEL COLOR PICKER (se expande)
             local pickerContent = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 0),
                 BackgroundTransparency = 1,
@@ -1472,7 +1500,7 @@ function Library:CreateTab(name, iconId)
                 Parent = pickerContent
             })
 
-            -- SVG (Sat/Val) - CUADRADO
+            -- SVG (Sat/Val)
             local svBox = New("TextButton", {
                 Position = UDim2.new(0, 0, 0, 0),
                 Size = UDim2.new(0, 160, 0, 160),
@@ -1484,7 +1512,6 @@ function Library:CreateTab(name, iconId)
             })
             Cor(svBox, 10)
 
-            -- Gradiente Blanco (Saturación)
             New("UIGradient", {
                 Color = ColorSequence.new(Color3.fromRGB(255, 255, 255)),
                 Transparency = NumberSequence.new({
@@ -1494,7 +1521,6 @@ function Library:CreateTab(name, iconId)
                 Parent = svBox
             })
 
-            -- Gradiente Negro (Valor)
             local blackOverlay = New("Frame", {
                 Size = UDim2.fromScale(1, 1),
                 BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -1513,7 +1539,6 @@ function Library:CreateTab(name, iconId)
                 Parent = blackOverlay
             })
 
-            -- Cursor del SVG (igual a Rayfield)
             local pickerCursor = New("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(1, 0),
@@ -1525,7 +1550,7 @@ function Library:CreateTab(name, iconId)
             Cor(pickerCursor, 6)
             Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
-            -- Hue Bar (igual a Rayfield)
+            -- Hue Bar
             local hueBar = New("TextButton", {
                 Position = UDim2.new(0, 168, 0, 0),
                 Size = UDim2.new(0, 14, 0, 160),
@@ -1551,7 +1576,6 @@ function Library:CreateTab(name, iconId)
                 Parent = hueBar
             })
 
-            -- Cursor del Hue (igual a Rayfield)
             local hueCursor = New("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(0.5, 0.5),
@@ -1563,7 +1587,7 @@ function Library:CreateTab(name, iconId)
             Cor(hueCursor, 6)
             Stk(hueCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
-            -- Botones Cancel / Apply (igual a Rayfield)
+            -- Botones Cancel / Apply
             local btnFrame = New("Frame", {
                 Position = UDim2.new(0, 0, 1, -40),
                 Size = UDim2.new(1, 0, 0, 36),
@@ -1611,11 +1635,12 @@ function Library:CreateTab(name, iconId)
                 pickerCursor.Position = UDim2.fromScale(s, 1 - v)
                 hueCursor.Position = UDim2.fromScale(0.5, 1 - h)
                 colorPreview.BackgroundColor3 = tempColor
+                if cb then cb(tempColor) end
             end
 
             refreshUI()
 
-            -- BOTÓN PARA ABRIR/CERRAR
+            -- BOTÓN PARA ABRIR/CERRAR (Animación elástica)
             local openBtn = New("TextButton", {
                 Size = UDim2.fromScale(1, 1),
                 BackgroundTransparency = 1,
@@ -1627,8 +1652,7 @@ function Library:CreateTab(name, iconId)
             openBtn.MouseButton1Click:Connect(function()
                 pickerOpen = not pickerOpen
                 local targetHeight = pickerOpen and 220 or 0
-                -- Animación elástica exacta como Rayfield
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 40 + targetHeight) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45 + targetHeight) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, targetHeight) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 if not pickerOpen then
                     h, s, v = Color3.toHSV(savedColor)
@@ -1641,7 +1665,7 @@ function Library:CreateTab(name, iconId)
                 pickerOpen = false
                 h, s, v = Color3.toHSV(savedColor)
                 refreshUI()
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, 0) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
             end)
 
@@ -1649,13 +1673,13 @@ function Library:CreateTab(name, iconId)
             applyBtn.MouseButton1Click:Connect(function()
                 savedColor = tempColor
                 colorPreview.BackgroundColor3 = savedColor
-                cb(savedColor)
+                if cb then cb(savedColor) end
                 pickerOpen = false
-                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 40) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                Tween(row, 0.5, { Size = UDim2.new(1, 0, 0, 45) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 Tween(pickerContent, 0.4, { Size = UDim2.new(1, 0, 0, 0) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
             end)
 
-            -- DRAG (igual a Rayfield)
+            -- DRAG
             local draggingSV, draggingHue = false, false
 
             svBox.InputBegan:Connect(function(input)
