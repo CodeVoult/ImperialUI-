@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,18 +9,22 @@ local HttpService = game:GetService("HttpService")
 local Library = {}
 Library.__index = Library
 
--- Cargar elementos
+-- 🔗 URL BASE DE TUS ELEMENTOS EN GITHUB (RAW)
+local GITHUB_BASE = "https://raw.githubusercontent.com/CodeVoult/CodeVoul1.lib/main/elements/"
+
+-- Cargar elementos de forma dinámica (SOLO UNA VEZ AL INICIO)
 local Elements = {
-    Tabs = require(script.elements.Tabs),
-    Toggle = require(script.elements.Toggle),
-    Button = require(script.elements.Button),
-    Slider = require(script.elements.Slider),
-    Dropdown = require(script.elements.Dropdown),
-    ColorPicker = require(script.elements.ColorPicker)
+    Tabs = loadstring(game:HttpGet(GITHUB_BASE .. "Tabs.lua"))(),
+    Toggle = loadstring(game:HttpGet(GITHUB_BASE .. "Toggle.lua"))(),
+    Button = loadstring(game:HttpGet(GITHUB_BASE .. "Button.lua"))(),
+    Slider = loadstring(game:HttpGet(GITHUB_BASE .. "Slider.lua"))(),
+    Dropdown = loadstring(game:HttpGet(GITHUB_BASE .. "Dropdown.lua"))(),
+    ColorPicker = loadstring(game:HttpGet(GITHUB_BASE .. "ColorPicker.lua"))()
+    Section = loadstring(game:HttpGet(GITHUB_BASE .. "Section.lua"))()
 }
 
 -- ================================================================= --
--- FUNCIÓN DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
+-- FUNCIÓN DE ENVIAR WEBHOOK
 -- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
@@ -773,6 +777,14 @@ function Library:CreateWindow(hubTitle, webhookUrl)
         self.LogoLocked = locked
     end
 
+    -- ============================================================
+    -- MÉTODOS DE LA LIBRERÍA (LLAMAN A LOS ELEMENTOS CARGADOS)
+    -- ============================================================
+    
+    function self:CreateTab(name, iconId)
+        return Elements.Tabs.Create(self, name, iconId)
+    end
+
     return self
 end
 
@@ -874,14 +886,6 @@ function Library:Notify(feature, state)
         track:Destroy()
         task.delay(0.35, function() if card then card:Destroy() end end)
     end)
-end
-
-function Library:CreateTab(name, iconId)
-    return Elements.Tabs.Create(self, name, iconId)
-end
-
-function Library:CreateSection(page)
-    return Elements.Section.Create(self, page)
 end
 
 return Library
