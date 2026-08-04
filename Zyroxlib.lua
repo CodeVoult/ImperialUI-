@@ -1,4 +1,4 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]] --
+-- [[ ZyroxHub UI Library | iOS Premium VIP Edition (YARHM Style - Elastic Tab Animation) ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -1239,9 +1239,13 @@ function Library:CreateTab(name, iconId)
             end)
         end
 
-        function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb)
-            local currIdx = defaultIdx
+        -- ===================================================================== --
+        -- BUILD SELECTOR / DROPDOWN (ESTILO RAYFIELD) - Animaciones exactas    --
+        -- ===================================================================== --
+        function ElementMethods:AddDropdown(lbl, options, defaultOpt, cb)
+            local currentOption = defaultOpt or options[1]
             local dropdownOpen = false
+            local debounce = false
 
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -1251,8 +1255,10 @@ function Library:CreateTab(name, iconId)
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            local rowStroke = Stk(row, T.border, 1.5)
+            rowStroke.Transparency = 0
 
+            -- Header (siempre visible)
             local header = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundTransparency = 1,
@@ -1278,7 +1284,7 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.new(0, 110, 0, 26),
                 BackgroundColor3 = T.switchOff,
-                Text = options[defaultIdx] .. " ▼",
+                Text = currentOption .. " ▼",
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 Font = Enum.Font.GothamBold,
                 TextSize = 11,
@@ -1288,6 +1294,7 @@ function Library:CreateTab(name, iconId)
             Cor(selectBtn, 13)
             Stk(selectBtn, T.border, 1.5)
 
+            -- Contenedor de opciones (se oculta/muestra con animación)
             local optionsHolder = New("ScrollingFrame", {
                 Position = UDim2.new(0, 10, 0, 44),
                 Size = UDim2.new(1, -20, 0, 110),
@@ -1295,13 +1302,15 @@ function Library:CreateTab(name, iconId)
                 CanvasSize = UDim2.new(0, 0, 0, (#options * 32) + 6),
                 ScrollBarThickness = 3,
                 ZIndex = 6,
+                Visible = false,
                 Parent = row
             })
             List(optionsHolder, Enum.FillDirection.Vertical, 6)
             Pad(optionsHolder, 2, 2, 2, 2)
 
+            local optionButtons = {}
             for i, opt in ipairs(options) do
-                local isSelected = (i == currIdx)
+                local isSelected = (opt == currentOption)
                 local optBtn = New("TextButton", {
                     Size = UDim2.new(0.96, 0, 0, 26),
                     AnchorPoint = Vector2.new(0.5, 0),
@@ -1318,40 +1327,227 @@ function Library:CreateTab(name, iconId)
                 Stk(optBtn, T.border, 1.2)
 
                 optBtn.MouseButton1Click:Connect(function()
-                    currIdx = i
+                    if debounce then return end
+                    currentOption = opt
                     cb(opt)
                     dropdownOpen = false
-                    selectBtn.Text = options[currIdx] .. " ▼"
+                    selectBtn.Text = currentOption .. " ▼"
+                    
+                    -- Cerrar con animación
                     Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
+                    for _, btn in ipairs(optionButtons) do
+                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
+                        Tween(btn:FindFirstChild("UIStroke"), 0.2, { Transparency = 1 })
+                    end
+                    task.delay(0.3, function()
+                        optionsHolder.Visible = false
+                        for _, btn in ipairs(optionButtons) do
+                            btn.BackgroundTransparency = 0
+                            btn.TextTransparency = 0
+                            local st = btn:FindFirstChild("UIStroke")
+                            if st then st.Transparency = 0 end
+                        end
+                        optionsHolder.BackgroundTransparency = 1
+                    end)
+                    debounce = false
                 end)
+                table.insert(optionButtons, optBtn)
             end
 
+            -- Abrir/Cerrar con animación al hacer click en el botón selector
             selectBtn.MouseButton1Click:Connect(function()
+                if debounce then return end
+                debounce = true
                 dropdownOpen = not dropdownOpen
+
+                if dropdownOpen then
+                    -- Abrir: mostrar opciones con animación
+                    optionsHolder.Visible = true
+                    optionsHolder.BackgroundTransparency = 1
+                    for _, btn in ipairs(optionButtons) do
+                        btn.BackgroundTransparency = 1
+                        btn.TextTransparency = 1
+                        local st = btn:FindFirstChild("UIStroke")
+                        if st then st.Transparency = 1 end
+                    end
+                    
+                    local contentHeight = (#options * 32) + 12
+                    local holderHeight = math.min(contentHeight, 110)
+                    optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
+                    selectBtn.Text = currentOption .. " ▲"
+                    
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 48 + holderHeight + 8) })
+                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 0 })
+                    for i, btn in ipairs(optionButtons) do
+                        task.delay(i * 0.03, function()
+                            Tween(btn, 0.2, { BackgroundTransparency = 0, TextTransparency = 0 })
+                            local st = btn:FindFirstChild("UIStroke")
+                            if st then Tween(st, 0.2, { Transparency = 0 }) end
+                        end)
+                    end
+                    task.delay(0.35, function() debounce = false end)
+                else
+                    -- Cerrar: ocultar opciones con animación
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
+                    for _, btn in ipairs(optionButtons) do
+                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
+                        local st = btn:FindFirstChild("UIStroke")
+                        if st then Tween(st, 0.2, { Transparency = 1 }) end
+                    end
+                    task.delay(0.3, function()
+                        optionsHolder.Visible = false
+                        for _, btn in ipairs(optionButtons) do
+                            btn.BackgroundTransparency = 0
+                            btn.TextTransparency = 0
+                            local st = btn:FindFirstChild("UIStroke")
+                            if st then st.Transparency = 0 end
+                        end
+                        optionsHolder.BackgroundTransparency = 1
+                    end)
+                    selectBtn.Text = currentOption .. " ▼"
+                    task.delay(0.35, function() debounce = false end)
+                end
+            end)
+            
+            -- Actualizar opciones seleccionadas visualmente
+            local function updateSelected(selected)
+                for _, btn in ipairs(optionButtons) do
+                    local isSel = (btn.Text == selected)
+                    btn.BackgroundColor3 = isSel and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30)
+                    btn.TextColor3 = isSel and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230)
+                end
+            end
+
+            -- Función para actualizar el dropdown desde fuera
+            local dropdownMethods = {}
+            function dropdownMethods:Set(newOption)
+                currentOption = newOption
+                selectBtn.Text = currentOption .. " ▼"
+                updateSelected(currentOption)
+                cb(currentOption)
+                -- Si estaba abierto, cerrarlo
+                if dropdownOpen then
+                    dropdownOpen = false
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                    Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
+                    for _, btn in ipairs(optionButtons) do
+                        Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
+                        local st = btn:FindFirstChild("UIStroke")
+                        if st then Tween(st, 0.2, { Transparency = 1 }) end
+                    end
+                    task.delay(0.3, function()
+                        optionsHolder.Visible = false
+                        for _, btn in ipairs(optionButtons) do
+                            btn.BackgroundTransparency = 0
+                            btn.TextTransparency = 0
+                            local st = btn:FindFirstChild("UIStroke")
+                            if st then st.Transparency = 0 end
+                        end
+                        optionsHolder.BackgroundTransparency = 1
+                    end)
+                    selectBtn.Text = currentOption .. " ▼"
+                end
+            end
+
+            function dropdownMethods:Refresh(newOptions)
+                -- Limpiar opciones antiguas
+                for _, btn in ipairs(optionButtons) do
+                    btn:Destroy()
+                end
+                optionButtons = {}
+                options = newOptions or options
+                
+                -- Recrear botones de opción
+                for i, opt in ipairs(options) do
+                    local isSelected = (opt == currentOption)
+                    local optBtn = New("TextButton", {
+                        Size = UDim2.new(0.96, 0, 0, 26),
+                        AnchorPoint = Vector2.new(0.5, 0),
+                        Position = UDim2.new(0.5, 0, 0, 0),
+                        BackgroundColor3 = isSelected and Color3.fromRGB(25, 35, 60) or Color3.fromRGB(15, 20, 30),
+                        Text = opt,
+                        TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 200, 230),
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 11,
+                        ZIndex = 7,
+                        Parent = optionsHolder
+                    })
+                    Cor(optBtn, 13)
+                    Stk(optBtn, T.border, 1.2)
+                    
+                    optBtn.MouseButton1Click:Connect(function()
+                        if debounce then return end
+                        currentOption = opt
+                        cb(opt)
+                        dropdownOpen = false
+                        selectBtn.Text = currentOption .. " ▼"
+                        
+                        Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                        Tween(optionsHolder, 0.25, { BackgroundTransparency = 1 })
+                        for _, btn in ipairs(optionButtons) do
+                            Tween(btn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
+                            local st = btn:FindFirstChild("UIStroke")
+                            if st then Tween(st, 0.2, { Transparency = 1 }) end
+                        end
+                        task.delay(0.3, function()
+                            optionsHolder.Visible = false
+                            for _, btn in ipairs(optionButtons) do
+                                btn.BackgroundTransparency = 0
+                                btn.TextTransparency = 0
+                                local st = btn:FindFirstChild("UIStroke")
+                                if st then st.Transparency = 0 end
+                            end
+                            optionsHolder.BackgroundTransparency = 1
+                        end)
+                        debounce = false
+                    end)
+                    table.insert(optionButtons, optBtn)
+                end
+                
+                -- Actualizar tamaño del contenedor
                 local contentHeight = (#options * 32) + 12
                 local holderHeight = math.min(contentHeight, 110)
                 optionsHolder.Size = UDim2.new(1, -20, 0, holderHeight)
-                selectBtn.Text = options[currIdx] .. (dropdownOpen and " ▲" or " ▼")
-                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, dropdownOpen and (48 + holderHeight + 8) or 40) })
-            end)
+                optionsHolder.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 6)
+                
+                -- Si está abierto, actualizar visualmente
+                if dropdownOpen then
+                    for _, btn in ipairs(optionButtons) do
+                        btn.BackgroundTransparency = 0
+                        btn.TextTransparency = 0
+                        local st = btn:FindFirstChild("UIStroke")
+                        if st then st.Transparency = 0 end
+                    end
+                end
+            end
+
+            return dropdownMethods
         end
 
+        -- ===================================================================== --
+        -- COLOR PICKER (ESTILO RAYFIELD) - Animaciones exactas                --
+        -- ===================================================================== --
         function ElementMethods:AddColorPicker(lbl, defaultColor, cb)
             local savedColor = defaultColor or Color3.fromRGB(255, 255, 255)
             local tempColor = savedColor
+            local h, s, v = Color3.toHSV(savedColor)
+            local opened = false
 
             local row = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = T.panel2,
+                ClipsDescendants = true,
                 ZIndex = 5,
                 Parent = card
             })
             Cor(row, 20)
-            Stk(row, T.border, 1.5)
+            local rowStroke = Stk(row, T.border, 1.5)
 
             New("TextLabel", {
                 Position = UDim2.new(0, 14, 0, 0),
-                Size = UDim2.new(0.6, 0, 1, 0),
+                Size = UDim2.new(0.5, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = lbl,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
@@ -1374,73 +1570,27 @@ function Library:CreateTab(name, iconId)
             Cor(colorPreview, 11)
             Stk(colorPreview, T.border, 1.2)
 
-            local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
-            local modalOverlay = New("Frame", {
-                Position = UDim2.new(0, -200, 0, -200),
-                Size = UDim2.new(1, 400, 1, 400),
-                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-                BackgroundTransparency = 0.5,
-                Visible = false,
-                ZIndex = 100,
-                Parent = screenGui
-            })
-
-            local modalFrame = New("Frame", {
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.fromScale(0.5, 0.5),
-                Size = UDim2.new(0, 340, 0, 280),
-                BackgroundColor3 = Color3.fromRGB(8, 14, 26),
-                ZIndex = 101,
-                Parent = modalOverlay
-            })
-            Cor(modalFrame, 20)
-
-            local modalShadow = Shadow(modalFrame, 0.5, 30)
-            modalShadow.ZIndex = 100
-
-            local modalStroke = New("UIStroke", {
-                Thickness = 2.2,
-                Color = Color3.fromRGB(255, 255, 255),
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = modalFrame
-            })
-            local modalGradient = New("UIGradient", {
-                Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
-                }),
-                Rotation = 225,
-                Parent = modalStroke
-            })
-            task.spawn(function()
-                while modalGradient and modalGradient.Parent do
-                    modalGradient.Rotation = (modalGradient.Rotation + 1.2) % 360
-                    task.wait(0.03)
-                end
-            end)
-
-            New("TextLabel", {
-                Position = UDim2.new(0, 16, 0, 12),
-                Size = UDim2.new(1, -32, 0, 24),
+            -- Panel desplegable del color picker
+            local pickerPanel = New("Frame", {
+                Position = UDim2.new(0, 10, 0, 44),
+                Size = UDim2.new(1, -20, 0, 0),
                 BackgroundTransparency = 1,
-                Text = lbl,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                Font = Enum.Font.GothamBold,
-                TextSize = 16,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 102,
-                Parent = modalFrame
+                ClipsDescendants = true,
+                Visible = false,
+                ZIndex = 7,
+                Parent = row
             })
 
+            -- Área de selección de Saturación/Valor
             local svBox = New("TextButton", {
-                Position = UDim2.new(0, 16, 0, 44),
+                AnchorPoint = Vector2.new(0.5, 0),
+                Position = UDim2.new(0.5, 0, 0, 0),
                 Size = UDim2.new(0, 150, 0, 130),
                 BackgroundColor3 = Color3.fromRGB(255, 0, 0),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 102,
-                Parent = modalFrame
+                ZIndex = 8,
+                Parent = pickerPanel
             })
             Cor(svBox, 10)
 
@@ -1457,7 +1607,7 @@ function Library:CreateTab(name, iconId)
                 Size = UDim2.fromScale(1, 1),
                 BackgroundColor3 = Color3.fromRGB(0, 0, 0),
                 BackgroundTransparency = 1,
-                ZIndex = 103,
+                ZIndex = 9,
                 Parent = svBox
             })
             Cor(blackOverlay, 10)
@@ -1477,20 +1627,22 @@ function Library:CreateTab(name, iconId)
                 Position = UDim2.fromScale(1, 0),
                 Size = UDim2.new(0, 12, 0, 12),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                ZIndex = 104,
+                ZIndex = 10,
                 Parent = svBox
             })
             Cor(pickerCursor, 6)
             Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
 
+            -- Barra de tono (Hue)
             local hueBar = New("TextButton", {
-                Position = UDim2.new(0, 174, 0, 44),
+                AnchorPoint = Vector2.new(0.5, 0),
+                Position = UDim2.new(0.5, 78, 0, 0),
                 Size = UDim2.new(0, 14, 0, 130),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Text = "",
                 AutoButtonColor = false,
-                ZIndex = 102,
-                Parent = modalFrame
+                ZIndex = 8,
+                Parent = pickerPanel
             })
             Cor(hueBar, 7)
 
@@ -1508,60 +1660,106 @@ function Library:CreateTab(name, iconId)
                 Parent = hueBar
             })
 
+            local hueCursor = New("Frame", {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.fromScale(0.5, 1),
+                Size = UDim2.new(0, 20, 0, 6),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 10,
+                Parent = hueBar
+            })
+            Cor(hueCursor, 3)
+            Stk(hueCursor, Color3.fromRGB(0, 0, 0), 1)
+
+            -- Botones Cancelar/Aplicar
             local cancelBtn = New("TextButton", {
-                Position = UDim2.new(0, 16, 0, 222),
-                Size = UDim2.new(0, 148, 0, 42),
-                BackgroundColor3 = Color3.fromRGB(14, 25, 45),
+                AnchorPoint = Vector2.new(0.5, 0),
+                Position = UDim2.new(0.5, -80, 0, 135),
+                Size = UDim2.new(0, 70, 0, 30),
+                BackgroundColor3 = T.panel2,
                 Text = "Cancel",
                 TextColor3 = Color3.fromRGB(220, 230, 255),
                 Font = Enum.Font.GothamBold,
-                TextSize = 14,
-                ZIndex = 102,
-                Parent = modalFrame
+                TextSize = 12,
+                ZIndex = 8,
+                Parent = pickerPanel
             })
             Cor(cancelBtn, 21)
-            Stk(cancelBtn, Color3.fromRGB(30, 100, 210), 1.8)
+            Stk(cancelBtn, T.border, 1.8)
 
             local applyBtn = New("TextButton", {
-                Position = UDim2.new(0, 176, 0, 222),
-                Size = UDim2.new(0, 148, 0, 42),
-                BackgroundColor3 = Color3.fromRGB(24, 100, 230),
+                AnchorPoint = Vector2.new(0.5, 0),
+                Position = UDim2.new(0.5, 80, 0, 135),
+                Size = UDim2.new(0, 70, 0, 30),
+                BackgroundColor3 = T.border,
                 Text = "Apply",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 Font = Enum.Font.GothamBold,
-                TextSize = 14,
-                ZIndex = 102,
-                Parent = modalFrame
+                TextSize = 12,
+                ZIndex = 8,
+                Parent = pickerPanel
             })
             Cor(applyBtn, 21)
-            Stk(applyBtn, Color3.fromRGB(60, 140, 255), 1.8)
+            Stk(applyBtn, T.border, 1.8)
 
-            local h, s, v = Color3.toHSV(savedColor)
-
+            -- Actualizar UI del color
             local function refreshUI()
                 tempColor = Color3.fromHSV(h, s, v)
                 svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
+                hueCursor.Position = UDim2.fromScale(0.5, 1 - h)
+                colorPreview.BackgroundColor3 = tempColor
             end
 
+            -- Abrir/Cerrar color picker
             colorPreview.MouseButton1Click:Connect(function()
-                tempColor = savedColor
-                h, s, v = Color3.toHSV(savedColor)
-                pickerCursor.Position = UDim2.fromScale(s, 1 - v)
-                refreshUI()
-                modalOverlay.Visible = true
+                opened = not opened
+                if opened then
+                    -- Abrir con animación
+                    tempColor = savedColor
+                    h, s, v = Color3.toHSV(savedColor)
+                    pickerPanel.Visible = true
+                    pickerPanel.Size = UDim2.new(1, -20, 0, 0)
+                    pickerPanel.BackgroundTransparency = 1
+                    refreshUI()
+                    
+                    Tween(row, 0.4, { Size = UDim2.new(1, 0, 0, 190) })
+                    Tween(pickerPanel, 0.3, { Size = UDim2.new(1, -20, 0, 175), BackgroundTransparency = 0 })
+                else
+                    -- Cerrar con animación
+                    Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                    Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
+                    task.delay(0.3, function()
+                        pickerPanel.Visible = false
+                        pickerPanel.BackgroundTransparency = 1
+                    end)
+                end
             end)
 
             cancelBtn.MouseButton1Click:Connect(function()
-                modalOverlay.Visible = false
+                opened = false
+                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
+                task.delay(0.3, function()
+                    pickerPanel.Visible = false
+                    pickerPanel.BackgroundTransparency = 1
+                end)
             end)
 
             applyBtn.MouseButton1Click:Connect(function()
                 savedColor = tempColor
                 colorPreview.BackgroundColor3 = savedColor
                 cb(savedColor)
-                modalOverlay.Visible = false
+                opened = false
+                Tween(row, 0.3, { Size = UDim2.new(1, 0, 0, 40) })
+                Tween(pickerPanel, 0.25, { BackgroundTransparency = 1 })
+                task.delay(0.3, function()
+                    pickerPanel.Visible = false
+                    pickerPanel.BackgroundTransparency = 1
+                end)
             end)
 
+            -- Arrastre en el selector SV
             local draggingSV, draggingHue = false, false
 
             svBox.InputBegan:Connect(function(input)
@@ -1583,22 +1781,38 @@ function Library:CreateTab(name, iconId)
                 end
             end)
 
+            local function updateColorFromInput(inputPos)
+                if draggingSV then
+                    local relX = math.clamp((inputPos.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
+                    local relY = math.clamp((inputPos.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
+                    s = relX
+                    v = 1 - relY
+                    refreshUI()
+                elseif draggingHue then
+                    local relY = math.clamp((inputPos.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
+                    h = relY
+                    refreshUI()
+                end
+            end
+
             UserInputService.InputChanged:Connect(function(input)
                 if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    if draggingSV then
-                        local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
-                        local relY = math.clamp((input.Position.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
-                        s = relX
-                        v = 1 - relY
-                        pickerCursor.Position = UDim2.fromScale(relX, relY)
-                        refreshUI()
-                    elseif draggingHue then
-                        local relY = math.clamp((input.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
-                        h = relY
-                        refreshUI()
-                    end
+                    updateColorFromInput(input.Position)
                 end
             end)
+
+            -- Función para establecer el color desde fuera
+            local colorMethods = {}
+            function colorMethods:Set(newColor)
+                savedColor = newColor
+                tempColor = newColor
+                h, s, v = Color3.toHSV(newColor)
+                colorPreview.BackgroundColor3 = savedColor
+                if opened then refreshUI() end
+                cb(savedColor)
+            end
+
+            return colorMethods
         end
 
         return ElementMethods
