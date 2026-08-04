@@ -1,16 +1,32 @@
-return function(self, lbl, cb)
-    local H, T, card = self.Helpers, self.Theme, self.Card
+local TweenService = game:GetService("TweenService")
+local T = require(script.Parent.Parent.T)
 
-    local row = H.New("Frame", { Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = T.panel2, ZIndex = 5, Parent = card })
-    H.Cor(row, 20); H.Stk(row, T.border, 1.5)
+local Button = {}
 
-    local btn = H.New("TextButton", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = lbl, TextColor3 = Color3.fromRGB(240, 245, 255), Font = Enum.Font.GothamBold, TextSize = 13, Parent = row })
+function Button.Create(row, lbl, cb)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.fromScale(1, 1)
+    btn.BackgroundTransparency = 1
+    btn.Text = lbl
+    btn.TextColor3 = Color3.fromRGB(240, 245, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.ZIndex = 6
+    btn.Parent = row
 
     btn.MouseButton1Click:Connect(function()
-        H.Tween(row, 0.1, { BackgroundColor3 = T.border })
+        local tween = TweenService:Create(row, TweenInfo.new(0.1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            BackgroundColor3 = T.border
+        })
+        tween:Play()
         task.delay(0.1, function()
-            H.Tween(row, 0.2, { BackgroundColor3 = T.panel2 })
+            local tween = TweenService:Create(row, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                BackgroundColor3 = T.panel2
+            })
+            tween:Play()
         end)
         cb()
     end)
 end
+
+return Button
