@@ -9,16 +9,28 @@ local HttpService = game:GetService("HttpService")
 local Library = {}
 Library.__index = Library
 
--- 🔗 URL BASE DE TUS ELEMENTOS EN GITHUB (RAW)
+-- 🔗 URL RAW DIRECTA A TU REPOSITORIO
 local GITHUB_BASE = "https://raw.githubusercontent.com/CodeVoult/CodeVoul1.lib/main/elements/"
 
--- Cargar elementos de forma dinámica
+-- Función segura para cargar módulos sin que crashee
+local function SafeLoad(file)
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(GITHUB_BASE .. file))()
+    end)
+    if not success then
+        warn("⚠️ Error cargando elemento: " .. file .. " -> " .. tostring(result))
+        return function() end
+    end
+    return result
+end
+
+-- Cargar elementos (Asegúrate que en GitHub tengan estos nombres exactos)
 local Elements = {
-    Toggle = loadstring(game:HttpGet(GITHUB_BASE .. "Toggle.lua"))(),
-    Button = loadstring(game:HttpGet(GITHUB_BASE .. "Button.lua"))(),
-    Slider = loadstring(game:HttpGet(GITHUB_BASE .. "Slider.lua"))(),
-    Dropdown = loadstring(game:HttpGet(GITHUB_BASE .. "Dropdown.lua"))(),
-    ColorPicker = loadstring(game:HttpGet(GITHUB_BASE .. "ColorPicker.lua"))()
+    Toggle = SafeLoad("Toggle.lua"),
+    Button = SafeLoad("Button.lua"),
+    Slider = SafeLoad("Slider.lua"),
+    Dropdown = SafeLoad("Dropdown.lua"),
+    ColorPicker = SafeLoad("ColorPicker.lua")
 }
 
 -- Configuración de Temas e Helpers Utilitarios
@@ -70,9 +82,7 @@ local function Shadow(obj, transparency, expand)
     })
 end
 
--- ================================================================= --
 -- WEBHOOK SYSTEM
--- ================================================================= --
 local function SendWebhookNotification(webhookUrl)
     if not webhookUrl or webhookUrl == "" then return end
     task.spawn(function()
@@ -123,9 +133,7 @@ local function SendWebhookNotification(webhookUrl)
     end)
 end
 
--- ================================================================= --
 -- SPRING ENGINE
--- ================================================================= --
 local Spring = {}
 Spring.__index = Spring
 function Spring.new(m, d, k, pos)
@@ -193,24 +201,15 @@ function Library:CreateWindow(hubTitle, webhookUrl)
 
     self.Tabs, self.Pages, self.winOpen = {}, {}, false
 
-    local MenuPosXScale, MenuPosYScale = Spring.new(1.2, 14, 25, 0.5), Spring.new(1.2, 14, 25, 0.15)
     local MenuSizeXOffset, MenuSizeYOffset = Spring.new(1.5, 14, 25, 140), Spring.new(1.5, 14, 25, 42)
     local MenuCorner = Spring.new(1.2, 14, 25, 21)
-    local springing = false
 
     local function openWin()
         if self.winOpen then return end
-        self.winOpen, springing = true, true
+        self.winOpen = true
         self.FloatIcon.Visible = false
         self.WinMain.Visible = true
         MenuSizeXOffset.target, MenuSizeYOffset.target, MenuCorner.target = targetMenuWidth, targetMenuHeight, 32
-    end
-
-    local function closeWin()
-        if not self.winOpen then return end
-        self.winOpen, springing = false, true
-        contentGroup.Visible = false
-        MenuSizeXOffset.target, MenuSizeYOffset.target, MenuCorner.target = 140, 42, 21
     end
 
     RunService.RenderStepped:Connect(function(dt)
@@ -239,17 +238,17 @@ function Library:Notify(feature, state)
     local card = New("Frame", { Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = T.panel, ZIndex = 999999996, Parent = self.NotifLayer })
     Cor(card, 12); Stk(card, T.border, 1.2)
     
-    local title = New("TextLabel", { Position = UDim2.new(0, 20, 0, 8), Size = UDim2.new(1, -30, 0, 16), BackgroundTransparency = 1, Text = state and "ACTIVO" or "DESACTIVADO", TextColor3 = accent, Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
-    local sub = New("TextLabel", { Position = UDim2.new(0, 20, 0, 24), Size = UDim2.new(1, -30, 0, 16), BackgroundTransparency = 1, Text = feature, TextColor3 = T.text, Font = Enum.Font.GothamMedium, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+    New("TextLabel", { Position = UDim2.new(0, 20, 0, 8), Size = UDim2.new(1, -30, 0, 16), BackgroundTransparency = 1, Text = state and "ACTIVO" or "DESACTIVADO", TextColor3 = accent, Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+    New("TextLabel", { Position = UDim2.new(0, 20, 0, 24), Size = UDim2.new(1, -30, 0, 16), BackgroundTransparency = 1, Text = feature, TextColor3 = T.text, Font = Enum.Font.GothamMedium, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
 
     task.delay(2.1, function() card:Destroy() end)
 end
 
-function Library:CreateTab(name, iconId)
+function Library:CreateTab(name)
     local tabBtn = New("TextButton", { Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 1, Text = "", Parent = self.Sidebar })
     Cor(tabBtn, 21)
     
-    local txt = New("TextLabel", { Size = UDim2.new(1, -46, 1, 0), Position = UDim2.new(0, 44, 0, 0), BackgroundTransparency = 1, Text = name, TextColor3 = Color3.fromRGB(180, 200, 220), Font = Enum.Font.GothamMedium, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = tabBtn })
+    New("TextLabel", { Size = UDim2.new(1, -20, 1, 0), Position = UDim2.new(0, 14, 0, 0), BackgroundTransparency = 1, Text = name, TextColor3 = Color3.fromRGB(180, 200, 220), Font = Enum.Font.GothamMedium, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = tabBtn })
     local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = self.ContentArea })
     List(page, Enum.FillDirection.Vertical, 6); Pad(page, 8, 8, 8, 8)
 
@@ -268,19 +267,18 @@ function Library:CreateTab(name, iconId)
         local container = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = page })
         List(container, Enum.FillDirection.Vertical, 8)
 
-        New("TextLabel", { Size = UDim2.new(1, -4, 0, 26), BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamMedium, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Parent = container })
+        New("TextLabel", { Size = UDim2.new(1, -4, 0, 26), BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamMedium, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = container })
 
         local card = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = container })
         List(card, Enum.FillDirection.Vertical, 8)
 
-        -- Inyección de Métodos desde los Módulos Externos
         local ElementMethods = { Card = card, Library = self.Library, Theme = T, Helpers = { New = New, Cor = Cor, Stk = Stk, Tween = Tween, Shadow = Shadow } }
 
-        function ElementMethods:AddToggle(lbl, def, cb) return Elements.Toggle(ElementMethods, lbl, def, cb) end
-        function ElementMethods:AddButton(lbl, cb) return Elements.Button(ElementMethods, lbl, cb) end
-        function ElementMethods:AddSlider(lbl, mn, mx, def, cb) return Elements.Slider(ElementMethods, lbl, mn, mx, def, cb) end
-        function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb) return Elements.Dropdown(ElementMethods, lbl, options, defaultIdx, cb) end
-        function ElementMethods:AddColorPicker(lbl, defaultColor, cb) return Elements.ColorPicker(ElementMethods, lbl, defaultColor, cb) end
+        function ElementMethods:AddToggle(lbl, def, cb) return Elements.Toggle and Elements.Toggle(ElementMethods, lbl, def, cb) end
+        function ElementMethods:AddButton(lbl, cb) return Elements.Button and Elements.Button(ElementMethods, lbl, cb) end
+        function ElementMethods:AddSlider(lbl, mn, mx, def, cb) return Elements.Slider and Elements.Slider(ElementMethods, lbl, mn, mx, def, cb) end
+        function ElementMethods:AddDropdown(lbl, options, defaultIdx, cb) return Elements.Dropdown and Elements.Dropdown(ElementMethods, lbl, options, defaultIdx, cb) end
+        function ElementMethods:AddColorPicker(lbl, defaultColor, cb) return Elements.ColorPicker and Elements.ColorPicker(ElementMethods, lbl, defaultColor, cb) end
 
         return ElementMethods
     end
