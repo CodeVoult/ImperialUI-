@@ -36,19 +36,24 @@ function TabsModule.Create(Library, name, iconId)
         end
     end)
 
+    -- Icono: si iconId es nil o vacío, se oculta o se pone uno por defecto
     local icon = Library.New("ImageLabel", {
         Size = UDim2.new(0, 24, 0, 24),
         Position = UDim2.new(0, 12, 0.5, -12),
         BackgroundTransparency = 1,
-        Image = iconId or "",
+        Image = (iconId and iconId ~= "") and iconId or "",
         ImageColor3 = Color3.fromRGB(255, 255, 255),
         ZIndex = 5,
         Parent = tabBtn
     })
+    -- Si no hay icono, lo ocultamos para que el texto ocupe todo el espacio
+    if not iconId or iconId == "" then
+        icon.Visible = false
+    end
 
     local txt = Library.New("TextLabel", {
-        Size = UDim2.new(1, -46, 1, 0),
-        Position = UDim2.new(0, 44, 0, 0),
+        Size = UDim2.new(1, (iconId and iconId ~= "") and -46 or -12, 1, 0), -- ajuste automático
+        Position = UDim2.new(iconId and 0.09 or 0.02, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
@@ -58,6 +63,11 @@ function TabsModule.Create(Library, name, iconId)
         ZIndex = 5,
         Parent = tabBtn
     })
+    -- Si no hay icono, centramos el texto a la izquierda con margen
+    if not iconId or iconId == "" then
+        txt.Size = UDim2.new(1, -12, 1, 0)
+        txt.Position = UDim2.new(0.02, 0, 0, 0)
+    end
 
     local page = Library.New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
@@ -121,7 +131,13 @@ function TabsModule.Create(Library, name, iconId)
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    table.insert(Library.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
+    -- Guardamos la referencia con el icono para futuras actualizaciones
+    table.insert(Library.Tabs, { 
+        btn = tabBtn, 
+        stroke = tabStroke, 
+        txt = txt, 
+        icon = icon 
+    })
     table.insert(Library.Pages, page)
 
     return page
