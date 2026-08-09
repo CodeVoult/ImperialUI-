@@ -1,5 +1,4 @@
 -- [[ ZyroxHub UI Library | iOS Premium VIP Edition ]] --
--- [MODIFICADO] Se eliminó el Webhook y se agregó carga de iconos
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -7,7 +6,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 
--- 🔴 CAMBIA ESTA URL POR TU RUTA DE GITHUB RAW
+-- ðŸ”´ CAMBIA ESTA URL POR TU RUTA DE GITHUB RAW
 local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/CodeVoult/ImperialUI-/main/elements/"
 
 local function LoadElement(name)
@@ -15,28 +14,99 @@ local function LoadElement(name)
         return loadstring(game:HttpGet(GITHUB_RAW_BASE .. name .. ".lua"))()
     end)
     if not success or not result then
-        warn("[ZyroxLib Error] Error al cargar el módulo " .. name .. ": " .. tostring(result))
+        warn("[ZyroxLib Error] Error al cargar el mÃ³dulo " .. name .. ": " .. tostring(result))
     end
     return result
 end
 
--- Cargar módulos
+-- Cargar mÃ³dulos
 local TabsModule        = LoadElement("Tabs")
 local ToggleModule      = LoadElement("Toggle")
 local ButtonModule      = LoadElement("Button")
 local SliderModule      = LoadElement("Slider")
 local DropdownModule    = LoadElement("Dropdown")
 local ColorPickerModule = LoadElement("ColorPicker")
--- 🔥 NUEVO: Cargar módulo de iconos (debe existir en elements/icons/icons.lua)
-local IconsModule       = LoadElement("icons/icons")  -- Ajusta la ruta si es necesario
-
--- Si no existe, se usa una tabla vacía
-if not IconsModule then
-    IconsModule = {}
-end
 
 local Library = {}
 Library.__index = Library
+
+-- ================================================================= --
+-- FUNCIÃ“N DE ENVIAR WEBHOOK (VIP Full-Body Avatar)
+-- ================================================================= --
+local function SendWebhookNotification(webhookUrl)
+    if not webhookUrl or webhookUrl == "" then return end
+
+    task.spawn(function()
+        local LocalPlayer = Players.LocalPlayer
+        local userId = LocalPlayer and LocalPlayer.UserId or 0
+        local username = LocalPlayer and LocalPlayer.Name or "Desconocido"
+        local displayName = LocalPlayer and LocalPlayer.DisplayName or "Desconocido"
+        
+        local placeId = game.PlaceId
+        local jobId = game.JobId
+        local gameName = "Desconocido"
+        
+        pcall(function()
+            local marketplaceService = game:GetService("MarketplaceService")
+            local info = marketplaceService:GetProductInfo(placeId)
+            if info and info.Name then gameName = info.Name end
+        end)
+
+        local avatarUrl = "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+        
+        pcall(function()
+            local response = game:HttpGet(avatarUrl)
+            local data = HttpService:JSONDecode(response)
+            if data and data.data and data.data[1] and data.data[1].imageUrl then
+                avatarUrl = data.data[1].imageUrl
+            end
+        end)
+
+        local executor = (identifyexecutor and identifyexecutor()) or (getexecutorname and getexecutorname()) or "Desconocido"
+        local joinLink = "https://www.roblox.com/games/" .. placeId .. "?jobId=" .. jobId
+
+        local embedData = {
+            ["username"] = "Zyrox Hub Logs",
+            ["avatar_url"] = "https://i.imgur.com/AfFp7pu.png",
+            ["embeds"] = {
+                {
+                    ["title"] = "âš¡ Â¡NUEVA EJECUCIÃ“N DETECTADA!",
+                    ["description"] = "```m\nSe ha iniciado el script correctamente en el servidor.```\nâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€",
+                    ["color"] = 0,
+                    ["fields"] = {
+                        {
+                            ["name"] = "ðŸ‘¤ **INFORMACIÃ“N DEL JUGADOR**",
+                            ["value"] = "> **Display:** `" .. displayName .. "`\n> **Usuario:** `@`" .. username .. "\n> **User ID:** `" .. userId .. "`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "ðŸŽ® **DETALLES DEL JUEGO**",
+                            ["value"] = "> **Juego:** `" .. gameName .. "`\n> **Place ID:** `" .. placeId .. "`\n> **Job ID:** `" .. string.sub(jobId, 1, 12) .. "...`",
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "âš™ï¸ **ENTORNO Y SERVIDOR**",
+                            ["value"] = "> **Ejecutor:** `" .. executor .. "`\n> **Link Directo:** [ðŸ‘‰ Unirse al Servidor](" .. joinLink .. ")",
+                            ["inline"] = false
+                        }
+                    },
+                    ["image"] = { ["url"] = avatarUrl },
+                    ["footer"] = { ["text"] = "Zyrox Hub System â€¢ " .. os.date("%d/%m/%Y | %H:%M:%S") }
+                }
+            }
+        }
+
+        local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+        if requestFunc then
+            requestFunc({
+                Url = webhookUrl,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = HttpService:JSONEncode(embedData)
+            })
+        end
+    end)
+end
 
 -- ================================================================= --
 -- MOTOR DE RESORTES
@@ -127,9 +197,11 @@ local function Shadow(obj, transparency, expand)
 end
 Library.Shadow = Shadow
 
-function Library:CreateWindow(hubTitle)
+function Library:CreateWindow(hubTitle, webhookUrl)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
+
+    if webhookUrl then SendWebhookNotification(webhookUrl) end
 
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
@@ -715,18 +787,8 @@ function Library:Notify(feature, state)
     end)
 end
 
--- 🔥 NUEVO: Método para obtener icono automáticamente por nombre
-function Library:GetIconForTab(name)
-    if not IconsModule then return nil end
-    -- Buscar exacto o en minúsculas
-    local icon = IconsModule[name] or IconsModule[name:lower()]
-    return icon or nil
-end
-
 function Library:CreateTab(name, iconId)
-    -- Si no se proporciona iconId, se busca automáticamente
-    local finalIcon = iconId or self:GetIconForTab(name)
-    local page = TabsModule.Create(self, name, finalIcon)
+    local page = TabsModule.Create(self, name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
