@@ -3,11 +3,11 @@ Spring.__index = Spring
 
 function Spring.new(mass, damping, constant, initialPos)
     local self = setmetatable({}, Spring)
-    self.m = mass          
-    self.d = damping      
-    self.k = constant      
-    self.x = initialPos    
-    self.v = 0             
+    self.m = mass
+    self.d = damping
+    self.k = constant
+    self.x = initialPos
+    self.v = 0
     self.target = initialPos
     return self
 end
