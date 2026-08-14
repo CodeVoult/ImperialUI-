@@ -1,3 +1,5 @@
+
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -333,7 +335,7 @@ function Library:CreateWindow(hubTitle)
     self.Animations = SpringAnimations.Setup(self, {
         targetWidth = 620,
         targetHeight = 360,
-    })
+    }, Spring)
 
     -- Métodos para controlar la ventana desde fuera
     function self:Open()
