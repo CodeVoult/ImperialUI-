@@ -12,47 +12,27 @@ local function LoadElement(name)
         return loadstring(game:HttpGet(GITHUB_RAW_BASE .. name .. ".lua"))()
     end)
     if not success or not result then
-        warn("[ZyroxLib Error] Error al cargar el módulo " .. name .. ": " .. tostring(result))
+        warn("[Library Error] Error al cargar el módulo " .. name .. ": " .. tostring(result))
     end
     return result
 end
 
 -- Cargar módulos
-local TabsModule        = LoadElement("Tabs")
-local ToggleModule      = LoadElement("Toggle")
-local ButtonModule      = LoadElement("Button")
-local SliderModule      = LoadElement("Slider")
-local DropdownModule    = LoadElement("Dropdown")
+local Spring           = LoadElement("Spring")
+local SpringAnimations = LoadElement("SpringAnimations")
+local TabsModule       = LoadElement("Tabs")
+local ToggleModule     = LoadElement("Toggle")
+local ButtonModule     = LoadElement("Button")
+local SliderModule     = LoadElement("Slider")
+local DropdownModule   = LoadElement("Dropdown")
 local ColorPickerModule = LoadElement("ColorPicker")
 
 local Library = {}
 Library.__index = Library
 
 -- ================================================================= --
--- MOTOR DE RESORTES
+-- CONFIGURACIÓN DE COLORES Y UTILIDADES
 -- ================================================================= --
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(mass, damping, constant, initialPos)
-    local self = setmetatable({}, Spring)
-    self.m = mass
-    self.d = damping
-    self.k = constant
-    self.x = initialPos
-    self.v = 0
-    self.target = initialPos
-    return self
-end
-
-function Spring:Update(dt)
-    local f = -self.k * (self.x - self.target) - self.d * self.v
-    local a = f / self.m
-    self.v = self.v + a * dt
-    self.x = self.x + self.v * dt
-    return self.x
-end
-
 if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
     game:GetService("CoreGui").DDOS_VENOM:Destroy()
 end
@@ -117,10 +97,16 @@ local function Shadow(obj, transparency, expand)
 end
 Library.Shadow = Shadow
 
+-- ================================================================= --
+-- CREACIÓN DE LA VENTANA (sin lógica de animación)
+-- ================================================================= --
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
+    self.Pages = {}
+    self.T = T  -- para que el módulo de animaciones pueda acceder a T
 
+    -- GUI principal
     self.GUI = New("ScreenGui", {
         Name = "DDOS_VENOM",
         ResetOnSpawn = false,
@@ -128,6 +114,7 @@ function Library:CreateWindow(hubTitle)
         Parent = (gethui and gethui() or game:GetService("CoreGui"))
     })
 
+    -- Sonido de clic
     local clickSound = Instance.new("Sound")
     clickSound.SoundId = "rbxassetid://4590657391"
     clickSound.Volume = 0.5
@@ -139,6 +126,7 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
+    -- Capa de notificaciones
     self.NotifLayer = New("Frame", {
         Name = "Notifs",
         AnchorPoint = Vector2.new(1, 1),
@@ -151,6 +139,7 @@ function Library:CreateWindow(hubTitle)
     })
     List(self.NotifLayer, Enum.FillDirection.Vertical, 8)
 
+    -- Ícono flotante
     self.FloatIcon = New("TextButton", {
         Name = "FloatIcon",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -175,7 +164,6 @@ function Library:CreateWindow(hubTitle)
         Color = Color3.fromRGB(255, 255, 255),
         Parent = self.FloatIcon
     })
-
     New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
@@ -186,7 +174,8 @@ function Library:CreateWindow(hubTitle)
         Parent = lightStroke
     })
 
-    local closeTextLabel = New("TextLabel", {
+    -- Etiqueta para animación de cierre (se usa desde el módulo de animación)
+    self.closeTextLabel = New("TextLabel", {
         Name = "CloseTextAnim",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Size = UDim2.new(0, 140, 0, 42),
@@ -201,8 +190,7 @@ function Library:CreateWindow(hubTitle)
         Parent = self.GUI
     })
 
-    local targetMenuWidth, targetMenuHeight = 620, 360
-
+    -- Ventana principal
     self.WinMain = New("Frame", {
         Name = "Window",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -215,7 +203,7 @@ function Library:CreateWindow(hubTitle)
         ClipsDescendants = true,
         Parent = self.GUI
     })
-    local winCorner = Cor(self.WinMain, 21)
+    self.WinCorner = Cor(self.WinMain, 21)
     self.WinScale = New("UIScale", { Scale = 1, Parent = self.WinMain })
 
     local winInner = New("Frame", {
@@ -236,7 +224,6 @@ function Library:CreateWindow(hubTitle)
         Rotation = 45,
         Parent = winInner
     })
-
     task.spawn(function()
         local t = 0
         while bgGradient and bgGradient.Parent do
@@ -247,14 +234,13 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    local borderStroke = New("UIStroke", {
+    self.borderStroke = New("UIStroke", {
         Name = "BorderStroke",
         Thickness = 3.2,
         Color = Color3.fromRGB(255, 255, 255),
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = self.WinMain
     })
-
     local borderGradient = New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
@@ -262,9 +248,8 @@ function Library:CreateWindow(hubTitle)
             ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
         }),
         Rotation = 225,
-        Parent = borderStroke
+        Parent = self.borderStroke
     })
-    
     task.spawn(function()
         while borderGradient and borderGradient.Parent do
             borderGradient.Rotation = (borderGradient.Rotation + 1.2) % 360
@@ -272,7 +257,8 @@ function Library:CreateWindow(hubTitle)
         end
     end)
 
-    local contentGroup = New("CanvasGroup", {
+    -- Contenido (se muestra cuando la ventana está abierta)
+    self.ContentGroup = New("CanvasGroup", {
         Name = "ContentGroup",
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
@@ -283,29 +269,30 @@ function Library:CreateWindow(hubTitle)
         ZIndex = 4,
         Parent = winInner
     })
-    self.ContentGroup = contentGroup
 
-    local titleBar = New("Frame", {
+    -- Barra de título
+    self.titleBar = New("Frame", {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         ZIndex = 5,
-        Parent = contentGroup
+        Parent = self.ContentGroup
     })
 
+    -- Título en texto plano (sin formato)
     New("TextLabel", {
         Size = UDim2.new(1, -24, 1, 0),
         Position = UDim2.new(0, 12, 0, 0),
         BackgroundTransparency = 1,
-        RichText = true,
-        Text = hubTitle or 'Zyrox Scripts <font color="#FFD700">V1.01</font>',
+        Text = hubTitle or "Mi Script",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 7,
-        Parent = titleBar
+        Parent = self.titleBar
     })
 
+    -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
         Position = UDim2.new(0, 6, 0, 50),
         Size = UDim2.new(0, T.tabSize - 30, 1, -60),
@@ -316,11 +303,12 @@ function Library:CreateWindow(hubTitle)
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ZIndex = 3,
-        Parent = contentGroup
+        Parent = self.ContentGroup
     })
     List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
+    -- Área de contenido
     self.ContentArea = New("Frame", {
         Position = UDim2.new(0, T.tabSize - 20, 0, 50),
         Size = UDim2.new(1, -T.tabSize + 14, 1, -56),
@@ -328,7 +316,7 @@ function Library:CreateWindow(hubTitle)
         BackgroundTransparency = T.bgTrans,
         ClipsDescendants = true,
         ZIndex = 3,
-        Parent = contentGroup
+        Parent = self.ContentGroup
     })
     Cor(self.ContentArea, 16)
 
@@ -341,223 +329,31 @@ function Library:CreateWindow(hubTitle)
         Parent = self.ContentArea
     })
 
-    self.Tabs = {}
-    self.Pages = {}
-    self.ActivePage = nil
-    self.winOpen = false
+    -- Conectar animaciones (separa la lógica de animación)
+    self.Animations = SpringAnimations.Setup(self, {
+        targetWidth = 620,
+        targetHeight = 360,
+    })
 
-    local MenuPosXScale   = Spring.new(1.2, 14, 25, 0.5)
-    local MenuPosYScale   = Spring.new(1.2, 14, 25, 0.15)
-    local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
-    local MenuSizeYOffset = Spring.new(1.5, 14, 25, 42)
-    local MenuCorner      = Spring.new(1.2, 14, 25, 21)
-
-    local springing = false
-
-    local function getFloatScalePos()
-        local parentSize = self.GUI.AbsoluteSize
-        if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.15 end
-        local absPos = self.FloatIcon.AbsolutePosition
-        local absSize = self.FloatIcon.AbsoluteSize
-        return (absPos.X + (absSize.X / 2)) / parentSize.X, (absPos.Y + (absSize.Y / 2)) / parentSize.Y
+    -- Métodos para controlar la ventana desde fuera
+    function self:Open()
+        self.Animations.Open()
     end
 
-    local function openWin()
-        if self.winOpen then return end
-        self.winOpen = true
-        springing = true
-
-        closeTextLabel.Visible = false
-        closeTextLabel.TextTransparency = 1
-
-        local fx, fy = getFloatScalePos()
-
-        self.FloatIcon.Visible = false
-        self.WinMain.Visible = true
-        
-        MenuPosXScale.x, MenuPosXScale.v, MenuPosXScale.target = fx, 0, 0.5
-        MenuPosYScale.x, MenuPosYScale.v, MenuPosYScale.target = fy, 0, 0.5
-        MenuSizeXOffset.x, MenuSizeXOffset.v, MenuSizeXOffset.target = 140, 0, targetMenuWidth
-        MenuSizeYOffset.x, MenuSizeYOffset.v, MenuSizeYOffset.target = 42, 0, targetMenuHeight
-        MenuCorner.x, MenuCorner.v, MenuCorner.target = 21, 0, 32
-
-        self.WinMain.Position = UDim2.new(fx, 0, fy, 0)
-        self.WinMain.BackgroundTransparency = T.bgTrans
-
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
-        borderStroke.Transparency = 0.2
-
-        task.delay(0.35, function()
-            for _, page in ipairs(self.Pages) do
-                page.CanvasPosition = Vector2.zero
-            end
-        end)
+    function self:Close()
+        self.Animations.Close()
     end
 
-    local function closeWin()
-        if not self.winOpen then return end
-        self.winOpen = false
-        springing = true
-
-        contentGroup.Visible = false
-        contentGroup.GroupTransparency = 1
-
-        local fx, fy = getFloatScalePos()
-        
-        closeTextLabel.Position = self.WinMain.Position
-        closeTextLabel.Visible = true
-        closeTextLabel.TextTransparency = 0
-
-        MenuPosXScale.x, MenuPosXScale.v, MenuPosXScale.target = self.WinMain.Position.X.Scale, 0, fx
-        MenuPosYScale.x, MenuPosYScale.v, MenuPosYScale.target = self.WinMain.Position.Y.Scale, 0, fy
-        
-        MenuSizeXOffset.target = 140
-        MenuSizeYOffset.target = 42
-        MenuCorner.target = 21
+    function self:Toggle()
+        self.Animations.Toggle()
     end
 
-    RunService.RenderStepped:Connect(function(dt)
-        if not self.WinMain then return end
-
-        local currW = MenuSizeXOffset:Update(dt)
-        local currH = MenuSizeYOffset:Update(dt)
-        local currR = MenuCorner:Update(dt)
-
-        self.WinMain.Size = UDim2.fromOffset(currW, currH)
-        if winCorner then winCorner.CornerRadius = UDim.new(0, currR) end
-
-        local sidebarWidth = math.clamp(currW * 0.32, 50, T.tabSize - 30)
-        local availH = math.max(0, currH - 60)
-        
-        self.Sidebar.Size = UDim2.fromOffset(sidebarWidth, availH)
-        self.Sidebar.Position = UDim2.fromOffset(6, 50)
-
-        local contentX = sidebarWidth + 12
-        local contentW = math.max(0, currW - contentX - 10)
-        local contentH = math.max(0, currH - 56)
-
-        self.ContentArea.Size = UDim2.fromOffset(contentW, contentH)
-        self.ContentArea.Position = UDim2.fromOffset(contentX, 50)
-
-        if self.winOpen then
-            if currW < 300 then
-                contentGroup.Visible = false
-                contentGroup.GroupTransparency = 1
-            else
-                contentGroup.Visible = true
-                local p = math.clamp((currW - 300) / (targetMenuWidth - 300), 0, 1)
-                contentGroup.GroupTransparency = 1 - p
-                
-                if currW > targetMenuWidth - 10 and not springing then
-                    contentGroup.GroupTransparency = 0
-                    for _, page in ipairs(self.Pages) do
-                        if page and page.Parent == self.ContentArea then
-                            page.Size = UDim2.fromOffset(contentW, contentH - 8)
-                            local layout = page:FindFirstChildOfClass("UIListLayout")
-                            if layout then
-                                page.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 10)
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            contentGroup.Visible = false
-        end
-
-        if springing then
-            local currX = MenuPosXScale:Update(dt)
-            local currY = MenuPosYScale:Update(dt)
-            self.WinMain.Position = UDim2.new(currX, 0, currY, 0)
-            
-            if not self.winOpen then closeTextLabel.Position = self.WinMain.Position end
-
-            if self.winOpen then
-                if math.abs(currW - targetMenuWidth) < 1.5 and math.abs(currH - targetMenuHeight) < 1.5 and math.abs(MenuSizeXOffset.v) < 2 then
-                    springing = false
-                end
-            else
-                if math.abs(currW - 140) < 2 and math.abs(currH - 42) < 2 then
-                    springing = false
-                    self.WinMain.Visible = false
-                    self.FloatIcon.Visible = true
-                    
-                    Tween(closeTextLabel, 0.15, { TextTransparency = 1 })
-                    task.delay(0.15, function() closeTextLabel.Visible = false end)
-                end
-            end
-        end
-    end)
-
-    self.FloatIcon.MouseButton1Click:Connect(function()
-        if not self.winOpen then openWin() end
-    end)
-
-    local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
-        local dragging = false
-        local dragStart, startPos
-        local targetX, targetY, currentX, currentY = 0, 0, 0, 0
-        local lerpConnection = nil
-        local suavizado = 0.15
-        local inputBeganTime = 0
-
-        handle.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-            if springing then return end
-            dragging = true
-            self.dragging = true
-            inputBeganTime = tick()
-            dragStart = input.Position
-            startPos = target.Position
-            currentX = target.AbsolutePosition.X + (target.AbsoluteSize.X * target.AnchorPoint.X)
-            currentY = target.AbsolutePosition.Y + (target.AbsoluteSize.Y * target.AnchorPoint.Y)
-            targetX, targetY = currentX, currentY
-
-            if scaleObj then Tween(scaleObj, 0.2, { Scale = 1.01 }) end
-
-            if not lerpConnection then
-                lerpConnection = RunService.RenderStepped:Connect(function()
-                    if dragging or math.abs(currentX - targetX) > 0.1 or math.abs(currentY - targetY) > 0.1 then
-                        currentX = currentX + (targetX - currentX) * suavizado
-                        currentY = currentY + (targetY - currentY) * suavizado
-                        target.Position = UDim2.new(0, math.round(currentX), 0, math.round(currentY))
-                    else
-                        lerpConnection:Disconnect()
-                        lerpConnection = nil
-                    end
-                end)
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local delta = input.Position - dragStart
-                local originX = (target.Parent.AbsoluteSize.X * startPos.X.Scale) + startPos.X.Offset
-                local originY = (target.Parent.AbsoluteSize.Y * startPos.Y.Scale) + startPos.Y.Offset
-                targetX = originX + delta.X
-                targetY = originY + delta.Y
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-            if dragging then
-                dragging = false
-                self.dragging = false
-                if scaleObj then Tween(scaleObj, 0.25, { Scale = 1 }) end
-
-                local parentSize = self.GUI.AbsoluteSize
-                if parentSize.X > 0 and parentSize.Y > 0 then
-                    target.Position = UDim2.new(currentX / parentSize.X, 0, currentY / parentSize.Y, 0)
-                end
-
-                local duration = tick() - inputBeganTime
-                if duration < 0.25 and clickCallback then clickCallback() end
-            end
-        end)
+    function self:IsOpen()
+        return self.Animations.IsOpen()
     end
 
+    -- Funciones de arrastre para el ícono flotante (ya están en el módulo de animaciones, pero añadimos el arrastre básico)
+    -- (Lo dejamos aquí para que sea parte de la UI, pero puede ir en animaciones también)
     local function makeDraggable(obj, target)
         local dragStart, startPos, dragging
         obj.InputBegan:Connect(function(i)
@@ -588,8 +384,8 @@ function Library:CreateWindow(hubTitle)
     end
 
     makeDraggable(self.FloatIcon, self.FloatIcon)
-    makeSmoothDrag(titleBar, self.WinMain, self.WinScale, closeWin)
 
+    -- Métodos de utilidad
     function self:SetScale(scaleValue)
         if self.WinScale then self.WinScale.Scale = scaleValue end
     end
@@ -605,6 +401,9 @@ function Library:CreateWindow(hubTitle)
     return self
 end
 
+-- ================================================================= --
+-- NOTIFICACIONES (sin cambios)
+-- ================================================================= --
 function Library:Notify(feature, state)
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
@@ -705,6 +504,9 @@ function Library:Notify(feature, state)
     end)
 end
 
+-- ================================================================= --
+-- CREACIÓN DE PESTAÑAS (sin cambios)
+-- ================================================================= --
 function Library:CreateTab(name)
     local page = TabsModule.Create(self, name)
 
