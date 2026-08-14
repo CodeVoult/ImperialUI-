@@ -1,7 +1,8 @@
 local TabsModule = {}
 
 function TabsModule.Create(Library, name, iconId)
-    local hasIcon = (iconId and iconId ~= "")
+    -- Verificar si viene un ID válido
+    local hasIcon = (iconId and iconId ~= "" and iconId ~= "rbxassetid://")
 
     local tabBtn = Library.New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
@@ -38,11 +39,11 @@ function TabsModule.Create(Library, name, iconId)
         end
     end)
 
-    -- Icono: Se crea únicamente si existe iconId
+    -- Crear Imagen del Ícono
     local icon = Library.New("ImageLabel", {
         Name = "TabIcon",
         Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(0, 14, 0.5, -10), -- Posición fija limpia a la izquierda
+        Position = UDim2.new(0, 12, 0.5, -10), -- A la izquierda y centrado vertical
         BackgroundTransparency = 1,
         Image = hasIcon and iconId or "",
         ImageColor3 = Color3.fromRGB(255, 255, 255),
@@ -51,19 +52,19 @@ function TabsModule.Create(Library, name, iconId)
         Parent = tabBtn
     })
 
-    -- Texto: Si hay icono, empieza en X = 44px (14px de margen + 20px icono + 10px separación)
-    local textXOffset = hasIcon and 44 or 14
-    local textWidthSub = hasIcon and 54 or 24
+    -- Posición del texto: Si hay icono, darle 40px de espacio para que no se encima
+    local textXPosition = hasIcon and 40 or 14
+    local textWidthOffset = hasIcon and -48 or -20
 
     local txt = Library.New("TextLabel", {
         Name = "TabText",
-        Size = UDim2.new(1, -textWidthSub, 1, 0),
-        Position = UDim2.new(0, textXOffset, 0, 0), -- 🔥 Usamos píxeles exactos
+        Size = UDim2.new(1, textWidthOffset, 1, 0),
+        Position = UDim2.new(0, textXPosition, 0, 0),
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 14,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
