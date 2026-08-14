@@ -1,6 +1,8 @@
 local TabsModule = {}
 
 function TabsModule.Create(Library, name, iconId)
+    local hasIcon = (iconId and iconId ~= "")
+
     local tabBtn = Library.New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -36,38 +38,36 @@ function TabsModule.Create(Library, name, iconId)
         end
     end)
 
-    -- Icono: si iconId es nil o vacío, se oculta o se pone uno por defecto
+    -- Icono: Se crea únicamente si existe iconId
     local icon = Library.New("ImageLabel", {
-        Size = UDim2.new(0, 24, 0, 24),
-        Position = UDim2.new(0, 12, 0.5, -12),
+        Name = "TabIcon",
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 14, 0.5, -10), -- Posición fija limpia a la izquierda
         BackgroundTransparency = 1,
-        Image = (iconId and iconId ~= "") and iconId or "",
+        Image = hasIcon and iconId or "",
         ImageColor3 = Color3.fromRGB(255, 255, 255),
+        Visible = hasIcon,
         ZIndex = 5,
         Parent = tabBtn
     })
-    -- Si no hay icono, lo ocultamos para que el texto ocupe todo el espacio
-    if not iconId or iconId == "" then
-        icon.Visible = false
-    end
+
+    -- Texto: Si hay icono, empieza en X = 44px (14px de margen + 20px icono + 10px separación)
+    local textXOffset = hasIcon and 44 or 14
+    local textWidthSub = hasIcon and 54 or 24
 
     local txt = Library.New("TextLabel", {
-        Size = UDim2.new(1, (iconId and iconId ~= "") and -46 or -12, 1, 0), -- ajuste automático
-        Position = UDim2.new(iconId and 0.09 or 0.02, 0, 0, 0),
+        Name = "TabText",
+        Size = UDim2.new(1, -textWidthSub, 1, 0),
+        Position = UDim2.new(0, textXOffset, 0, 0), -- 🔥 Usamos píxeles exactos
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 16,
+        TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
     })
-    -- Si no hay icono, centramos el texto a la izquierda con margen
-    if not iconId or iconId == "" then
-        txt.Size = UDim2.new(1, -12, 1, 0)
-        txt.Position = UDim2.new(0.02, 0, 0, 0)
-    end
 
     local page = Library.New("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
@@ -131,7 +131,6 @@ function TabsModule.Create(Library, name, iconId)
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    -- Guardamos la referencia con el icono para futuras actualizaciones
     table.insert(Library.Tabs, { 
         btn = tabBtn, 
         stroke = tabStroke, 
