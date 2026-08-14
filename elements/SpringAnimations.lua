@@ -1,11 +1,18 @@
-local Spring = require(script.Parent.Spring)
+-- ================================================================= --
+-- ANIMACIONES CON RESORTES PARA LA VENTANA
+-- ================================================================= --
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local SpringAnimations = {}
 
-function SpringAnimations.Setup(window, config)
+function SpringAnimations.Setup(window, config, Spring)
+    -- Verificar que Spring no sea nil
+    if not Spring then
+        error("SpringAnimations.Setup: Spring module is nil")
+    end
+
     local targetWidth = config.targetWidth or 620
     local targetHeight = config.targetHeight or 360
 
@@ -19,7 +26,7 @@ function SpringAnimations.Setup(window, config)
     local borderStroke = window.borderStroke
     local Pages = window.Pages or {}
 
-
+    -- Crear resortes usando el módulo Spring recibido
     local MenuPosXScale   = Spring.new(1.2, 14, 25, 0.5)
     local MenuPosYScale   = Spring.new(1.2, 14, 25, 0.15)
     local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
@@ -29,6 +36,7 @@ function SpringAnimations.Setup(window, config)
     local springing = false
     local winOpen = false
 
+    -- Funciones auxiliares
     local function getFloatScalePos()
         local parentSize = GUI.AbsoluteSize
         if parentSize.X == 0 or parentSize.Y == 0 then return 0.5, 0.15 end
@@ -94,7 +102,7 @@ function SpringAnimations.Setup(window, config)
         MenuCorner.target = 21
     end
 
-    
+    -- Bucle de animación
     local renderConnection = RunService.RenderStepped:Connect(function(dt)
         if not WinMain then return end
 
@@ -105,7 +113,7 @@ function SpringAnimations.Setup(window, config)
         WinMain.Size = UDim2.fromOffset(currW, currH)
         if WinCorner then WinCorner.CornerRadius = UDim.new(0, currR) end
 
-        
+        -- Actualizar sidebar y content area (si existen)
         if window.Sidebar and window.ContentArea then
             local sidebarWidth = math.clamp(currW * 0.32, 50, window.T.tabSize - 30)
             local availH = math.max(0, currH - 60)
@@ -119,7 +127,7 @@ function SpringAnimations.Setup(window, config)
             window.ContentArea.Position = UDim2.fromOffset(contentX, 50)
         end
 
-
+        -- Mostrar contenido solo cuando la ventana es lo suficientemente grande
         if winOpen then
             if currW < 300 then
                 ContentGroup.Visible = false
@@ -171,11 +179,12 @@ function SpringAnimations.Setup(window, config)
         end
     end)
 
+    -- Evento de clic en el ícono flotante
     FloatIcon.MouseButton1Click:Connect(function()
         if not winOpen then openWin() end
     end)
 
-    
+    -- Función de arrastre suave (para la barra de título)
     local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
         local dragging = false
         local dragStart, startPos
@@ -240,11 +249,12 @@ function SpringAnimations.Setup(window, config)
         end)
     end
 
-
+    -- Conectar arrastre en la barra de título (si existe)
     if window.titleBar then
         makeSmoothDrag(window.titleBar, WinMain, WinScale, closeWin)
     end
 
+    -- Devolver métodos públicos
     return {
         Open = openWin,
         Close = closeWin,
