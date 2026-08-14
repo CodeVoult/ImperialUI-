@@ -1,9 +1,6 @@
 local TabsModule = {}
 
 function TabsModule.Create(Library, name, iconId)
-    -- Verificar si viene un ID válido
-    local hasIcon = (iconId and iconId ~= "" and iconId ~= "rbxassetid://")
-
     local tabBtn = Library.New("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -39,32 +36,24 @@ function TabsModule.Create(Library, name, iconId)
         end
     end)
 
-    -- Crear Imagen del Ícono
     local icon = Library.New("ImageLabel", {
-        Name = "TabIcon",
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(0, 12, 0.5, -10), -- A la izquierda y centrado vertical
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0, 12, 0.5, -12),
         BackgroundTransparency = 1,
-        Image = hasIcon and iconId or "",
+        Image = iconId or "",
         ImageColor3 = Color3.fromRGB(255, 255, 255),
-        Visible = hasIcon,
         ZIndex = 5,
         Parent = tabBtn
     })
 
-    -- Posición del texto: Si hay icono, darle 40px de espacio para que no se encima
-    local textXPosition = hasIcon and 40 or 14
-    local textWidthOffset = hasIcon and -48 or -20
-
     local txt = Library.New("TextLabel", {
-        Name = "TabText",
-        Size = UDim2.new(1, textWidthOffset, 1, 0),
-        Position = UDim2.new(0, textXPosition, 0, 0),
+        Size = UDim2.new(1, -46, 1, 0),
+        Position = UDim2.new(0, 44, 0, 0),
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = Color3.fromRGB(180, 200, 220),
         Font = Enum.Font.GothamMedium,
-        TextSize = 13,
+        TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 5,
         Parent = tabBtn
@@ -132,12 +121,7 @@ function TabsModule.Create(Library, name, iconId)
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    table.insert(Library.Tabs, { 
-        btn = tabBtn, 
-        stroke = tabStroke, 
-        txt = txt, 
-        icon = icon 
-    })
+    table.insert(Library.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
     table.insert(Library.Pages, page)
 
     return page
