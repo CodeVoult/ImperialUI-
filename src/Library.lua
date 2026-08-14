@@ -1,6 +1,3 @@
--- [[ ZyroxHub UI Library | iOS Premium VIP Edition ]] --
--- [MODIFICADO] Se eliminó el Webhook y se agregó carga de iconos
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -27,13 +24,6 @@ local ButtonModule      = LoadElement("Button")
 local SliderModule      = LoadElement("Slider")
 local DropdownModule    = LoadElement("Dropdown")
 local ColorPickerModule = LoadElement("ColorPicker")
--- 🔥 NUEVO: Cargar módulo de iconos (debe existir en elements/icons/icons.lua)
-local IconsModule       = LoadElement("icons/icons")  -- Ajusta la ruta si es necesario
-
--- Si no existe, se usa una tabla vacía
-if not IconsModule then
-    IconsModule = {}
-end
 
 local Library = {}
 Library.__index = Library
@@ -715,18 +705,8 @@ function Library:Notify(feature, state)
     end)
 end
 
--- 🔥 NUEVO: Método para obtener icono automáticamente por nombre
-function Library:GetIconForTab(name)
-    if not IconsModule then return nil end
-    -- Buscar exacto o en minúsculas
-    local icon = IconsModule[name] or IconsModule[name:lower()]
-    return icon or nil
-end
-
-function Library:CreateTab(name, iconId)
-    -- Si no se proporciona iconId, se busca automáticamente
-    local finalIcon = iconId or self:GetIconForTab(name)
-    local page = TabsModule.Create(self, name, finalIcon)
+function Library:CreateTab(name)
+    local page = TabsModule.Create(self, name)
 
     local TabMethods = { Library = self, Page = page }
 
