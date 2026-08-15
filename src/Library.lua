@@ -1,5 +1,3 @@
-
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -100,13 +98,16 @@ end
 Library.Shadow = Shadow
 
 -- ================================================================= --
--- CREACIÓN DE LA VENTANA (sin lógica de animación)
+-- CREACIÓN DE LA VENTANA (con título limpio)
 -- ================================================================= --
 function Library:CreateWindow(hubTitle)
     local self = setmetatable({}, Library)
     self.LogoLocked = false
     self.Pages = {}
-    self.T = T  -- para que el módulo de animaciones pueda acceder a T
+    self.T = T
+
+    -- Limpiar el título de cualquier etiqueta HTML para que sea texto plano
+    local cleanTitle = hubTitle and string.gsub(hubTitle, "<[^>]*>", "") or "Mi Script"
 
     -- GUI principal
     self.GUI = New("ScreenGui", {
@@ -285,7 +286,7 @@ function Library:CreateWindow(hubTitle)
         Size = UDim2.new(1, -24, 1, 0),
         Position = UDim2.new(0, 12, 0, 0),
         BackgroundTransparency = 1,
-        Text = hubTitle or "Mi Script",
+        Text = cleanTitle,   -- <-- título limpio
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 16,
@@ -354,8 +355,7 @@ function Library:CreateWindow(hubTitle)
         return self.Animations.IsOpen()
     end
 
-    -- Funciones de arrastre para el ícono flotante (ya están en el módulo de animaciones, pero añadimos el arrastre básico)
-    -- (Lo dejamos aquí para que sea parte de la UI, pero puede ir en animaciones también)
+    -- Funciones de arrastre para el ícono flotante
     local function makeDraggable(obj, target)
         local dragStart, startPos, dragging
         obj.InputBegan:Connect(function(i)
@@ -507,10 +507,11 @@ function Library:Notify(feature, state)
 end
 
 -- ================================================================= --
--- CREACIÓN DE PESTAÑAS (sin cambios)
+-- CREACIÓN DE PESTAÑAS (CORREGIDO: acepta iconId)
 -- ================================================================= --
-function Library:CreateTab(name)
-    local page = TabsModule.Create(self, name)
+function Library:CreateTab(name, iconId)
+    -- Pasar el iconId al módulo TabsModule
+    local page = TabsModule.Create(self, name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
