@@ -297,17 +297,18 @@ function Library:CreateWindow(hubTitle)
 
     -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
-        Position = UDim2.new(0, 6, 0, 50),
-        Size = UDim2.new(0, T.tabSize - 30, 1, -60),
-        BackgroundTransparency = 1,
-        ClipsDescendants = true,
-        ScrollBarThickness = 0,
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ZIndex = 3,
-        Parent = self.ContentGroup
-    })
+    Position = UDim2.new(0, 6, 0, 50),
+    Size = UDim2.new(0, T.tabSize - 30, 1, -60),
+    BackgroundTransparency = 1,
+    ClipsDescendants = true,
+    ScrollBarThickness = 4,          -- <-- ahora se ve el scroll
+    ScrollBarImageColor3 = Color3.fromRGB(0, 166, 255),
+    ScrollingDirection = Enum.ScrollingDirection.Y,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+    ZIndex = 3,
+    Parent = self.ContentGroup
+})
     List(self.Sidebar, Enum.FillDirection.Vertical, 6)
     Pad(self.Sidebar, 4, 12, 2, 6)
 
