@@ -127,6 +127,15 @@ function TabsModule.Create(Library, name, iconId)
     table.insert(Library.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
     table.insert(Library.Pages, page)
 
+    -- 🔥 Forzar actualización del CanvasSize del Sidebar
+    task.wait(0.05)
+    if Library.Sidebar then
+        local sidebarLayout = Library.Sidebar:FindFirstChildOfClass("UIListLayout")
+        if sidebarLayout then
+            Library.Sidebar.CanvasSize = UDim2.fromOffset(0, sidebarLayout.AbsoluteContentSize.Y + 10)
+        end
+    end
+
     return page
 end
 
