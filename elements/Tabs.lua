@@ -80,7 +80,9 @@ function TabsModule.Create(Library, name, iconId)
         end
     end)
 
-    tabBtn.MouseButton1Click:Connect(function()
+    -- Función para seleccionar esta pestaña
+    local function selectTab()
+        -- Ocultar todas las pestañas
         for _, t in pairs(Library.Tabs) do
             Library.Tween(t.btn, 0.2, { BackgroundTransparency = 1 })
             t.txt.TextColor3 = Color3.fromRGB(180, 200, 220)
@@ -89,6 +91,7 @@ function TabsModule.Create(Library, name, iconId)
         for _, p in pairs(Library.Pages) do
             p.Visible = false
         end
+        -- Mostrar esta
         Library.Tween(tabBtn, 0.2, { BackgroundTransparency = 0.85 })
         txt.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabStroke.Transparency = 0
@@ -112,13 +115,13 @@ function TabsModule.Create(Library, name, iconId)
             end
             page.CanvasPosition = Vector2.zero
         end
-    end)
+    end
 
+    tabBtn.MouseButton1Click:Connect(selectTab)
+
+    -- Si es la primera pestaña, seleccionarla automáticamente
     if not Library.ActivePage then
-        Library.ActivePage = page
-        page.Visible = true
-        tabBtn.BackgroundTransparency = 0.85
-        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+        selectTab()
     end
 
     table.insert(Library.Tabs, { btn = tabBtn, stroke = tabStroke, txt = txt, icon = icon })
