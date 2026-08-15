@@ -1,9 +1,11 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/ImperialUI-/refs/heads/main/src/Library.lua?v=" .. math.random(1,999999)))()
 
--- Integración del Webhook
+-- El título se mostrará sin HTML
+local Window = Library:CreateWindow('Zyrox Hub VIP v1.2')  -- texto plano
 
-local Window = Library:CreateWindow('Zyrox Hub VIP <font color="#FFD700">v1.2</font>', WebhookURL)
+-- Crear pestañas con iconos
 
+-- ... etc.
 -- ============================================================
 --   TABS
 -- ============================================================
