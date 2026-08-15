@@ -1,7 +1,7 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CodeVoult/ImperialUI-/refs/heads/main/src/Library.lua?v=" .. math.random(1,999999)))()
 
 -- El título se mostrará sin HTML
-local Window = Library:CreateWindow('Zyrox Hub VIP v1.2')  -- texto plano
+local Window = Library:CreateWindow('Zyrox Hub VIP v1.4')  -- texto plano
 
 -- Crear pestañas con iconos
 
