@@ -9,10 +9,17 @@ local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/CodeVoult/ImperialUI-
 
 local function LoadElement(name)
     local success, result = pcall(function()
+        -- ModuleScript layout also supports Studio without loadstring/HTTP.
+        if script then
+            local root = script.Parent.Parent
+            local folder = root:FindFirstChild("elements")
+            local module = folder and folder:FindFirstChild(name)
+            if module then return require(module) end
+        end
         return loadstring(game:HttpGet(GITHUB_RAW_BASE .. name .. ".lua"))()
     end)
     if not success or not result then
-        warn("[Library Error] Error al cargar el módulo " .. name .. ": " .. tostring(result))
+        error("[ImperialUI] No se pudo cargar " .. name .. ": " .. tostring(result), 2)
     end
     return result
 end
@@ -26,6 +33,8 @@ local ButtonModule     = LoadElement("Button")
 local SliderModule     = LoadElement("Slider")
 local DropdownModule   = LoadElement("Dropdown")
 local ColorPickerModule = LoadElement("ColorPicker")
+local Themes = LoadElement("Themes")
+local Icons = LoadElement("Icons")
 
 local Library = {}
 Library.__index = Library
@@ -33,24 +42,7 @@ Library.__index = Library
 -- ================================================================= --
 -- CONFIGURACIÓN DE COLORES Y UTILIDADES
 -- ================================================================= --
-if game:GetService("CoreGui"):FindFirstChild("DDOS_VENOM") then
-    game:GetService("CoreGui").DDOS_VENOM:Destroy()
-end
-
-local T = {
-    bg = Color3.fromRGB(14, 38, 70),
-    panel = Color3.fromRGB(4, 20, 38),
-    panel2 = Color3.fromRGB(6, 26, 48),
-    border = Color3.fromRGB(0, 166, 255),
-    acc = Color3.fromRGB(0, 166, 255),
-    text = Color3.fromRGB(255, 255, 255),
-    red = Color3.fromRGB(255, 60, 60),
-    green = Color3.fromRGB(50, 255, 100),
-    sep = Color3.fromRGB(10, 35, 60),
-    switchOff = Color3.fromRGB(10, 30, 50),
-    bgTrans = 0.1,
-    tabSize = 200,
-}
+local T = Themes.Get("Midnight")
 Library.T = T
 
 local function New(cls, props)
@@ -97,25 +89,85 @@ local function Shadow(obj, transparency, expand)
 end
 Library.Shadow = Shadow
 
+function Library:Track(connection)
+    table.insert(self.Connections, connection)
+    return connection
+end
+
+function Library:BindTheme(object, property, token)
+    local binding = {object = object, property = property, token = token}
+    table.insert(self.ThemeBindings, binding)
+    object[property] = type(token) == "function" and token(self.T) or self.T[token]
+    return object
+end
+
+function Library:SetTheme(name)
+    local palette = Themes.Get(name) -- Validate before modifying the current theme.
+    for key, value in pairs(palette) do self.T[key] = value end
+    self.ThemeName = name
+    for i = #self.ThemeBindings, 1, -1 do
+        local binding = self.ThemeBindings[i]
+        if binding.object.Parent then
+            binding.object[binding.property] = type(binding.token) == "function"
+                and binding.token(self.T) or self.T[binding.token]
+        else
+            table.remove(self.ThemeBindings, i)
+        end
+    end
+end
+
+function Library:GetThemes()
+    local names = {}
+    for i, name in ipairs(Themes.Names) do names[i] = name end
+    return names
+end
+
+function Library:SetIcon(image, value, fallback)
+    return Icons.Set(self, image, value, fallback)
+end
+
+function Library:Destroy()
+    if self.Destroyed then return end
+    self.Destroyed = true
+    for _, connection in ipairs(self.Connections) do connection:Disconnect() end
+    self.Connections = {}
+    self.ThemeBindings = {}
+    if self.GUI then self.GUI:Destroy() end
+end
+
 -- ================================================================= --
 -- CREACIÓN DE LA VENTANA (con título limpio)
 -- ================================================================= --
 function Library:CreateWindow(hubTitle)
+    local options = type(hubTitle) == "table" and hubTitle or {Title = hubTitle}
     local self = setmetatable({}, Library)
     self.LogoLocked = false
     self.Pages = {}
-    self.T = T
+    self.Tabs = {}
+    self.Connections = {}
+    self.ThemeBindings = {}
+    self.ThemeName = options.Theme or "Midnight"
+    self.T = Themes.Get(self.ThemeName)
+    local T = self.T
 
     -- Limpiar el título de cualquier etiqueta HTML para que sea texto plano
-    local cleanTitle = hubTitle and string.gsub(hubTitle, "<[^>]*>", "") or "Mi Script"
+    local cleanTitle = tostring(options.Title or "ImperialUI"):gsub("<[^>]*>", "")
+
+    local parent = options.Parent
+    if not parent then
+        local ok, hidden = pcall(function() return gethui and gethui() end)
+        parent = ok and hidden or Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
 
     -- GUI principal
     self.GUI = New("ScreenGui", {
-        Name = "DDOS_VENOM",
+        Name = "ImperialUI",
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
         DisplayOrder = 999999999,
-        Parent = (gethui and gethui() or game:GetService("CoreGui"))
+        Parent = parent
     })
+    self:Track(self.GUI.Destroying:Connect(function() self:Destroy() end))
 
     -- Sonido de clic
     local clickSound = Instance.new("Sound")
@@ -150,7 +202,7 @@ function Library:CreateWindow(hubTitle)
         Position = UDim2.new(0.5, 0, 0, 50),
         BackgroundColor3 = Color3.fromRGB(10, 14, 23),
         BackgroundTransparency = 0.35,
-        Text = "Open Menu",
+        Text = "Abrir menú",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 14,
@@ -183,7 +235,7 @@ function Library:CreateWindow(hubTitle)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Size = UDim2.new(0, 140, 0, 42),
         BackgroundTransparency = 1,
-        Text = "Open Menu",
+        Text = "Abrir menú",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 14,
@@ -216,7 +268,9 @@ function Library:CreateWindow(hubTitle)
         ClipsDescendants = true,
         Parent = self.WinMain
     })
-    Cor(winInner, 32)
+    Cor(winInner, 16)
+    winInner.BackgroundTransparency = 0
+    self:BindTheme(winInner, "BackgroundColor3", "bg")
 
     local bgGradient = New("UIGradient", {
         Color = ColorSequence.new({
@@ -227,19 +281,11 @@ function Library:CreateWindow(hubTitle)
         Rotation = 45,
         Parent = winInner
     })
-    task.spawn(function()
-        local t = 0
-        while bgGradient and bgGradient.Parent do
-            t = t + 0.02
-            bgGradient.Rotation = 45 + math.sin(t) * 4
-            bgGradient.Offset = Vector2.new(math.sin(t * 0.6) * 0.04, math.cos(t * 0.6) * 0.04)
-            task.wait(0.03)
-        end
-    end)
+    bgGradient:Destroy()
 
     self.borderStroke = New("UIStroke", {
         Name = "BorderStroke",
-        Thickness = 3.2,
+        Thickness = 1,
         Color = Color3.fromRGB(255, 255, 255),
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = self.WinMain
@@ -253,12 +299,7 @@ function Library:CreateWindow(hubTitle)
         Rotation = 225,
         Parent = self.borderStroke
     })
-    task.spawn(function()
-        while borderGradient and borderGradient.Parent do
-            borderGradient.Rotation = (borderGradient.Rotation + 1.2) % 360
-            task.wait(0.03)
-        end
-    end)
+    borderGradient:Destroy()
 
     -- Contenido (se muestra cuando la ventana está abierta)
     self.ContentGroup = New("CanvasGroup", {
@@ -282,9 +323,9 @@ function Library:CreateWindow(hubTitle)
     })
 
     -- Título en texto plano (sin formato)
-    New("TextLabel", {
-        Size = UDim2.new(1, -24, 1, 0),
-        Position = UDim2.new(0, 12, 0, 0),
+    local titleLabel = New("TextLabel", {
+        Size = UDim2.new(1, -170, 1, 0),
+        Position = UDim2.new(0, 20, 0, 0),
         BackgroundTransparency = 1,
         Text = cleanTitle,   -- <-- título limpio
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -294,6 +335,21 @@ function Library:CreateWindow(hubTitle)
         ZIndex = 7,
         Parent = self.titleBar
     })
+    self:BindTheme(titleLabel, "TextColor3", "text")
+    local minimize = New("TextButton", {
+        Name = "Minimize", Text = "—", Font = Enum.Font.GothamMedium, TextSize = 18,
+        Position = UDim2.new(1, -80, 0, 10), Size = UDim2.fromOffset(28, 28),
+        BackgroundTransparency = 1, ZIndex = 8, Parent = self.titleBar,
+    })
+    local close = New("TextButton", {
+        Name = "Close", Text = "×", Font = Enum.Font.GothamMedium, TextSize = 22,
+        Position = UDim2.new(1, -44, 0, 10), Size = UDim2.fromOffset(28, 28),
+        BackgroundTransparency = 1, ZIndex = 8, Parent = self.titleBar,
+    })
+    self:BindTheme(minimize, "TextColor3", "muted")
+    self:BindTheme(close, "TextColor3", "muted")
+    minimize.MouseButton1Click:Connect(function() self:Close() end)
+    close.MouseButton1Click:Connect(function() self:Destroy() end)
 
     -- Sidebar
     self.Sidebar = New("ScrollingFrame", {
@@ -324,19 +380,21 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(self.ContentArea, 16)
 
-    New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 44, 84)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 14, 34))
-        }),
-        Rotation = 45,
-        Parent = self.ContentArea
-    })
+    self:BindTheme(self.WinMain, "BackgroundColor3", "bg")
+    self:BindTheme(self.borderStroke, "Color", "border")
+    self:BindTheme(self.ContentArea, "BackgroundColor3", "panel")
+    self:BindTheme(self.Sidebar, "ScrollBarImageColor3", "acc")
+    self:BindTheme(self.FloatIcon, "BackgroundColor3", "panel2")
+    self:BindTheme(self.FloatIcon, "TextColor3", "text")
+    self:BindTheme(self.closeTextLabel, "TextColor3", "text")
+    lightStroke:ClearAllChildren()
+    lightStroke.Thickness = 1
+    self:BindTheme(lightStroke, "Color", "acc")
 
     -- Conectar animaciones (separa la lógica de animación)
     self.Animations = SpringAnimations.Setup(self, {
-        targetWidth = 620,
-        targetHeight = 360,
+        targetWidth = options.Width or 720,
+        targetHeight = options.Height or 460,
     }, Spring)
 
     -- Métodos para controlar la ventana desde fuera
@@ -367,13 +425,13 @@ function Library:CreateWindow(hubTitle)
                 startPos = target.Position
             end
         end)
-        UserInputService.InputChanged:Connect(function(i)
+        self:Track(UserInputService.InputChanged:Connect(function(i)
             if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
                 local del = i.Position - dragStart
                 target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + del.X, startPos.Y.Scale, startPos.Y.Offset + del.Y)
             end
-        end)
-        UserInputService.InputEnded:Connect(function(i)
+        end))
+        self:Track(UserInputService.InputEnded:Connect(function(i)
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
                 local parentSize = self.GUI.AbsoluteSize
@@ -383,13 +441,15 @@ function Library:CreateWindow(hubTitle)
                     target.Position = UDim2.new((absPos.X + (absSize.X / 2)) / parentSize.X, 0, (absPos.Y + (absSize.Y / 2)) / parentSize.Y, 0)
                 end
             end
-        end)
+        end))
     end
 
     makeDraggable(self.FloatIcon, self.FloatIcon)
 
     -- Métodos de utilidad
     function self:SetScale(scaleValue)
+        assert(type(scaleValue) == "number" and scaleValue == scaleValue, "Scale must be a number")
+        scaleValue = math.clamp(scaleValue, 0.5, 1.5)
         if self.WinScale then self.WinScale.Scale = scaleValue end
     end
 
@@ -401,6 +461,13 @@ function Library:CreateWindow(hubTitle)
         self.LogoLocked = locked
     end
 
+    self:Track(UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and not UserInputService:GetFocusedTextBox()
+            and input.KeyCode == (options.ToggleKey or Enum.KeyCode.RightShift) then
+            self:Toggle()
+        end
+    end))
+    if options.AutoOpen ~= false then self:Open() end
     return self
 end
 
@@ -408,6 +475,7 @@ end
 -- NOTIFICACIONES (sin cambios)
 -- ================================================================= --
 function Library:Notify(feature, state)
+    local T = self.T
     local accent = state and T.green or T.red
     local titleTxt = state and "SISTEMA ACTIVO" or "SISTEMA DESACTIVADO"
 
@@ -516,6 +584,12 @@ function Library:CreateTab(name, iconId)
 
     local TabMethods = { Library = self, Page = page }
 
+    function TabMethods:Select()
+        for _, tab in ipairs(self.Library.Tabs) do
+            if tab.page == self.Page then tab.select() return end
+        end
+    end
+
     function TabMethods:CreateSection(title)
         local container = New("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
@@ -526,18 +600,19 @@ function Library:CreateTab(name, iconId)
         })
         List(container, Enum.FillDirection.Vertical, 8)
 
-        New("TextLabel", {
+        local heading = New("TextLabel", {
             Size = UDim2.new(1, -4, 0, 26),
             Position = UDim2.new(0, 4, 0, 0),
             BackgroundTransparency = 1,
             Text = title,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextColor3 = self.Library.T.text,
             Font = Enum.Font.GothamMedium,
-            TextSize = 18,
+            TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 6,
             Parent = container
         })
+        self.Library:BindTheme(heading, "TextColor3", "text")
 
         local card = New("Frame", {
             Size = UDim2.new(1, 0, 0, 0),

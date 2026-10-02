@@ -13,20 +13,24 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
         Parent = card
     })
     Library.Cor(row, 20)
-    Library.Stk(row, T.border, 1.5)
+    local rowStroke = Library.Stk(row, T.border, 1)
 
     Library.New("TextLabel", {
         Position = UDim2.new(0, 14, 0, 0),
         Size = UDim2.new(0.6, 0, 1, 0),
         BackgroundTransparency = 1,
         Text = lbl,
-        TextColor3 = Color3.fromRGB(240, 245, 255),
+        TextColor3 = T.text,
         Font = Enum.Font.GothamMedium,
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 6,
         Parent = row
     })
+    Library:BindTheme(row, "BackgroundColor3", "panel2")
+    Library:BindTheme(rowStroke, "Color", "border")
+    local rowLabel = row:FindFirstChildOfClass("TextLabel")
+    Library:BindTheme(rowLabel, "TextColor3", "text")
 
     local colorPreview = Library.New("TextButton", {
         AnchorPoint = Vector2.new(1, 0.5),
@@ -38,13 +42,14 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
         Parent = row
     })
     Library.Cor(colorPreview, 11)
-    Library.Stk(colorPreview, T.border, 1.2)
+    local previewStroke = Library.Stk(colorPreview, T.border, 1)
+    Library:BindTheme(previewStroke, "Color", "border")
 
     local screenGui = card:FindFirstAncestorOfClass("ScreenGui")
     local modalOverlay = Library.New("Frame", {
         Position = UDim2.new(0, -200, 0, -200),
         Size = UDim2.new(1, 400, 1, 400),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundColor3 = T.bg,
         BackgroundTransparency = 0.5,
         Visible = false,
         ZIndex = 100,
@@ -55,54 +60,47 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(0, 340, 0, 280),
-        BackgroundColor3 = Color3.fromRGB(8, 14, 26),
+        BackgroundColor3 = T.panel,
         ZIndex = 101,
         Parent = modalOverlay
     })
     Library.Cor(modalFrame, 20)
+    modalFrame.Size = UDim2.new(0.9, 0, 0, 280)
+    Library.New("UISizeConstraint", {
+        MinSize = Vector2.new(280, 260),
+        MaxSize = Vector2.new(380, 300),
+        Parent = modalFrame
+    })
+    Library:BindTheme(modalOverlay, "BackgroundColor3", "bg")
+    Library:BindTheme(modalFrame, "BackgroundColor3", "panel")
 
     local modalShadow = Library.Shadow(modalFrame, 0.5, 30)
     modalShadow.ZIndex = 100
 
     local modalStroke = Library.New("UIStroke", {
-        Thickness = 2.2,
-        Color = Color3.fromRGB(255, 255, 255),
+        Thickness = 1,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = modalFrame
     })
-    local modalGradient = Library.New("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 110, 240)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 80))
-        }),
-        Rotation = 225,
-        Parent = modalStroke
-    })
-    
-    task.spawn(function()
-        while modalGradient and modalGradient.Parent do
-            modalGradient.Rotation = (modalGradient.Rotation + 1.2) % 360
-            task.wait(0.03)
-        end
-    end)
+    Library:BindTheme(modalStroke, "Color", "border")
 
     Library.New("TextLabel", {
         Position = UDim2.new(0, 16, 0, 12),
         Size = UDim2.new(1, -32, 0, 24),
         BackgroundTransparency = 1,
         Text = lbl,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = T.text,
         Font = Enum.Font.GothamBold,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 102,
         Parent = modalFrame
     })
+    Library:BindTheme(modalFrame:FindFirstChildOfClass("TextLabel"), "TextColor3", "text")
 
     local svBox = Library.New("TextButton", {
         Position = UDim2.new(0, 16, 0, 44),
-        Size = UDim2.new(0, 150, 0, 130),
+        Size = UDim2.new(0.5, -28, 0, 130),
         BackgroundColor3 = Color3.fromRGB(255, 0, 0),
         Text = "",
         AutoButtonColor = false,
@@ -143,15 +141,17 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(1, 0),
         Size = UDim2.new(0, 12, 0, 12),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundColor3 = T.onAccent,
         ZIndex = 104,
         Parent = svBox
     })
     Library.Cor(pickerCursor, 6)
-    Library.Stk(pickerCursor, Color3.fromRGB(0, 0, 0), 1.5)
+    local cursorStroke = Library.Stk(pickerCursor, T.text, 1)
+    Library:BindTheme(pickerCursor, "BackgroundColor3", "onAccent")
+    Library:BindTheme(cursorStroke, "Color", "text")
 
     local hueBar = Library.New("TextButton", {
-        Position = UDim2.new(0, 174, 0, 44),
+        Position = UDim2.new(0.5, -4, 0, 44),
         Size = UDim2.new(0, 14, 0, 130),
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         Text = "",
@@ -177,31 +177,37 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
 
     local cancelBtn = Library.New("TextButton", {
         Position = UDim2.new(0, 16, 0, 222),
-        Size = UDim2.new(0, 148, 0, 42),
-        BackgroundColor3 = Color3.fromRGB(14, 25, 45),
+        Size = UDim2.new(0.5, -24, 0, 42),
+        BackgroundColor3 = T.panel2,
         Text = "Cancel",
-        TextColor3 = Color3.fromRGB(220, 230, 255),
+        TextColor3 = T.text,
         Font = Enum.Font.GothamBold,
         TextSize = 14,
         ZIndex = 102,
         Parent = modalFrame
     })
     Library.Cor(cancelBtn, 21)
-    Library.Stk(cancelBtn, Color3.fromRGB(30, 100, 210), 1.8)
+    local cancelStroke = Library.Stk(cancelBtn, T.border, 1)
+    Library:BindTheme(cancelBtn, "BackgroundColor3", "panel2")
+    Library:BindTheme(cancelBtn, "TextColor3", "text")
+    Library:BindTheme(cancelStroke, "Color", "border")
 
     local applyBtn = Library.New("TextButton", {
-        Position = UDim2.new(0, 176, 0, 222),
-        Size = UDim2.new(0, 148, 0, 42),
-        BackgroundColor3 = Color3.fromRGB(24, 100, 230),
+        Position = UDim2.new(0.5, 4, 0, 222),
+        Size = UDim2.new(0.5, -24, 0, 42),
+        BackgroundColor3 = T.acc,
         Text = "Apply",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = T.onAccent,
         Font = Enum.Font.GothamBold,
         TextSize = 14,
         ZIndex = 102,
         Parent = modalFrame
     })
     Library.Cor(applyBtn, 21)
-    Library.Stk(applyBtn, Color3.fromRGB(60, 140, 255), 1.8)
+    local applyStroke = Library.Stk(applyBtn, T.border, 1)
+    Library:BindTheme(applyBtn, "BackgroundColor3", "acc")
+    Library:BindTheme(applyBtn, "TextColor3", "onAccent")
+    Library:BindTheme(applyStroke, "Color", "border")
 
     local h, s, v = Color3.toHSV(savedColor)
 
@@ -210,47 +216,54 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
         svBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
     end
 
-    colorPreview.MouseButton1Click:Connect(function()
+    Library:Track(colorPreview.MouseButton1Click:Connect(function()
         tempColor = savedColor
         h, s, v = Color3.toHSV(savedColor)
         pickerCursor.Position = UDim2.fromScale(s, 1 - v)
         refreshUI()
         modalOverlay.Visible = true
-    end)
+    end))
 
-    cancelBtn.MouseButton1Click:Connect(function()
+    Library:Track(cancelBtn.MouseButton1Click:Connect(function()
         modalOverlay.Visible = false
-    end)
+    end))
 
-    applyBtn.MouseButton1Click:Connect(function()
+    Library:Track(applyBtn.MouseButton1Click:Connect(function()
         savedColor = tempColor
         colorPreview.BackgroundColor3 = savedColor
         if cb then cb(savedColor) end
         modalOverlay.Visible = false
-    end)
+    end))
 
     local draggingSV, draggingHue = false, false
 
-    svBox.InputBegan:Connect(function(input)
+    Library:Track(svBox.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingSV = true
+            local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
+            local relY = math.clamp((input.Position.Y - svBox.AbsolutePosition.Y) / svBox.AbsoluteSize.Y, 0, 1)
+            s, v = relX, 1 - relY
+            pickerCursor.Position = UDim2.fromScale(relX, relY)
+            refreshUI()
         end
-    end)
+    end))
 
-    hueBar.InputBegan:Connect(function(input)
+    Library:Track(hueBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingHue = true
+            h = math.clamp((input.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y, 0, 1)
+            refreshUI()
         end
-    end)
+    end))
 
-    UserInputService.InputEnded:Connect(function(input)
+    Library:Track(UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingSV = false
             draggingHue = false
         end
-    end)
+    end))
 
-    UserInputService.InputChanged:Connect(function(input)
+    Library:Track(UserInputService.InputChanged:Connect(function(input)
         if (draggingSV or draggingHue) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             if draggingSV then
                 local relX = math.clamp((input.Position.X - svBox.AbsolutePosition.X) / svBox.AbsoluteSize.X, 0, 1)
@@ -265,7 +278,7 @@ function ColorPickerModule.Add(Library, card, lbl, defaultColor, cb)
                 refreshUI()
             end
         end
-    end)
+    end))
 end
 
 return ColorPickerModule
