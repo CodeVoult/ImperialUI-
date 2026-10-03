@@ -1,5 +1,9 @@
 local LIBRARY_URL = "https://raw.githubusercontent.com/CodeVoult/ImperialUI-/refs/heads/main/src/Library.lua"
-local librarySource = game:HttpGet(LIBRARY_URL .. "?v=" .. tostring(os.time()))
+local requestOk, librarySource = pcall(function()
+    return game:HttpGet(LIBRARY_URL .. "?v=" .. tostring(os.time()))
+end)
+assert(requestOk and type(librarySource) == "string" and #librarySource > 0,
+    "[ImperialUI] No se pudo descargar src/Library.lua. Revisa la URL, el acceso a Internet y que los cambios estén en GitHub.")
 local loadLibrary, compileError = loadstring(librarySource)
 assert(loadLibrary, "[ImperialUI] No se pudo compilar la librería: " .. tostring(compileError))
 local Library = loadLibrary()

@@ -41,13 +41,10 @@ function Icons.Draw(library, image, name)
         library.Cor(line, 2)
         line.BackgroundColor3 = image.ImageColor3
         local connection = image:GetPropertyChangedSignal("ImageColor3"):Connect(function()
+            if not image.Parent or not line.Parent then return end
             line.BackgroundColor3 = image.ImageColor3
         end)
-        local destroying
-        destroying = frame.Destroying:Connect(function()
-            connection:Disconnect()
-            destroying:Disconnect()
-        end)
+        library:Track(connection)
     end
     return frame
 end
