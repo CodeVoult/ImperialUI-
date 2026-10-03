@@ -11,7 +11,13 @@ assert(type(Library) == "table" and type(Library.CreateWindow) == "function",
     "[ImperialUI] La URL no devolvió una versión válida de src/Library.lua")
 
 -- El título se mostrará sin HTML
-local Window = Library:CreateWindow({Title = "Zyrox Hub VIP v1.4", Theme = "Midnight"})
+local Window = Library:CreateWindow("Zyrox Hub VIP v1.4")
+assert(type(Window) == "table", "[ImperialUI] CreateWindow no devolvió una ventana.")
+if type(Window.Open) == "function" then
+    Window:Open()
+else
+    error("[ImperialUI] La librería descargada no incluye Window:Open(). Actualiza src/Library.lua en GitHub.")
+end
 
 -- Crear pestañas con iconos
 
@@ -19,15 +25,15 @@ local Window = Library:CreateWindow({Title = "Zyrox Hub VIP v1.4", Theme = "Midn
 -- ============================================================
 --   TABS
 -- ============================================================
-local MainTab     = Window:CreateTab("Main", "home")
-local CombatTab   = Window:CreateTab("Combat", "combat")
-local HitboxTab   = Window:CreateTab("Hitbox", "hitbox")
-local VisualTab   = Window:CreateTab("Visual", "eye")
-local FarmTab     = Window:CreateTab("Farm", "leaf")
-local AvatarTab   = Window:CreateTab("Avatar", "user")
-local AnimsTab    = Window:CreateTab("Animaciones", "sparkles")
-local CameraTab   = Window:CreateTab("Camera", "camera")
-local SettingsTab = Window:CreateTab("Settings", "settings")
+local MainTab     = Window:CreateTab("Main", "rbxassetid://129659183898289")
+local CombatTab   = Window:CreateTab("Combat", "rbxassetid://139144481094772")
+local HitboxTab   = Window:CreateTab("Hitbox", "rbxassetid://92387641579827")
+local VisualTab   = Window:CreateTab("Visual", "rbxassetid://128792349513965")
+local FarmTab     = Window:CreateTab("Farm", "rbxassetid://139145941679098")
+local AvatarTab   = Window:CreateTab("Avatar", "rbxassetid://109575005864749")
+local AnimsTab    = Window:CreateTab("Animaciones", "rbxassetid://103266505441539")
+local CameraTab   = Window:CreateTab("Camera", "rbxassetid://80826768886976")
+local SettingsTab = Window:CreateTab("Settings", "rbxassetid://92718502822243")
 
 -- ============================================================
 --   COMBAT TAB
@@ -129,10 +135,12 @@ MoveSec:AddSlider("Velocidad de Caminado", 16, 300, 200, function(v) end)
 -- ============================================================
 local SizeSec = SettingsTab:CreateSection("Dimensiones del Hub")
 
-local ThemeSec = SettingsTab:CreateSection("Temas")
-ThemeSec:AddDropdown("Apariencia", Window:GetThemes(), 1, function(themeName)
-    Window:SetTheme(themeName)
-end)
+if type(Window.GetThemes) == "function" and type(Window.SetTheme) == "function" then
+    local ThemeSec = SettingsTab:CreateSection("Temas")
+    ThemeSec:AddDropdown("Apariencia", Window:GetThemes(), 1, function(themeName)
+        Window:SetTheme(themeName)
+    end)
+end
 
 SizeSec:AddSlider("Ancho/Escala del Hub", 80, 150, 100, function(v)
     Window:SetScale(v / 100)
