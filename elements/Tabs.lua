@@ -110,10 +110,10 @@ function TabsModule.Create(Library, name, iconId)
         page.Position = UDim2.new(0, 0, -0.1, 0)
         page.Size = UDim2.new(1, 0, 1.2, 0)
         
-        Library.Tween(page, 0.6, {
+        Library.Tween(page, 0.22, {
             Position = UDim2.new(0, 0, 0, 0),
             Size = UDim2.new(1, 0, 1, 0)
-        }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        }, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
         Library.ActivePage = page
         
@@ -151,6 +151,8 @@ function TabsModule.Create(Library, name, iconId)
     tabRecord.stroke = tabStroke
     tabRecord.txt = txt
     tabRecord.icon = icon
+    tabRecord.page = page
+    tabRecord.select = selectTab
     table.insert(Library.Tabs, tabRecord)
     table.insert(Library.Pages, page)
 

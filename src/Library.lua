@@ -16,10 +16,15 @@ local function LoadElement(name)
             local module = folder and folder:FindFirstChild(name)
             if module then return require(module) end
         end
-        return loadstring(game:HttpGet(GITHUB_RAW_BASE .. name .. ".lua"))()
+        local url = GITHUB_RAW_BASE .. name .. ".lua?v=" .. tostring(os.time())
+        local source = game:HttpGet(url)
+        local chunk, compileError = loadstring(source)
+        if not chunk then error("Lua syntax error: " .. tostring(compileError)) end
+        return chunk()
     end)
     if not success or not result then
-        error("[ImperialUI] No se pudo cargar " .. name .. ": " .. tostring(result), 2)
+        error("[ImperialUI] No se pudo cargar el módulo " .. name .. ": " .. tostring(result)
+            .. ". Confirma que el archivo exista en GitHub y que el repositorio esté actualizado.", 2)
     end
     return result
 end
@@ -42,9 +47,6 @@ Library.__index = Library
 -- ================================================================= --
 -- CONFIGURACIÓN DE COLORES Y UTILIDADES
 -- ================================================================= --
-local T = Themes.Get("Midnight")
-Library.T = T
-
 local function New(cls, props)
     local o = Instance.new(cls)
     for k, v in pairs(props or {}) do o[k] = v end
@@ -156,7 +158,16 @@ function Library:CreateWindow(hubTitle)
     local parent = options.Parent
     if not parent then
         local ok, hidden = pcall(function() return gethui and gethui() end)
-        parent = ok and hidden or Players.LocalPlayer:WaitForChild("PlayerGui")
+        parent = ok and hidden or nil
+        if not parent then
+            local coreOk, core = pcall(function() return game:GetService("CoreGui") end)
+            parent = coreOk and core or nil
+        end
+        if not parent then
+            local player = Players.LocalPlayer
+            assert(player, "[ImperialUI] CreateWindow debe ejecutarse desde un cliente Roblox.")
+            parent = player:WaitForChild("PlayerGui")
+        end
     end
 
     -- GUI principal
@@ -164,7 +175,7 @@ function Library:CreateWindow(hubTitle)
         Name = "ImperialUI",
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
-        DisplayOrder = 999999999,
+        DisplayOrder = 100,
         Parent = parent
     })
     self:Track(self.GUI.Destroying:Connect(function() self:Destroy() end))
@@ -175,11 +186,11 @@ function Library:CreateWindow(hubTitle)
     clickSound.Volume = 0.5
     clickSound.Parent = self.GUI
 
-    self.GUI.DescendantAdded:Connect(function(obj)
+    self:Track(self.GUI.DescendantAdded:Connect(function(obj)
         if obj:IsA("TextButton") or obj:IsA("ImageButton") then
-            obj.MouseButton1Click:Connect(function() clickSound:Play() end)
+            self:Track(obj.MouseButton1Click:Connect(function() clickSound:Play() end))
         end
-    end)
+    end))
 
     -- Capa de notificaciones
     self.NotifLayer = New("Frame", {
@@ -380,6 +391,11 @@ function Library:CreateWindow(hubTitle)
     })
     Cor(self.ContentArea, 16)
 
+    local camera = workspace.CurrentCamera
+    local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
+    local targetWidth = math.clamp(math.min(options.Width or 720, viewport.X - 24), 300, 760)
+    local targetHeight = math.clamp(math.min(options.Height or 460, viewport.Y - 24), 280, 600)
+
     self:BindTheme(self.WinMain, "BackgroundColor3", "bg")
     self:BindTheme(self.borderStroke, "Color", "border")
     self:BindTheme(self.ContentArea, "BackgroundColor3", "panel")
@@ -393,8 +409,8 @@ function Library:CreateWindow(hubTitle)
 
     -- Conectar animaciones (separa la lógica de animación)
     self.Animations = SpringAnimations.Setup(self, {
-        targetWidth = options.Width or 720,
-        targetHeight = options.Height or 460,
+        targetWidth = targetWidth,
+        targetHeight = targetHeight,
     }, Spring)
 
     -- Métodos para controlar la ventana desde fuera
@@ -489,6 +505,8 @@ function Library:Notify(feature, state)
     Cor(card, 12)
 
     local st = Stk(card, T.border, 1.2)
+    self:BindTheme(card, "BackgroundColor3", "panel")
+    self:BindTheme(st, "Color", "border")
     st.Transparency = 1
     local sh = Shadow(card, 1, 24)
     local cs = New("UIScale", { Scale = 0.8, Parent = card })
@@ -530,6 +548,7 @@ function Library:Notify(feature, state)
         ZIndex = 999999997,
         Parent = card
     })
+    self:BindTheme(sub, "TextColor3", "text")
 
     local track = New("Frame", {
         AnchorPoint = Vector2.new(0, 1),
@@ -540,6 +559,7 @@ function Library:Notify(feature, state)
         ZIndex = 999999997,
         Parent = card
     })
+    self:BindTheme(track, "BackgroundColor3", "sep")
 
     local fill = New("Frame", {
         Size = UDim2.new(1, 0, 1, 0),

@@ -8,7 +8,7 @@ function SliderModule.Add(Library, card, lbl, mn, mx, def, cb)
     def = math.clamp(tonumber(def) or mn, mn, mx)
 
     local row = Library.New("Frame", {
-        Size = UDim2.new(1, 0, 0, 42),
+        Size = UDim2.new(1, 0, 0, 58),
         BackgroundColor3 = T.panel2,
         ZIndex = 5,
         Parent = card
@@ -17,8 +17,9 @@ function SliderModule.Add(Library, card, lbl, mn, mx, def, cb)
     local rowStroke = Library.Stk(row, T.border, 1)
 
     local valInput = Library.New("TextBox", {
-        Position = UDim2.new(0, 12, 0.5, -10),
-        Size = UDim2.new(0, 35, 0, 20),
+        AnchorPoint = Vector2.new(1, 0),
+        Position = UDim2.new(1, -12, 0, 5),
+        Size = UDim2.new(0, 48, 0, 20),
         BackgroundTransparency = 1,
         Text = tostring(def),
         TextColor3 = T.acc,
@@ -32,8 +33,8 @@ function SliderModule.Add(Library, card, lbl, mn, mx, def, cb)
 
     Library.New("TextLabel", {
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -12, 0.5, 0),
-        Size = UDim2.new(0, 130, 0, 20),
+        Position = UDim2.new(0, 12, 0, 5),
+        Size = UDim2.new(1, -80, 0, 20),
         BackgroundTransparency = 1,
         Text = lbl,
         TextColor3 = T.text,
@@ -45,8 +46,8 @@ function SliderModule.Add(Library, card, lbl, mn, mx, def, cb)
     })
 
     local track = Library.New("Frame", {
-        Position = UDim2.new(0, 52, 0.5, -2),
-        Size = UDim2.new(1, -200, 0, 6),
+        Position = UDim2.new(0, 12, 0, 39),
+        Size = UDim2.new(1, -24, 0, 6),
         ZIndex = 6,
         Parent = row
     })

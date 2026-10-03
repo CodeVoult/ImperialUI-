@@ -27,11 +27,11 @@ function SpringAnimations.Setup(window, config, Spring)
     local Pages = window.Pages or {}
 
     -- Crear resortes usando el módulo Spring recibido
-    local MenuPosXScale   = Spring.new(1.2, 14, 25, 0.5)
-    local MenuPosYScale   = Spring.new(1.2, 14, 25, 0.15)
-    local MenuSizeXOffset = Spring.new(1.5, 14, 25, 140)
-    local MenuSizeYOffset = Spring.new(1.5, 14, 25, 42)
-    local MenuCorner      = Spring.new(1.2, 14, 25, 21)
+    local MenuPosXScale   = Spring.new(1, 20, 100, 0.5)
+    local MenuPosYScale   = Spring.new(1, 20, 100, 0.15)
+    local MenuSizeXOffset = Spring.new(1, 20, 100, 140)
+    local MenuSizeYOffset = Spring.new(1, 20, 100, 42)
+    local MenuCorner      = Spring.new(1, 20, 100, 21)
 
     local springing = false
     local winOpen = false
@@ -134,7 +134,7 @@ function SpringAnimations.Setup(window, config, Spring)
                 ContentGroup.GroupTransparency = 1
             else
                 ContentGroup.Visible = true
-                local p = math.clamp((currW - 300) / (targetWidth - 300), 0, 1)
+                local p = math.clamp((currW - 300) / math.max(targetWidth - 300, 1), 0, 1)
                 ContentGroup.GroupTransparency = 1 - p
                 
                 if currW > targetWidth - 10 and not springing then
@@ -178,27 +178,26 @@ function SpringAnimations.Setup(window, config, Spring)
             end
         end
     end)
+    window:Track(renderConnection)
 
     -- Evento de clic en el ícono flotante
-    FloatIcon.MouseButton1Click:Connect(function()
+    window:Track(FloatIcon.MouseButton1Click:Connect(function()
         if not winOpen then openWin() end
-    end)
+    end))
 
     -- Función de arrastre suave (para la barra de título)
-    local function makeSmoothDrag(handle, target, scaleObj, clickCallback)
+    local function makeSmoothDrag(handle, target, scaleObj)
         local dragging = false
         local dragStart, startPos
         local targetX, targetY, currentX, currentY = 0, 0, 0, 0
         local lerpConnection = nil
         local suavizado = 0.15
-        local inputBeganTime = 0
 
-        handle.InputBegan:Connect(function(input)
+        window:Track(handle.InputBegan:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if springing then return end
             dragging = true
             window.dragging = true
-            inputBeganTime = tick()
             dragStart = input.Position
             startPos = target.Position
             currentX = target.AbsolutePosition.X + (target.AbsoluteSize.X * target.AnchorPoint.X)
@@ -208,30 +207,33 @@ function SpringAnimations.Setup(window, config, Spring)
             if scaleObj then TweenService:Create(scaleObj, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Scale = 1.01 }):Play() end
 
             if not lerpConnection then
-                lerpConnection = RunService.RenderStepped:Connect(function()
+                lerpConnection = RunService.RenderStepped:Connect(function(dt)
                     if dragging or math.abs(currentX - targetX) > 0.1 or math.abs(currentY - targetY) > 0.1 then
-                        currentX = currentX + (targetX - currentX) * suavizado
-                        currentY = currentY + (targetY - currentY) * suavizado
+                        local alpha = 1 - math.exp(-dt / suavizado)
+                        currentX = currentX + (targetX - currentX) * alpha
+                        currentY = currentY + (targetY - currentY) * alpha
                         target.Position = UDim2.new(0, math.round(currentX), 0, math.round(currentY))
                     else
                         lerpConnection:Disconnect()
                         lerpConnection = nil
                     end
                 end)
+                window:Track(lerpConnection)
             end
-        end)
+        end))
 
-        UserInputService.InputChanged:Connect(function(input)
+        window:Track(UserInputService.InputChanged:Connect(function(input)
             if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 local delta = input.Position - dragStart
                 local originX = (target.Parent.AbsoluteSize.X * startPos.X.Scale) + startPos.X.Offset
                 local originY = (target.Parent.AbsoluteSize.Y * startPos.Y.Scale) + startPos.Y.Offset
-                targetX = originX + delta.X
-                targetY = originY + delta.Y
+                local halfX, halfY = target.AbsoluteSize.X / 2, target.AbsoluteSize.Y / 2
+                targetX = math.clamp(originX + delta.X, halfX + 8, GUI.AbsoluteSize.X - halfX - 8)
+                targetY = math.clamp(originY + delta.Y, halfY + 8, GUI.AbsoluteSize.Y - halfY - 8)
             end
-        end)
+        end))
 
-        UserInputService.InputEnded:Connect(function(input)
+        window:Track(UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
             if dragging then
                 dragging = false
@@ -243,15 +245,13 @@ function SpringAnimations.Setup(window, config, Spring)
                     target.Position = UDim2.new(currentX / parentSize.X, 0, currentY / parentSize.Y, 0)
                 end
 
-                local duration = tick() - inputBeganTime
-                if duration < 0.25 and clickCallback then clickCallback() end
             end
-        end)
+        end))
     end
 
     -- Conectar arrastre en la barra de título (si existe)
     if window.titleBar then
-        makeSmoothDrag(window.titleBar, WinMain, WinScale, closeWin)
+        makeSmoothDrag(window.titleBar, WinMain, WinScale)
     end
 
     -- Devolver métodos públicos
