@@ -10,8 +10,9 @@ local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/CodeVoult/ImperialUI-
 local function LoadElement(name)
     local success, result = pcall(function()
         -- ModuleScript layout also supports Studio without loadstring/HTTP.
-        if script then
-            local root = script.Parent.Parent
+        local currentScript = script
+        local root = currentScript and currentScript.Parent and currentScript.Parent.Parent
+        if root then
             local folder = root:FindFirstChild("elements")
             local module = folder and folder:FindFirstChild(name)
             if module then return require(module) end
